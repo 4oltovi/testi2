@@ -1,0 +1,4 @@
+﻿question_text,type,difficulty_level,option_a,option_b,option_c,option_d,option_e,correct_answer,explanation
+"Пойтахти Тоҷикистон кадом шаҳр аст?",single_choice,1,Душанбе,Хуҷанд,Бохтар,Кӯлоб,,a,"Душанбе пойтахт аст"
+"PHP забони барномасозӣ аст",true_false,1,Дуруст,Нодуруст,,,,a,
+"Кадомашон забони барномасозӣ?",multiple_choice,2,Python,HTML,Java,CSS,,ac,"Python ва Java"
