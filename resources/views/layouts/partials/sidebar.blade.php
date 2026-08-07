@@ -3,7 +3,12 @@
     <!-- Logo -->
     <div class="sidebar-header p-3 border-bottom border-secondary">
         <a href="{{ auth()->user()?->hasRole('admin') ? '/admin/dashboard' : (auth()->user()?->hasRole('teacher') ? '/teacher/dashboard' : '/student/dashboard') }}" class="text-decoration-none text-white d-flex align-items-center">
+            @php $logoPath = \App\Models\Setting::get('institution_logo'); @endphp
+            @if($logoPath && file_exists(public_path($logoPath)))
+            <img src="{{ asset($logoPath) }}" alt="Логотип" style="height:40px; width:40px; object-fit:contain;" class="me-2">
+            @else
             <i class="bi bi-mortarboard-fill fs-4 me-2 text-primary"></i>
+            @endif
             <span class="fs-5 fw-bold">ДОНИШЁР</span>
         </a>
         <small class="text-muted d-block mt-1">Системаи идоракунии таълим</small>
@@ -22,7 +27,7 @@
             </li>
 
             <li class="nav-item mt-2">
-                <small class="nav-link text-muted text-uppercase fw-bold px-3">Корбарон</small>
+                <small class="nav-link text-uppercase fw-bold px-3" style="color:#8a94ff;">Корбарон</small>
             </li>
             <li class="nav-item">
                 <a class="nav-link text-white {{ request()->is('admin/users*') ? 'active bg-primary rounded' : '' }}" href="/admin/users">
@@ -31,7 +36,7 @@
             </li>
 
             <li class="nav-item mt-2">
-                <small class="nav-link text-muted text-uppercase fw-bold px-3">Сохтор</small>
+                <small class="nav-link text-uppercase fw-bold px-3" style="color:#8a94ff;">Сохтор</small>
             </li>
             <li class="nav-item">
                 <a class="nav-link text-white {{ request()->is('admin/structure/faculties*') ? 'active bg-primary rounded' : '' }}" href="/admin/structure/faculties">
@@ -75,7 +80,7 @@
             </li>
 
             <li class="nav-item mt-2">
-                <small class="nav-link text-muted text-uppercase fw-bold px-3">Таълим</small>
+                <small class="nav-link text-uppercase fw-bold px-3" style="color:#8a94ff;">Таълим</small>
             </li>
             <li class="nav-item">
                 <a class="nav-link text-white {{ request()->is('admin/students*') ? 'active bg-primary rounded' : '' }}" href="/admin/students">
@@ -99,7 +104,7 @@
             </li>
 
             <li class="nav-item mt-2">
-                <small class="nav-link text-muted text-uppercase fw-bold px-3">Аналитика</small>
+                <small class="nav-link text-uppercase fw-bold px-3" style="color:#8a94ff;">Аналитика</small>
             </li>
             <li class="nav-item">
                 <a class="nav-link text-white {{ request()->is('admin/ratings*') ? 'active bg-primary rounded' : '' }}" href="/admin/ratings">
@@ -109,6 +114,11 @@
             <li class="nav-item">
                 <a class="nav-link text-white {{ request()->is('admin/exams*') ? 'active bg-primary rounded' : '' }}" href="/admin/exams">
                     <i class="bi bi-pencil-square me-2"></i> Имтиҳонҳо
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {{ request()->is('admin/vedomosts*') ? 'active bg-primary rounded' : '' }}" href="/admin/vedomosts">
+                    <i class="bi bi-file-earmark-spreadsheet me-2"></i> Вeдемостхо
                 </a>
             </li>
             <li class="nav-item">
@@ -128,7 +138,7 @@
             </li>
 
             <li class="nav-item mt-2">
-                <small class="nav-link text-muted text-uppercase fw-bold px-3">Система</small>
+                <small class="nav-link text-uppercase fw-bold px-3" style="color:#8a94ff;">Система</small>
             </li>
             <li class="nav-item">
                 <a class="nav-link text-white {{ request()->is('admin/reports*') ? 'active bg-primary rounded' : '' }}" href="/admin/reports">

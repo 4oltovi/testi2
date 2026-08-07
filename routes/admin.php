@@ -91,6 +91,7 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/create', [\App\Http\Controllers\Admin\ExamController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\Admin\ExamController::class, 'store'])->name('store');
 
+
         // Саволномаҳо (ПЕШИ /{exam} бошад!)
         Route::resource('question-banks', \App\Http\Controllers\Admin\QuestionBankController::class);
         Route::resource('questions', \App\Http\Controllers\Admin\QuestionController::class)->except(['show']);
@@ -123,7 +124,8 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/student/{student}', [\App\Http\Controllers\Admin\TranscriptController::class, 'show'])->name('show');
         Route::post('/student/{student}/generate', [\App\Http\Controllers\Admin\TranscriptController::class, 'generate'])->name('generate');
         Route::get('/{transcript}/pdf', [\App\Http\Controllers\Admin\TranscriptController::class, 'exportPdf'])->name('pdf');
-    });
+        Route::get('student/{student}/print', [\App\Http\Controllers\Admin\TranscriptController::class, 'printStudent'])->name('print');    
+        });
 
     // Ҳисоботҳо
     Route::prefix('reports')->name('reports.')->group(function () {
@@ -142,7 +144,8 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
         Route::put('/', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('update');
         Route::get('/formula', [\App\Http\Controllers\Admin\SettingsController::class, 'formula'])->name('formula');
         Route::get('/test', [\App\Http\Controllers\Admin\SettingsController::class, 'test'])->name('test');
-    });
+        Route::post('logo', [\App\Http\Controllers\Admin\SettingsController::class, 'uploadLogo'])->name('logo');
+        });
 
     // Импорти Excel
     Route::prefix('import')->name('import.')->group(function () {
@@ -155,4 +158,10 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
     Route::prefix('audit')->name('audit.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\AuditController::class, 'index'])->name('index');
     });
-});
+
+    // Ведомостҳо (дар поён, берун аз ҳамаи гурӯҳҳо)
+    Route::get('vedomosts', [\App\Http\Controllers\Admin\VedomostController::class, 'index'])->name('vedomosts.index');
+    Route::get('vedomosts-zip', [\App\Http\Controllers\Admin\VedomostController::class, 'downloadZip'])->name('vedomosts.zip');
+    Route::get('vedomosts/{vedomost}/pdf', [\App\Http\Controllers\Admin\VedomostController::class, 'downloadPdf'])->name('vedomosts.pdf');
+    Route::get('vedomosts/{vedomost}/preview', [\App\Http\Controllers\Admin\VedomostController::class, 'preview'])->name('vedomosts.preview');
+    });
