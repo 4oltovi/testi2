@@ -100,6 +100,20 @@ class CategoryScoreController extends Controller
                     );
                 }
             }
+
+            // Ҳисоби баҳои ниҳоӣ барои ҳамаи донишҷӯён
+            $gradeCalc = app(\App\Services\GradeCalculator::class);
+            $studentsToRecalc = $subjectAssignment->group->activeStudents;
+            foreach ($studentsToRecalc as $student) {
+                $semesterGrade = \App\Models\SemesterGrade::where('student_id', $student->id)
+                    ->where('subject_assignment_id', $subjectAssignment->id)
+                    ->where('semester_id', $semester->id)
+                    ->first();
+
+                if ($semesterGrade && !$semesterGrade->is_finalized) {
+                    $gradeCalc->processAndSaveFinalGrade($semesterGrade);
+                }
+            }
         });
 
         return back()->with('success', 'Баҳоҳо дар 5 категория сабт шуданд.');

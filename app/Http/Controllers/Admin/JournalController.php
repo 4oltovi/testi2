@@ -287,22 +287,54 @@ class JournalController extends Controller
     public function semesterGrades(SubjectAssignment $subjectAssignment): View
     {
         $subjectAssignment->load(['subject', 'group.activeStudents.user', 'teacher', 'semester']);
-        $students = $subjectAssignment->group->activeStudents->sortBy('user.last_name');
+        $students = $subjectAssignment->group->activeStudents
+            ->sortBy(function ($student) {
+                return $student->user?->last_name ?? '' . $student->user?->first_name ?? '';
+            })
+            ->values();
+
         $semester = $subjectAssignment->semester;
         $subject = $subjectAssignment->subject;
 
-        // Баҳоҳои семестрии мавҷуда
         $semesterGrades = SemesterGrade::where('subject_assignment_id', $subjectAssignment->id)
             ->where('semester_id', $semester->id)
             ->get()
             ->keyBy('student_id');
 
-        // Ҳисоби автоматикии рейтингҳо
-        $calculatedRatings = [];
+        $calculatedGrades = [];
         foreach ($students as $student) {
-            $calculatedRatings[$student->id] = [
-                'rating1' => $this->gradeCalculator->calculateRating1($student->id, $subjectAssignment->id, $semester->id),
-                'rating2' => $this->gradeCalculator->calculateRating2($student->id, $subjectAssignment->id, $semester->id),
+            $rating1 = $this->gradeCalculator->calculateRating1($student->id, $subjectAssignment->id, $semester->id);
+            $rating2 = $this->gradeCalculator->calculateRating2($student->id, $subjectAssignment->id, $semester->id);
+            $exam = $this->gradeCalculator->calculateExamPercentage($student->id, $subjectAssignment->id, $semester->id);
+
+            $totalScore = null;
+            $letterGrade = null;
+            $gradePoint = null;
+            $status = null;
+
+            if ($exam > 0 || ($rating1 > 0 || $rating2 > 0)) {
+                $divisor = (float) \App\Models\Setting::get('rating_part_divisor', 4);
+                $examWeight = (float) \App\Models\Setting::get('exam_weight', 0.5);
+
+                $r1 = (float) $rating1;
+                $r2 = (float) $rating2;
+
+                $totalScore = round(($r1 + $r2) / $divisor + ($exam * $examWeight), 2);
+
+                $gradeEnum = \App\Enums\GradeScale::fromPercentage($totalScore);
+                $letterGrade = $gradeEnum->value;
+                $gradePoint = $gradeEnum->gradePoint();
+                $status = $gradeEnum->isPassing() ? 'passed' : ($gradeEnum->canRetake() ? 'retake' : 'failed');
+            }
+
+            $calculatedGrades[$student->id] = [
+                'rating1' => $rating1,
+                'rating2' => $rating2,
+                'exam' => $exam,
+                'total_score' => $totalScore,
+                'letter_grade' => $letterGrade,
+                'grade_point' => $gradePoint,
+                'status' => $status,
             ];
         }
 
@@ -312,7 +344,7 @@ class JournalController extends Controller
             'semester',
             'subject',
             'semesterGrades',
-            'calculatedRatings'
+            'calculatedGrades'
         ));
     }
 

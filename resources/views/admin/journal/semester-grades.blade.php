@@ -76,7 +76,7 @@
                     @foreach($students as $index => $student)
                     @php
                     $grade = $semesterGrades[$student->id] ?? null;
-                    $calc = $calculatedRatings[$student->id] ?? ['rating1' => 0, 'rating2' => 0];
+                    $calc = $calculatedGrades[$student->id] ?? ['rating1' => 0, 'rating2' => 0, 'exam' => 0, 'total_score' => null, 'letter_grade' => null, 'grade_point' => null, 'status' => null];
                     @endphp
                     <tr class="{{ $grade && $grade->is_finalized ? 'table-light' : '' }}">
                         <td>{{ $index + 1 }}</td>
@@ -86,55 +86,55 @@
                             </a>
                         </td>
                         <td>
-                            <span title="Ҳисобшуда: {{ number_format($calc['rating1'], 1) }}">
-                                {{ $grade?->rating1_score !== null ? number_format($grade->rating1_score, 0) : '—' }}
+                            <span title="Захирашуда: {{ $grade?->rating1_score !== null ? number_format($grade->rating1_score, 0) : '—' }}">
+                                {{ $calc['rating1'] !== null ? number_format($calc['rating1'], 0) : '—' }}
                             </span>
                         </td>
                         <td>
-                            <span title="Ҳисобшуда: {{ number_format($calc['rating2'], 1) }}">
-                                {{ $grade?->rating2_score !== null ? number_format($grade->rating2_score, 0) : '—' }}
+                            <span title="Захирашуда: {{ $grade?->rating2_score !== null ? number_format($grade->rating2_score, 0) : '—' }}">
+                                {{ $calc['rating2'] !== null ? number_format($calc['rating2'], 0) : '—' }}
                             </span>
                         </td>
                         <td>{{ $grade?->independent_work_score !== null ? number_format($grade->independent_work_score, 0) : '—' }}</td>
-                        <td>{{ $grade?->exam_score !== null ? number_format($grade->exam_score, 0) : '—' }}</td>
+                        <td>{{ $calc['exam'] !== null ? number_format($calc['exam'], 0) : '—' }}</td>
                         <td>{{ $grade?->retake_score !== null ? number_format($grade->retake_score, 0) : '—' }}</td>
                         <td>{{ $grade?->retake2_score !== null ? number_format($grade->retake2_score, 0) : '—' }}</td>
                         <td>
-                            @if($grade?->total_score !== null)
-                            <strong>{{ number_format($grade->total_score, 1) }}</strong>
+                            @if($calc['total_score'] !== null)
+                            <strong>{{ number_format($calc['total_score'], 1) }}</strong>
                             @else
                             —
                             @endif
                         </td>
                         <td>
-                            @if($grade?->letter_grade)
-                            @php $gradeEnum = \App\Enums\GradeScale::tryFrom($grade->letter_grade); @endphp
+                            @if($calc['letter_grade'])
+                            @php $gradeEnum = \App\Enums\GradeScale::tryFrom($calc['letter_grade']); @endphp
                             <span class="badge {{ $gradeEnum?->badgeClass() ?? 'bg-secondary' }}">
-                                {{ $grade->letter_grade }}
+                                {{ $calc['letter_grade'] }}
                             </span>
                             @else
                             —
                             @endif
                         </td>
-                        <td>{{ $grade?->grade_point !== null ? number_format($grade->grade_point, 2) : '—' }}</td>
+                        <td>{{ $calc['grade_point'] !== null ? number_format($calc['grade_point'], 2) : '—' }}</td>
                         <td>
-                            @if($grade?->status)
+                            @if($calc['status'])
                             @php
-                            $statusBadge = match($grade->status) {
-                            'passed' => 'bg-success',
-                            'failed' => 'bg-danger',
-                            'retake' => 'bg-warning',
-                            'debt' => 'bg-danger',
-                            'in_progress' => 'bg-secondary',
-                            default => 'bg-secondary',
+                            $statusBadge = match($calc['status']) {
+                                'passed' => 'bg-success',
+                                'failed' => 'bg-danger',
+                                'retake' => 'bg-warning',
+                                'debt' => 'bg-danger',
+                                'in_progress' => 'bg-secondary',
+                                default => 'bg-secondary',
                             };
-                            $statusLabel = match($grade->status) {
-                            'passed' => 'Гузашт',
-                            'failed' => 'Нагуз.',
-                            'retake' => 'Такр.',
-                            'debt' => 'Қарз',
-                            'in_progress' => 'Ҷараён',
-                            default => $grade->status,
+                            $statusLabel = match($calc['status']) {
+                                'passed' => 'Гузашт',
+                                'failed' => 'Нагуз.',
+                                'retake' => 'Такр.',
+                                'debt' => 'Қарз',
+                                'in_progress' => 'Ҷараён',
+                                default => $calc['status'],
                             };
                             @endphp
                             <span class="badge {{ $statusBadge }}">{{ $statusLabel }}</span>
@@ -143,7 +143,7 @@
                             @endif
                         </td>
                         <td>
-                            @if($grade && !$grade->is_finalized)
+                            @if($grade && !$grade->is_finalized && $calc['total_score'] !== null)
                             <form action="{{ route('admin.journal.finalize', $grade) }}" method="POST" class="d-inline">
                                 @csrf
                                 <button type="submit" class="btn btn-sm btn-success"
@@ -167,12 +167,9 @@
             <div class="col-md-6">
                 <small class="text-muted">
                     <strong>Тавзеҳот:</strong>
-                    R1 = Рейтинги 1 (ҳафтаи 1-8) |
-                    R2 = Рейтинги 2 (ҳафтаи 9-16) |
-                    КМ = Корҳои мустақилона |
-                    Имт. = Имтиҳон |
-                    Такр. = Такрорсупорӣ |
-                    Ком. = Комиссионӣ
+                    R1 = Рейтинги 1 (авто) |
+                    R2 = Рейтинги 2 (авто) |
+                    Имт. = Имтиҳон (аз тести онлайн)
                 </small>
             </div>
             <div class="col-md-6 text-end">
