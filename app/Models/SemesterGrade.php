@@ -11,13 +11,30 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class SemesterGrade extends Model
 {
     protected $fillable = [
-        'student_id', 'subject_assignment_id', 'curriculum_id', 'semester_id',
-        'rating1_score', 'rating2_score', 'independent_work_score',
-        'exam_score', 'retake_score', 'retake2_score',
-        'total_score', 'letter_grade', 'grade_point', 'traditional_grade',
-        'credits_earned', 'status',
-        'rating1_date', 'rating2_date', 'exam_date', 'retake_date', 'retake2_date',
-        'finalized_at', 'exam_teacher_id', 'finalized_by', 'is_finalized',
+        'student_id',
+        'subject_assignment_id',
+        'semester_id',
+        'rating1_score',
+        'rating2_score',
+        'independent_work_score',
+        'exam_score',
+        'retake_score',
+        'retake2_score',
+        'total_score',
+        'letter_grade',
+        'grade_point',
+        'traditional_grade',
+        'credits_earned',
+        'status',
+        'rating1_date',
+        'rating2_date',
+        'exam_date',
+        'retake_date',
+        'retake2_date',
+        'finalized_at',
+        'exam_teacher_id',
+        'finalized_by',
+        'is_finalized',
     ];
 
     protected function casts(): array
@@ -53,9 +70,9 @@ class SemesterGrade extends Model
         return $this->belongsTo(SubjectAssignment::class);
     }
 
-    public function curriculum(): BelongsTo
+    public function subject(): BelongsTo
     {
-        return $this->belongsTo(Curriculum::class);
+        return $this->belongsTo(Subject::class, 'subject_assignment_id');
     }
 
     public function semester(): BelongsTo
@@ -81,6 +98,22 @@ class SemesterGrade extends Model
     public function academicDebt(): HasOne
     {
         return $this->hasOne(AcademicDebt::class, 'semester_grade_id');
+    }
+
+    /**
+     * Фан (shortcut)
+     */
+    public function getSubjectAttribute(): ?Subject
+    {
+        return $this->subjectAssignment?->subject;
+    }
+
+    /**
+     * Номи фан (shortcut)
+     */
+    public function getSubjectNameAttribute(): string
+    {
+        return $this->subjectAssignment?->subject?->name ?? '';
     }
 
     // ==================== SCOPES ====================
@@ -112,9 +145,6 @@ class SemesterGrade extends Model
      *
      * Формула:
      * total_score = ((rating + journal) / 2) + (exam × 0.50)
-     *
-     * Масалан: rating = 40, journal = 35, exam = 70
-     * total = ((40 + 35) / 2) + (70 × 0.50) = 37.5 + 35 = 72.5
      */
     public function calculateTotalScore(): ?float
     {
@@ -138,11 +168,17 @@ class SemesterGrade extends Model
      */
     public function calculateAndSetFinalGrade(): void
     {
-        $totalScore = $this->calculateTotalScore();
+        $examScore = $this->retake2_score ?? $this->retake_score ?? $this->exam_score;
 
-        if (is_null($totalScore)) {
+        if (is_null($examScore)) {
             return;
         }
+
+        $rating1 = (float) ($this->rating1_score ?? 0);
+        $rating2 = (float) ($this->rating2_score ?? 0);
+
+        // ФОРМУЛАИ НАВ: (R1 + R2) ÷ 4 + Имтиҳон × 0,5
+        $totalScore = round(($rating1 + $rating2) / 4 + ($examScore * 0.5), 2);
 
         $grade = GradeScale::fromPercentage($totalScore);
 
@@ -153,7 +189,7 @@ class SemesterGrade extends Model
 
         if ($grade->isPassing()) {
             $this->status = 'passed';
-            $this->credits_earned = $this->curriculum?->credits ?? 0;
+            $this->credits_earned = $this->subjectAssignment?->subject?->credits ?? 0;
         } else {
             $this->status = $grade->canRetake() ? 'retake' : 'failed';
             $this->credits_earned = 0;

@@ -3,7 +3,7 @@
 @section('title', 'Танзимоти категорияҳо')
 @section('page-header', 'Танзимоти категорияҳои баҳо')
 @section('page-description')
-    {{ $subjectAssignment->curriculum?->subject?->name }} | {{ $subjectAssignment->group?->name }}
+    {{ $subjectAssignment->subject?->name }} | {{ $subjectAssignment->group?->name }}
 @endsection
 
 @section('content')

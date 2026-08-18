@@ -67,7 +67,7 @@ class DebtController extends Controller
 
     public function show(AcademicDebt $debt): View
     {
-        $debt->load(['student.user', 'student.group', 'subject', 'semester', 'curriculum', 'history.performedBy', 'semesterGrade']);
+        $debt->load(['student.user', 'student.group', 'subject', 'semester', 'subject', 'history.performedBy', 'semesterGrade']);
         return view('admin.debts.show', compact('debt'));
     }
 

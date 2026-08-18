@@ -36,18 +36,22 @@ class SpecialtyController extends Controller
     public function create(): View
     {
         $departments = Department::active()->with('faculty')->orderBy('name')->get();
+
         return view('admin.structure.specialties.create', compact('departments'));
     }
 
+    /**
+     * НАВ: "Миёна" илова шуд + маҷмӯи кредитҳо ихтиёрӣ
+     */
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'department_id' => 'required|exists:departments,id',
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:20|unique:specialties,code',
-            'education_level' => 'required|in:bachelor,master,specialist',
+            'education_level' => 'required|in:bachelor,master,specialist,secondary',
             'study_years' => 'required|integer|min:1|max:7',
-            'total_credits' => 'required|integer|min:60|max:500',
+            'total_credits' => 'nullable|integer|min:0|max:500',
             'study_form' => 'required|in:full_time,part_time,evening',
             'is_active' => 'boolean',
         ], [
@@ -56,10 +60,10 @@ class SpecialtyController extends Controller
             'code.required' => 'Рамзи ихтисос ҳатмӣ аст.',
             'code.unique' => 'Ин рамз аллакай мавҷуд аст.',
             'study_years.required' => 'Муддати таҳсил ҳатмӣ аст.',
-            'total_credits.required' => 'Маҷмӯи кредитҳо ҳатмӣ аст.',
         ]);
 
         $validated['is_active'] = $request->boolean('is_active', true);
+        $validated['total_credits'] = (int) ($validated['total_credits'] ?? 0);
 
         Specialty::create($validated);
 
@@ -69,13 +73,20 @@ class SpecialtyController extends Controller
 
     public function show(Specialty $specialty): View
     {
-        $specialty->load(['department.faculty', 'groups.course', 'curriculum.subject', 'curriculum.semester']);
+        $specialty->load([
+            'department.faculty',
+            'groups.course',
+            'subjectAssignments.subject',
+            'subjectAssignments.semester'
+        ]);
+
         return view('admin.structure.specialties.show', compact('specialty'));
     }
 
     public function edit(Specialty $specialty): View
     {
         $departments = Department::active()->with('faculty')->orderBy('name')->get();
+
         return view('admin.structure.specialties.edit', compact('specialty', 'departments'));
     }
 
@@ -85,14 +96,15 @@ class SpecialtyController extends Controller
             'department_id' => 'required|exists:departments,id',
             'name' => 'required|string|max:255',
             'code' => "required|string|max:20|unique:specialties,code,{$specialty->id}",
-            'education_level' => 'required|in:bachelor,master,specialist',
+            'education_level' => 'required|in:bachelor,master,specialist,secondary',
             'study_years' => 'required|integer|min:1|max:7',
-            'total_credits' => 'required|integer|min:60|max:500',
+            'total_credits' => 'nullable|integer|min:0|max:500',
             'study_form' => 'required|in:full_time,part_time,evening',
             'is_active' => 'boolean',
         ]);
 
         $validated['is_active'] = $request->boolean('is_active', true);
+        $validated['total_credits'] = (int) ($validated['total_credits'] ?? $specialty->total_credits ?? 0);
 
         $specialty->update($validated);
 

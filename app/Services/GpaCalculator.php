@@ -2,13 +2,10 @@
 
 namespace App\Services;
 
-use App\Enums\GradeScale;
-use App\Models\Curriculum;
 use App\Models\Semester;
-use App\Models\SemesterGpa;
 use App\Models\SemesterGrade;
+use App\Models\SemesterGpa;
 use App\Models\Student;
-use Illuminate\Support\Collection;
 
 /**
  * Хидмати ҳисоби GPA мутобиқи низоми кредитии Тоҷикистон
@@ -27,7 +24,7 @@ class GpaCalculator
         $grades = SemesterGrade::where('student_id', $student->id)
             ->where('semester_id', $semester->id)
             ->where('is_finalized', true)
-            ->with('curriculum')
+            ->with('subjectAssignment.subject')
             ->get();
 
         if ($grades->isEmpty()) {
@@ -41,7 +38,7 @@ class GpaCalculator
         $subjectsFailed = 0;
 
         foreach ($grades as $grade) {
-            $credits = $grade->curriculum?->credits ?? 0;
+            $credits = $grade->subjectAssignment?->credits ?? 0;
             $gradePoint = $grade->grade_point ?? 0;
 
             $totalCreditsAttempted += $credits;
@@ -55,36 +52,31 @@ class GpaCalculator
             }
         }
 
-        // GPA = Σ(Gi × Ci) / Σ(Ci)
+        // Ҳисоби GPA
         $gpa = $totalCreditsAttempted > 0
             ? round($totalGradePoints / $totalCreditsAttempted, 2)
             : 0;
 
-        // GPA кумулятивӣ
-        $cumulativeData = $this->calculateCumulativeGpa($student, $semester);
+        // Ҳисоби GPA кумулятивӣ
+        $cumulativeResult = $this->calculateCumulativeGpa($student, $semester);
+        $cumulativeGpa = $cumulativeResult['gpa'];
 
-        // Сабт ё навсозии SemesterGpa
+        // Сохтан ё навсозии SemesterGpa
         $semesterGpa = SemesterGpa::updateOrCreate(
-            ['student_id' => $student->id, 'semester_id' => $semester->id],
             [
-                'academic_year_id' => $semester->academic_year_id,
+                'student_id' => $student->id,
+                'semester_id' => $semester->id,
+            ],
+            [
                 'gpa' => $gpa,
+                'cumulative_gpa' => $cumulativeGpa,
                 'credits_attempted' => $totalCreditsAttempted,
                 'credits_earned' => $totalCreditsEarned,
                 'subjects_passed' => $subjectsPassed,
                 'subjects_failed' => $subjectsFailed,
-                'total_grade_points' => $totalGradePoints,
-                'total_subjects' => $grades->count(),
-                'cumulative_gpa' => $cumulativeData['gpa'],
-                'cumulative_credits_earned' => $cumulativeData['credits'],
+                'calculated_at' => now(),
             ]
         );
-
-        // Навсозии GPA дар профили донишҷӯ
-        $student->update([
-            'cumulative_gpa' => $cumulativeData['gpa'],
-            'total_credits_earned' => $cumulativeData['credits'],
-        ]);
 
         return $semesterGpa;
     }
@@ -100,7 +92,7 @@ class GpaCalculator
             ->whereHas('semester', function ($query) use ($upToSemester) {
                 $query->where('start_date', '<=', $upToSemester->end_date);
             })
-            ->with('curriculum')
+            ->with('subjectAssignment.subject')
             ->get();
 
         if ($allGrades->isEmpty()) {
@@ -115,7 +107,7 @@ class GpaCalculator
         $latestGrades = $this->getLatestGradesPerSubject($allGrades);
 
         foreach ($latestGrades as $grade) {
-            $credits = $grade->curriculum?->credits ?? 0;
+            $credits = $grade->subjectAssignment?->subject?->credits ?? 0;
             $gradePoint = $grade->grade_point ?? 0;
 
             $totalCreditsAttempted += $credits;
@@ -137,67 +129,55 @@ class GpaCalculator
     }
 
     /**
-     * Ҳисоби GPA барои тамоми донишҷӯёни як гурӯҳ
+     * Охирин баҳо барои ҳар як фан (агар такрорсупорӣ бошад)
      */
-    public function calculateGroupGpa(int $groupId, int $semesterId): Collection
+    private function getLatestGradesPerSubject($grades)
     {
-        $semester = Semester::find($semesterId);
-        $students = Student::where('group_id', $groupId)->active()->get();
+        // Гурӯҳбандӣ аз рӯйи фан (subject_id)
+        $grouped = $grades->groupBy(function ($grade) {
+            return $grade->subjectAssignment?->subject_id ?? 0;
+        });
 
-        $results = collect();
+        // Барои ҳар як фан, охирин баҳоро мегирем
+        return $grouped->map(function ($subjectGrades) {
+            return $subjectGrades->sortBy('semester_id')->last();
+        })->values();
+    }
 
-        foreach ($students as $student) {
-            $gpa = $this->calculateSemesterGpa($student, $semester);
-            $results->push([
-                'student' => $student,
-                'semester_gpa' => $gpa,
-            ]);
+    /**
+     * Муайян кардани дараҷаи ифтихорӣ
+     */
+    public function determineHonors(?float $gpa): string
+    {
+        if ($gpa === null) {
+            return 'none';
         }
 
-        return $results->sortByDesc(fn($item) => $item['semester_gpa']?->gpa ?? 0);
+        if ($gpa >= 3.90) {
+            return 'summa_cum_laude';
+        }
+
+        if ($gpa >= 3.70) {
+            return 'magna_cum_laude';
+        }
+
+        if ($gpa >= 3.50) {
+            return 'cum_laude';
+        }
+
+        return 'none';
     }
 
     /**
-     * Охирин баҳо барои ҳар фан (агар такрорсупорӣ бошад)
-     */
-    private function getLatestGradesPerSubject(Collection $grades): Collection
-    {
-        return $grades->groupBy(fn($g) => $g->curriculum_id)
-            ->map(function ($subjectGrades) {
-                // Агар гузашт — баҳои гузаштаро мегирем
-                $passed = $subjectGrades->where('status', 'passed')->sortByDesc('finalized_at')->first();
-                if ($passed) return $passed;
-
-                // Вагарна — охирин баҳоро
-                return $subjectGrades->sortByDesc('finalized_at')->first();
-            })
-            ->filter()
-            ->values();
-    }
-
-    /**
-     * Муайян кардани ифтихорот (honors) аз рӯйи GPA
-     */
-    public function determineHonors(float $gpa): string
-    {
-        return match (true) {
-            $gpa >= 3.80 => 'summa_cum_laude', // Бо ифтихори аъло
-            $gpa >= 3.50 => 'magna_cum_laude', // Бо ифтихор
-            $gpa >= 3.00 => 'cum_laude',       // Қобили таваҷҷуҳ
-            default => 'none',
-        };
-    }
-
-    /**
-     * Тарҷумаи honors ба тоҷикӣ
+     * Номи дараҷаи ифтихорӣ ба забони тоҷикӣ
      */
     public static function honorsLabel(string $honors): string
     {
         return match ($honors) {
-            'summa_cum_laude' => 'Бо ифтихори аъло (Диплом бо имтиёз)',
-            'magna_cum_laude' => 'Бо ифтихор',
-            'cum_laude' => 'Қобили таваҷҷуҳ',
-            default => '',
+            'summa_cum_laude' => 'Аъло (Summa Cum Laude)',
+            'magna_cum_laude' => 'Аъло (Magna Cum Laude)',
+            'cum_laude' => 'Аъло (Cum Laude)',
+            default => 'Оддӣ',
         };
     }
 }

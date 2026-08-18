@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
 use App\Models\SemesterGrade;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
 class TranscriptController extends Controller
@@ -14,7 +15,7 @@ class TranscriptController extends Controller
 
         $grades = SemesterGrade::where('student_id', $student?->id)
             ->where('is_finalized', true)
-            ->with(['curriculum.subject', 'semester'])
+            ->with(['subject', 'semester'])
             ->orderBy('semester_id')
             ->get();
 
@@ -23,6 +24,17 @@ class TranscriptController extends Controller
 
     public function download(Request $request)
     {
-        return back()->with('info', 'Содироти PDF дар версияи оянда фаъол мешавад.');
+        $student = $request->user()->student;
+
+        $grades = SemesterGrade::where('student_id', $student?->id)
+            ->where('is_finalized', true)
+            ->with(['subject', 'semester'])
+            ->orderBy('semester_id')
+            ->get();
+
+        $pdf = Pdf::loadView('student.transcript.pdf', compact('grades', 'student'));
+        $pdf->setPaper('a4');
+
+        return $pdf->stream('transcript_' . ($student?->id ?? 'student') . '.pdf');
     }
 }

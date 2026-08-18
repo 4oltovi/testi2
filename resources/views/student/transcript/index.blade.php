@@ -24,7 +24,7 @@
                     @foreach($grades as $index => $grade)
                     <tr>
                         <td>{{ $index + 1 }}</td>
-                        <td>{{ $grade->curriculum?->subject?->name ?? '—' }}</td>
+                        <td>{{ $grade->subject?->name ?? '—' }}</td>
                         <td class="text-center">{{ $grade->semester?->name ?? '—' }}</td>
                         <td class="text-center">{{ $grade->credits_earned }}</td>
                         <td class="text-center">{{ $grade->total_score ? number_format($grade->total_score, 0) . '%' : '—' }}</td>

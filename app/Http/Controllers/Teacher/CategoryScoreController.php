@@ -22,7 +22,7 @@ class CategoryScoreController extends Controller
     {
         $this->authorizeTeacher($subjectAssignment, $request);
 
-        $subjectAssignment->load(['curriculum.subject', 'group.activeStudents.user', 'semester']);
+        $subjectAssignment->load(['subject', 'group.activeStudents.user', 'semester']);
         $students = $subjectAssignment->group->activeStudents->sortBy('user.last_name');
         $semester = $subjectAssignment->semester;
 
@@ -112,7 +112,7 @@ class CategoryScoreController extends Controller
     {
         $this->authorizeTeacher($subjectAssignment, $request);
 
-        $subjectAssignment->load(['curriculum.subject', 'group']);
+        $subjectAssignment->load(['subject', 'group']);
         $categorySettings = GradeCategorySetting::getOrCreateDefaults($subjectAssignment->id);
 
         return view('teacher.journal.category-settings', compact('subjectAssignment', 'categorySettings'));
@@ -154,7 +154,7 @@ class CategoryScoreController extends Controller
     {
         $this->authorizeTeacher($subjectAssignment, $request);
 
-        $subjectAssignment->load(['curriculum.subject', 'group.activeStudents.user', 'semester']);
+        $subjectAssignment->load(['subject', 'group.activeStudents.user', 'semester']);
         $students = $subjectAssignment->group->activeStudents->sortBy('user.last_name');
         $semester = $subjectAssignment->semester;
 

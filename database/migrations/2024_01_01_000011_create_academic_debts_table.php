@@ -13,8 +13,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('student_id')->constrained()->cascadeOnDelete();
             $table->foreignId('semester_grade_id')->constrained('semester_grades')->cascadeOnDelete();
-            $table->foreignId('curriculum_id')->constrained('curriculum')->cascadeOnDelete();
-            $table->foreignId('subject_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('subject_id')->constrained('subjects')->cascadeOnDelete();
             $table->foreignId('semester_id')->constrained()->cascadeOnDelete();
 
             // Сабаби қарздорӣ

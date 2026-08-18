@@ -96,7 +96,7 @@ class Teacher extends Model
         return $this->subjectAssignments()
             ->where('semester_id', $semesterId)
             ->where('is_active', true)
-            ->with(['curriculum.subject', 'group'])
+            ->with(['subject', 'group'])
             ->get();
     }
 

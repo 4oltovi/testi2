@@ -12,14 +12,22 @@ class Specialty extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'department_id', 'name', 'code', 'education_level',
-        'study_years', 'total_credits', 'study_form', 'is_active',
+        'department_id',
+        'name',
+        'code',
+        'education_level',
+        'study_years',
+        'total_credits',
+        'study_form',
+        'is_active',
     ];
 
     protected function casts(): array
     {
         return ['is_active' => 'boolean'];
     }
+
+    // ==================== РОБИТАҲО ====================
 
     public function department(): BelongsTo
     {
@@ -31,15 +39,27 @@ class Specialty extends Model
         return $this->hasMany(Group::class);
     }
 
-    public function curriculum(): HasMany
-    {
-        return $this->hasMany(Curriculum::class);
-    }
-
     public function students(): HasMany
     {
         return $this->hasMany(Student::class);
     }
+
+    /**
+     * Фанҳои ихтисос тавассути гурӯҳҳо ва таъинотҳо
+     */
+    public function subjectAssignments(): HasMany
+    {
+        return $this->hasManyThrough(
+            SubjectAssignment::class,
+            Group::class,
+            'specialty_id', // Foreign key on groups table
+            'group_id',     // Foreign key on subject_assignments table
+            'id',           // Local key on specialties table
+            'id'            // Local key on groups table
+        );
+    }
+
+    // ==================== SCOPES ====================
 
     public function scopeActive($query)
     {

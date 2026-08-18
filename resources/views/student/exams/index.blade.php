@@ -2,12 +2,17 @@
 
 @section('title', 'Тестҳои ман')
 @section('page-header', 'Тестҳои дастрас')
+@section('page-description', 'Имтиҳонҳои онлайни гурӯҳи шумо')
 
 @section('content')
     @if($exams->isEmpty())
         <div class="text-center py-5">
             <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
             <p class="text-muted">Ҳоло тести дастрасе нест.</p>
+            <small class="text-muted">
+                Агар админ имтиҳон сохта бошад, бояд онро <strong>нашр</strong> кунад.<br>
+                Шумо танҳо имтиҳонҳои онлайни гурӯҳи худро мебинед.
+            </small>
         </div>
     @else
         <div class="row g-3">
@@ -23,14 +28,14 @@
                     <div class="card border-0 shadow-sm h-100">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-start mb-2">
-                                <span class="badge bg-{{ $exam->status === 'active' ? 'success' : 'warning' }}">
-                                    {{ $exam->status === 'active' ? 'Фаъол' : 'Интизорӣ' }}
+                                <span class="badge bg-{{ $exam->status === 'active' ? 'success' : 'info' }}">
+                                    {{ $exam->status === 'active' ? 'Фаъол' : ($exam->status === 'scheduled' ? 'Интизорӣ' : $exam->status) }}
                                 </span>
-                                <span class="badge bg-light text-dark">{{ $exam->exam_type }}</span>
+                                <span class="badge bg-light text-dark">{{ $exam->exam_type?->label() ?? $exam->exam_type }}</span>
                             </div>
                             <h6 class="card-title">{{ $exam->title }}</h6>
                             <p class="text-muted small mb-2">
-                                {{ $exam->subjectAssignment?->curriculum?->subject?->name }}
+                                <i class="bi bi-book me-1"></i> {{ $exam->subjectAssignment?->subject?->name ?? 'Фан номаълум' }}
                             </p>
                             <ul class="list-unstyled small text-muted">
                                 <li><i class="bi bi-clock me-1"></i> {{ $exam->duration_minutes }} дақиқа</li>

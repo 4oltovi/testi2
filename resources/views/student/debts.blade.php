@@ -22,7 +22,7 @@
                     @foreach($debts as $index => $debt)
                     <tr>
                         <td>{{ $index + 1 }}</td>
-                        <td>{{ $debt->semesterGrade?->curriculum?->subject?->name ?? '—' }}</td>
+                        <td>{{ $debt->semesterGrade?->subject?->name ?? '—' }}</td>
                         <td>{{ $debt->semesterGrade?->semester?->name ?? '—' }}</td>
                         <td>
                             <span class="badge bg-danger">{{ $debt->semesterGrade?->letter_grade ?? 'F' }}</span>

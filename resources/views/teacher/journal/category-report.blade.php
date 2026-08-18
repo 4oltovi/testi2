@@ -3,7 +3,7 @@
 @section('title', 'Гузориши журнал')
 @section('page-header', 'Гузориши баҳоҳои категориявӣ')
 @section('page-description')
-    {{ $subjectAssignment->curriculum?->subject?->name }} | {{ $subjectAssignment->group?->name }}
+    {{ $subjectAssignment->subject?->name }} | {{ $subjectAssignment->group?->name }}
 @endsection
 
 @section('content')

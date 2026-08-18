@@ -15,7 +15,9 @@
         <div class="row g-3">
             @foreach($subjects as $subject)
                 @php
-                    $count = \App\Models\Question::where('subject_id', $subject->id)->count();
+                    $count = \App\Models\Question::where('subject_id', $subject->id)
+                        ->whereHas('questionBank', fn($q) => $q->where('bank_type', 'exam'))
+                        ->count();
                 @endphp
                 <div class="col-6 col-md-4 col-lg-3">
                     <a href="{{ route('admin.exams.questions.index', ['subject_id' => $subject->id]) }}" class="text-decoration-none">

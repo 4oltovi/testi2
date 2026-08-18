@@ -13,7 +13,7 @@ class DebtController extends Controller
         $student = $request->user()->student;
 
         $debts = AcademicDebt::where('student_id', $student?->id)
-            ->with(['semesterGrade.curriculum.subject', 'semesterGrade.semester'])
+            ->with(['semesterGrade.subject', 'semesterGrade.semester'])
             ->orderByDesc('created_at')
             ->get();
 

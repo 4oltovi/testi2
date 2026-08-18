@@ -25,9 +25,6 @@ Route::middleware(['web', 'auth', 'role:teacher'])->prefix('teacher')->name('tea
         Route::get('/grades/{subjectAssignment}', [\App\Http\Controllers\Teacher\JournalController::class, 'grades'])->name('grades');
         Route::post('/grades/{subjectAssignment}', [\App\Http\Controllers\Teacher\JournalController::class, 'storeGrades'])->name('grades.store');
         Route::get('/semester-grades/{subjectAssignment}', [\App\Http\Controllers\Teacher\JournalController::class, 'semesterGrades'])->name('semester-grades');
-        Route::post('/semester-grades/{subjectAssignment}/set-rating', [\App\Http\Controllers\Teacher\JournalController::class, 'setRating'])->name('set-rating');
-        Route::post('/semester-grades/{subjectAssignment}/set-exam', [\App\Http\Controllers\Teacher\JournalController::class, 'setExamScore'])->name('set-exam');
-        Route::post('/semester-grades/{semesterGrade}/finalize', [\App\Http\Controllers\Teacher\JournalController::class, 'finalize'])->name('finalize');
 
         // Журнали категориявӣ (5 категория: Савод, Сарулибос, Ҷиҳоз, Иштирок, Интизом)
         Route::get('/category-scores/{subjectAssignment}', [\App\Http\Controllers\Teacher\CategoryScoreController::class, 'index'])->name('category-scores');

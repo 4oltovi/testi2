@@ -149,7 +149,7 @@ class TeacherController extends Controller
         $teacher->load([
             'user.roles',
             'department.faculty',
-            'subjectAssignments.curriculum.subject',
+            'subjectAssignments.subject',
             'subjectAssignments.group',
             'subjectAssignments.semester',
             'activityLog',
@@ -159,7 +159,7 @@ class TeacherController extends Controller
         $currentAssignments = $teacher->subjectAssignments()
             ->when($currentSemester, fn($q) => $q->where('semester_id', $currentSemester->id))
             ->where('is_active', true)
-            ->with(['curriculum.subject', 'group'])
+            ->with(['subject', 'group'])
             ->get();
 
         return view('admin.teachers.show', compact('teacher', 'currentAssignments', 'currentSemester'));

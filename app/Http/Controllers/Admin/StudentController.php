@@ -180,7 +180,7 @@ class StudentController extends Controller
             'statusHistory.createdByUser',
             'promotions.fromGroup',
             'promotions.toGroup',
-            'semesterGrades.curriculum.subject',
+            'semesterGrades.subject',
             'semesterGrades.semester',
             'activeDebts.subject',
             'semesterGpas.semester',

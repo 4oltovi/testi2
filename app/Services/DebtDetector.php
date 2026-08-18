@@ -23,23 +23,28 @@ use Illuminate\Support\Facades\DB;
 class DebtDetector
 {
     /**
-     * Санҷиши баҳои ниҳоӣ ва эҷоди қарздорӣ (агар лозим бошад)
+     * Санҷиш ва эҷоди қарздорӣ барои баҳои ниҳоӣ
      */
     public function checkAndCreateDebt(SemesterGrade $semesterGrade): ?AcademicDebt
     {
-        // Агар баҳо ҳоло ҳисоб нашуда бошад
-        if (!$semesterGrade->letter_grade) {
+        // Агар баҳо тасдиқ нашуда бошад, қарздорӣ эҷод намешавад
+        if (!$semesterGrade->is_finalized) {
             return null;
         }
 
+        // Агар баҳо гузашта бошад, қарздорӣ нест
+        if ($semesterGrade->isPassed()) {
+            return null;
+        }
+
+        // Гирифтани GradeScale enum
         $grade = GradeScale::tryFrom($semesterGrade->letter_grade);
-        if (!$grade || $grade->isPassing()) {
-            // Агар қарзи пеш дошт ва ҳоло гузашт — пӯшонем
-            $this->resolveExistingDebt($semesterGrade);
+
+        if (!$grade) {
             return null;
         }
 
-        // Қарздорӣ пайдо шуд
+        // Эҷоди қарздорӣ
         return $this->createDebt($semesterGrade, $grade);
     }
 
@@ -51,7 +56,7 @@ class DebtDetector
         return DB::transaction(function () use ($semesterGrade, $grade) {
             // Оё аллакай қарздорӣ барои ин фан/семестр мавҷуд аст?
             $existingDebt = AcademicDebt::where('student_id', $semesterGrade->student_id)
-                ->where('curriculum_id', $semesterGrade->curriculum_id)
+                ->where('subject_assignment_id', $semesterGrade->subject_assignment_id)
                 ->where('semester_id', $semesterGrade->semester_id)
                 ->whereIn('status', ['active', 'retake_scheduled', 'escalated'])
                 ->first();
@@ -65,8 +70,8 @@ class DebtDetector
             $debt = AcademicDebt::create([
                 'student_id' => $semesterGrade->student_id,
                 'semester_grade_id' => $semesterGrade->id,
-                'curriculum_id' => $semesterGrade->curriculum_id,
-                'subject_id' => $semesterGrade->curriculum?->subject_id,
+                'subject_assignment_id' => $semesterGrade->subject_assignment_id,
+                'subject_id' => $semesterGrade->subjectAssignment?->subject_id,
                 'semester_id' => $semesterGrade->semester_id,
                 'reason' => $reason,
                 'debt_date' => now(),
@@ -103,111 +108,41 @@ class DebtDetector
      */
     private function determineReason(SemesterGrade $semesterGrade): string
     {
-        if (is_null($semesterGrade->exam_score) && is_null($semesterGrade->retake_score)) {
-            return 'exam_absent'; // Ба имтиҳон наомад
+        $grade = GradeScale::tryFrom($semesterGrade->letter_grade);
+
+        if ($grade && !$grade->isPassing()) {
+            return 'exam_failed';
         }
 
-        $examScore = $semesterGrade->retake2_score
-            ?? $semesterGrade->retake_score
-            ?? $semesterGrade->exam_score;
-
-        if ($examScore !== null && $examScore < 50) {
-            return 'exam_failed'; // Имтиҳонро нагузашт
-        }
-
-        if (($semesterGrade->rating1_score ?? 0) < 50 || ($semesterGrade->rating2_score ?? 0) < 50) {
-            return 'rating_failed'; // Рейтинг кам
+        if ($this->isAttendanceLow($semesterGrade)) {
+            return 'low_attendance';
         }
 
         return 'exam_failed';
     }
 
     /**
-     * Ҳал кардани қарздории мавҷуда (баъди гузаштани такрорсупорӣ)
+     * Санҷиши давомоти донишҷӯ барои фан
      */
-    public function resolveExistingDebt(SemesterGrade $semesterGrade): void
+    private function isAttendanceLow(SemesterGrade $semesterGrade): bool
     {
-        $debt = AcademicDebt::where('student_id', $semesterGrade->student_id)
-            ->where('curriculum_id', $semesterGrade->curriculum_id)
-            ->where('semester_id', $semesterGrade->semester_id)
-            ->whereIn('status', [
-                DebtStatus::ACTIVE,
-                DebtStatus::RETAKE_SCHEDULED,
-                DebtStatus::ESCALATED,
-            ])
+        $minPercentage = config('donishor.grading.min_attendance_percentage', 75);
+
+        $attendance = $semesterGrade->subjectAssignment?->attendances()
+            ->where('student_id', $semesterGrade->student_id)
+            ->selectRaw('
+                COUNT(*) as total,
+                SUM(CASE WHEN status IN ("present", "late", "excused", "sick") THEN 1 ELSE 0 END) as present
+            ')
             ->first();
 
-        if (!$debt) return;
-
-        $debt->resolve(
-            $semesterGrade->total_score,
-            $semesterGrade->letter_grade,
-            Auth::id() ?? 1,
-            'Такрорсупорӣ бомуваффақият гузашт'
-        );
-
-        // Сабти таърих
-        AcademicDebtHistory::create([
-            'academic_debt_id' => $debt->id,
-            'action' => 'resolved',
-            'from_status' => $debt->getOriginal('status')?->value ?? 'active',
-            'to_status' => DebtStatus::RESOLVED->value,
-            'comment' => "Қарздорӣ ҳал шуд. Баҳои нав: {$semesterGrade->letter_grade} ({$semesterGrade->total_score}%)",
-            'performed_by' => Auth::id() ?? 1,
-        ]);
-    }
-
-    /**
-     * Таъини такрорсупорӣ
-     */
-    public function scheduleRetake(AcademicDebt $debt, ?\DateTimeInterface $retakeDate = null): bool
-    {
-        if (!$debt->canRetake()) {
+        if (!$attendance || $attendance->total == 0) {
             return false;
         }
 
-        $debt->update(['status' => DebtStatus::RETAKE_SCHEDULED]);
+        $percentage = ($attendance->present / $attendance->total) * 100;
 
-        AcademicDebtHistory::create([
-            'academic_debt_id' => $debt->id,
-            'action' => 'retake_scheduled',
-            'from_status' => DebtStatus::ACTIVE->value,
-            'to_status' => DebtStatus::RETAKE_SCHEDULED->value,
-            'comment' => 'Такрорсупорӣ таъин шуд',
-            'metadata' => json_encode(['retake_date' => $retakeDate?->format('Y-m-d')]),
-            'performed_by' => Auth::id() ?? 1,
-        ]);
-
-        return true;
-    }
-
-    /**
-     * Эскалатсия ба комиссия (баъди 2 бори нокомӣ)
-     */
-    public function escalateToCommission(AcademicDebt $debt): void
-    {
-        $debt->update(['status' => DebtStatus::ESCALATED]);
-
-        AcademicDebtHistory::create([
-            'academic_debt_id' => $debt->id,
-            'action' => 'escalated',
-            'from_status' => $debt->getOriginal('status')?->value ?? 'active',
-            'to_status' => DebtStatus::ESCALATED->value,
-            'comment' => 'Ба комиссияи такрорсупорӣ фиристода шуд',
-            'performed_by' => Auth::id() ?? 1,
-        ]);
-    }
-
-    /**
-     * Гирифтани ҳамаи қарздорони як семестр
-     */
-    public function getDebtorsBySemester(int $semesterId): \Illuminate\Support\Collection
-    {
-        return AcademicDebt::where('semester_id', $semesterId)
-            ->open()
-            ->with(['student.user', 'subject', 'curriculum'])
-            ->get()
-            ->groupBy('student_id');
+        return $percentage < $minPercentage;
     }
 
     /**
@@ -225,34 +160,14 @@ class DebtDetector
     }
 
     /**
-     * Санҷиши давомот барои иҷозат ба имтиҳон
+     * Рӯйхати қарздорони як донишҷӯ
      */
-    public function checkAttendanceForExamAdmission(int $studentId, int $subjectAssignmentId): array
+    public function getDebtsByStudent(int $studentId): \Illuminate\Support\Collection
     {
-        $total = \App\Models\Attendance::where('student_id', $studentId)
-            ->where('subject_assignment_id', $subjectAssignmentId)
-            ->count();
-
-        if ($total === 0) {
-            return ['admitted' => true, 'percentage' => 100, 'message' => 'Маълумот мавҷуд нест'];
-        }
-
-        $present = \App\Models\Attendance::where('student_id', $studentId)
-            ->where('subject_assignment_id', $subjectAssignmentId)
-            ->whereIn('status', ['present', 'late', 'excused', 'sick'])
-            ->count();
-
-        $percentage = round(($present / $total) * 100, 1);
-        $admitted = $percentage >= 75; // 75% — ҳадди ақали давомот
-
-        return [
-            'admitted' => $admitted,
-            'percentage' => $percentage,
-            'total_lessons' => $total,
-            'attended' => $present,
-            'message' => $admitted
-                ? "Давомот: {$percentage}% — Ба имтиҳон иҷозат дорад"
-                : "Давомот: {$percentage}% — Ба имтиҳон иҷозат ДОДА НАМЕШАВАД (ҳадди ақал 75%)",
-        ];
+        return AcademicDebt::where('student_id', $studentId)
+            ->open()
+            ->with(['subject', 'semester'])
+            ->orderByDesc('debt_date')
+            ->get();
     }
 }

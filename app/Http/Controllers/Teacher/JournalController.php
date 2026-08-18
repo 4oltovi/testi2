@@ -3,8 +3,6 @@
 namespace App\Http\Controllers\Teacher;
 
 use App\Http\Controllers\Controller;
-use App\Enums\AttendanceStatus;
-use App\Enums\GradeScale;
 use App\Models\Attendance;
 use App\Models\CurrentGrade;
 use App\Models\GradeChangeLog;
@@ -30,31 +28,41 @@ class JournalController extends Controller
     }
 
     /**
-     * Фанҳои омӯзгор дар ин семестр
+     * НАВ: Рӯйхати таъинотҳои омӯзгор
      */
     public function index(Request $request): View
     {
-        $teacher = $request->user();
+        $user = $request->user();
         $currentSemester = Semester::current();
+        $semesterId = $request->get('semester_id', $currentSemester?->id);
 
-        $assignments = SubjectAssignment::where('teacher_id', $teacher->id)
-            ->where('semester_id', $currentSemester?->id)
-            ->where('is_active', true)
-            ->with(['curriculum.subject', 'group', 'semester'])
-            ->orderBy('group_id')
-            ->get();
+        $query = SubjectAssignment::with(['subject', 'group', 'semester'])
+            ->where('teacher_id', $user->id)
+            ->where('is_active', true);
 
-        return view('teacher.journal.index', compact('assignments', 'currentSemester'));
+        if ($semesterId) {
+            $query->where('semester_id', $semesterId);
+        }
+
+        $assignments = $query->orderBy('group_id')->paginate(20)->withQueryString();
+        $semesters = Semester::with('academicYear')->orderByDesc('start_date')->get();
+
+        return view('teacher.journal.index', compact(
+            'assignments',
+            'semesters',
+            'currentSemester',
+            'semesterId'
+        ));
     }
 
     /**
-     * Давомот
+     * НАВ: Давомот — намоиш
      */
     public function attendance(SubjectAssignment $subjectAssignment, Request $request): View
     {
         $this->authorizeTeacher($subjectAssignment, $request);
 
-        $subjectAssignment->load(['curriculum.subject', 'group.activeStudents.user']);
+        $subjectAssignment->load(['subject', 'group.activeStudents.user', 'semester']);
         $students = $subjectAssignment->group->activeStudents->sortBy('user.last_name');
 
         $date = $request->get('date', now()->format('Y-m-d'));
@@ -65,13 +73,27 @@ class JournalController extends Controller
             ->where('lesson_number', $lessonNumber)
             ->pluck('status', 'student_id');
 
+        $attendanceStats = Attendance::where('subject_assignment_id', $subjectAssignment->id)
+            ->selectRaw('student_id,
+                COUNT(*) as total,
+                SUM(CASE WHEN status = "present" OR status = "late" THEN 1 ELSE 0 END) as present_count,
+                SUM(CASE WHEN status = "absent" THEN 1 ELSE 0 END) as absent_count')
+            ->groupBy('student_id')
+            ->get()
+            ->keyBy('student_id');
+
         return view('teacher.journal.attendance', compact(
-            'subjectAssignment', 'students', 'date', 'lessonNumber', 'existingAttendance'
+            'subjectAssignment',
+            'students',
+            'date',
+            'lessonNumber',
+            'existingAttendance',
+            'attendanceStats'
         ));
     }
 
     /**
-     * Сабти давомот
+     * НАВ: Сабти давомот
      */
     public function storeAttendance(SubjectAssignment $subjectAssignment, Request $request): RedirectResponse
     {
@@ -84,49 +106,56 @@ class JournalController extends Controller
             'attendance.*' => 'required|in:present,absent,excused,late,sick',
         ]);
 
-        DB::transaction(function () use ($subjectAssignment, $request) {
+        $date = $request->input('date');
+        $lessonNumber = $request->input('lesson_number');
+
+        DB::transaction(function () use ($subjectAssignment, $request, $date, $lessonNumber) {
             foreach ($request->input('attendance') as $studentId => $status) {
                 Attendance::updateOrCreate(
                     [
                         'student_id' => $studentId,
                         'subject_assignment_id' => $subjectAssignment->id,
-                        'lesson_date' => $request->input('date'),
-                        'lesson_number' => $request->input('lesson_number'),
+                        'lesson_date' => $date,
+                        'lesson_number' => $lessonNumber,
                     ],
-                    [
-                        'status' => $status,
-                        'marked_by' => auth()->id(),
-                    ]
+                    ['status' => $status, 'marked_by' => auth()->id()]
                 );
             }
         });
 
-        return back()->with('success', 'Давомот сабт шуд.');
+        return back()->with('success', "Давомот барои санаи {$date} сабт шуд.");
     }
 
     /**
-     * Баҳоҳои ҷорӣ
+     * НАВ: Баҳоҳои ҷорӣ — намоиш
      */
     public function grades(SubjectAssignment $subjectAssignment, Request $request): View
     {
         $this->authorizeTeacher($subjectAssignment, $request);
 
-        $subjectAssignment->load(['curriculum.subject', 'group.activeStudents.user', 'semester']);
+        $subjectAssignment->load(['subject', 'group.activeStudents.user', 'semester']);
         $students = $subjectAssignment->group->activeStudents->sortBy('user.last_name');
         $semester = $subjectAssignment->semester;
 
         $grades = CurrentGrade::where('subject_assignment_id', $subjectAssignment->id)
             ->where('semester_id', $semester->id)
-            ->orderBy('week_number')
             ->orderBy('grade_date')
             ->get()
             ->groupBy('student_id');
 
-        return view('teacher.journal.grades', compact('subjectAssignment', 'students', 'semester', 'grades'));
+        $weekNumber = $request->get('week', null);
+
+        return view('teacher.journal.grades', compact(
+            'subjectAssignment',
+            'students',
+            'semester',
+            'grades',
+            'weekNumber'
+        ));
     }
 
     /**
-     * Сабти баҳо
+     * НАВ: Сабти баҳои ҷорӣ
      */
     public function storeGrades(SubjectAssignment $subjectAssignment, Request $request): RedirectResponse
     {
@@ -171,28 +200,68 @@ class JournalController extends Controller
     {
         $this->authorizeTeacher($subjectAssignment, $request);
 
-        $subjectAssignment->load(['curriculum.subject', 'group.activeStudents.user', 'semester']);
-        $students = $subjectAssignment->group->activeStudents->sortBy('user.last_name');
+        $subjectAssignment->load(['subject', 'group.activeStudents.user', 'semester']);
+        $students = $subjectAssignment->group->activeStudents
+            ->sortBy(function ($student) {
+                return $student->user?->last_name ?? '' . $student->user?->first_name ?? '';
+            })
+            ->values();
+
         $semester = $subjectAssignment->semester;
-        $curriculum = $subjectAssignment->curriculum;
+        $subject = $subjectAssignment->subject;
 
         $semesterGrades = SemesterGrade::where('subject_assignment_id', $subjectAssignment->id)
             ->where('semester_id', $semester->id)
             ->get()
             ->keyBy('student_id');
 
-        // Автоматикӣ ҳисоби рейтингҳо
-        $calculatedRatings = [];
+        $calculatedGrades = [];
         foreach ($students as $student) {
-            $calculatedRatings[$student->id] = [
-                'rating1' => $this->gradeCalculator->calculateRating1($student->id, $subjectAssignment->id, $semester->id),
-                'rating2' => $this->gradeCalculator->calculateRating2($student->id, $subjectAssignment->id, $semester->id),
+            $rating1 = $this->gradeCalculator->calculateRating1($student->id, $subjectAssignment->id, $semester->id);
+            $rating2 = $this->gradeCalculator->calculateRating2($student->id, $subjectAssignment->id, $semester->id);
+            $exam = $this->gradeCalculator->calculateExamPercentage($student->id, $subjectAssignment->id, $semester->id);
+
+            $totalScore = null;
+            $letterGrade = null;
+            $gradePoint = null;
+            $status = null;
+
+            $hasRating = $rating1 > 0 || $rating2 > 0;
+            $hasExam = $exam > 0;
+
+            if ($hasRating || $hasExam) {
+                $divisor = (float) \App\Models\Setting::get('rating_part_divisor', 4);
+                $examWeight = (float) \App\Models\Setting::get('exam_weight', 0.5);
+
+                $r1 = (float) $rating1;
+                $r2 = (float) $rating2;
+
+                $totalScore = round(($r1 + $r2) / $divisor + ($exam * $examWeight), 2);
+
+                $gradeEnum = \App\Enums\GradeScale::fromPercentage($totalScore);
+                $letterGrade = $gradeEnum->value;
+                $gradePoint = $gradeEnum->gradePoint();
+                $status = $gradeEnum->isPassing() ? 'passed' : ($gradeEnum->canRetake() ? 'retake' : 'failed');
+            }
+
+            $calculatedGrades[$student->id] = [
+                'rating1' => $rating1,
+                'rating2' => $rating2,
+                'exam' => $exam,
+                'total_score' => $totalScore,
+                'letter_grade' => $letterGrade,
+                'grade_point' => $gradePoint,
+                'status' => $status,
             ];
         }
 
         return view('teacher.journal.semester-grades', compact(
-            'subjectAssignment', 'students', 'semester', 'curriculum',
-            'semesterGrades', 'calculatedRatings'
+            'subjectAssignment',
+            'students',
+            'semester',
+            'subject',
+            'semesterGrades',
+            'calculatedGrades'
         ));
     }
 
@@ -212,9 +281,8 @@ class JournalController extends Controller
         ]);
 
         $semester = $subjectAssignment->semester;
-        $curriculum = $subjectAssignment->curriculum;
 
-        DB::transaction(function () use ($subjectAssignment, $request, $semester, $curriculum) {
+        DB::transaction(function () use ($subjectAssignment, $request, $semester) {
             foreach ($request->input('ratings') as $rating) {
                 $studentId = $rating['student_id'];
 
@@ -224,28 +292,18 @@ class JournalController extends Controller
                         'subject_assignment_id' => $subjectAssignment->id,
                         'semester_id' => $semester->id,
                     ],
-                    [
-                        'curriculum_id' => $curriculum->id,
-                        'status' => 'in_progress',
-                    ]
+                    ['status' => 'in_progress']
                 );
 
-                // Навсозии баҳоҳо (танҳо агар тасдиқ нашуда бошад)
                 if (!$semesterGrade->is_finalized) {
                     $updates = [];
 
                     if (isset($rating['rating1_score']) && $rating['rating1_score'] !== '') {
-                        if ($semesterGrade->rating1_score != $rating['rating1_score']) {
-                            $this->logChange($semesterGrade, 'rating1_score', $semesterGrade->rating1_score, $rating['rating1_score']);
-                        }
                         $updates['rating1_score'] = $rating['rating1_score'];
                         $updates['rating1_date'] = now();
                     }
 
                     if (isset($rating['rating2_score']) && $rating['rating2_score'] !== '') {
-                        if ($semesterGrade->rating2_score != $rating['rating2_score']) {
-                            $this->logChange($semesterGrade, 'rating2_score', $semesterGrade->rating2_score, $rating['rating2_score']);
-                        }
                         $updates['rating2_score'] = $rating['rating2_score'];
                         $updates['rating2_date'] = now();
                     }
@@ -256,6 +314,7 @@ class JournalController extends Controller
 
                     if (!empty($updates)) {
                         $semesterGrade->update($updates);
+                        $this->gradeCalculator->processAndSaveFinalGrade($semesterGrade);
                     }
                 }
             }
@@ -279,10 +338,9 @@ class JournalController extends Controller
         ]);
 
         $semester = $subjectAssignment->semester;
-        $curriculum = $subjectAssignment->curriculum;
         $examType = $request->input('exam_type');
 
-        DB::transaction(function () use ($subjectAssignment, $request, $semester, $curriculum, $examType) {
+        DB::transaction(function () use ($subjectAssignment, $request, $semester, $examType) {
             foreach ($request->input('exam_scores') as $data) {
                 $studentId = $data['student_id'];
                 $score = $data['exam_score'];
@@ -295,10 +353,7 @@ class JournalController extends Controller
                         'subject_assignment_id' => $subjectAssignment->id,
                         'semester_id' => $semester->id,
                     ],
-                    [
-                        'curriculum_id' => $curriculum->id,
-                        'status' => 'in_progress',
-                    ]
+                    ['status' => 'in_progress']
                 );
 
                 if ($semesterGrade->is_finalized) continue;
@@ -321,83 +376,38 @@ class JournalController extends Controller
                     $dateField => now(),
                     'exam_teacher_id' => auth()->id(),
                 ]);
+
+                $this->gradeCalculator->processAndSaveFinalGrade($semesterGrade);
             }
         });
 
-        $label = match ($examType) {
-            'main' => 'Имтиҳони асосӣ',
-            'retake' => 'Такрорсупорӣ',
-            'retake2' => 'Комиссионӣ',
-        };
-
-        return back()->with('success', "Баҳоҳои «{$label}» сабт шуданд.");
+        return back()->with('success', 'Баҳоҳои имтиҳон сабт шуданд.');
     }
 
     /**
-     * Тасдиқи баҳои ниҳоӣ
+     * Санҷиши дастрасии омӯзгор
      */
-    public function finalize(SemesterGrade $semesterGrade, Request $request): RedirectResponse
+    private function authorizeTeacher(SubjectAssignment $subjectAssignment, Request $request): void
     {
-        // Санҷиши иҷозат
-        $assignment = $semesterGrade->subjectAssignment;
-        if ($assignment && $assignment->teacher_id !== $request->user()->id) {
-            abort(403, 'Шумо танҳо баҳоҳои фанҳои худро тасдиқ карда метавонед.');
-        }
-
-        if ($semesterGrade->is_finalized) {
-            return back()->with('error', 'Ин баҳо аллакай тасдиқ шудааст.');
-        }
-
-        DB::transaction(function () use ($semesterGrade) {
-            $this->gradeCalculator->processAndSaveFinalGrade($semesterGrade);
-
-            $semesterGrade->update([
-                'is_finalized' => true,
-                'finalized_at' => now(),
-                'finalized_by' => auth()->id(),
-            ]);
-
-            // Қарздорӣ
-            $this->debtDetector->checkAndCreateDebt($semesterGrade);
-
-            GradeChangeLog::create([
-                'semester_grade_id' => $semesterGrade->id,
-                'student_id' => $semesterGrade->student_id,
-                'field_changed' => 'finalized',
-                'old_value' => 'false',
-                'new_value' => 'true',
-                'reason' => 'Тасдиқ аз тарафи омӯзгор',
-                'changed_by' => auth()->id(),
-                'ip_address' => request()->ip(),
-            ]);
-        });
-
-        return back()->with('success', "Баҳо тасдиқ шуд: {$semesterGrade->letter_grade} ({$semesterGrade->total_score}%)");
+        abort_unless(
+            $subjectAssignment->teacher_id === $request->user()->id
+                || $request->user()->hasRole(['admin', 'super_admin']),
+            403
+        );
     }
 
     /**
-     * Санҷиши ки ин таъинот аз они ин омӯзгор аст
+     * Сабти тағйирот
      */
-    private function authorizeTeacher(SubjectAssignment $assignment, Request $request): void
+    private function logChange($semesterGrade, string $field, $oldValue, $newValue): void
     {
-        if ($assignment->teacher_id !== $request->user()->id) {
-            abort(403, 'Шумо ба ин фан/гурӯҳ дастрасӣ надоред.');
-        }
-    }
-
-    /**
-     * Сабти тағйирот дар лог
-     */
-    private function logChange(SemesterGrade $grade, string $field, $oldValue, $newValue): void
-    {
-        if ($oldValue == $newValue) return;
-
         GradeChangeLog::create([
-            'semester_grade_id' => $grade->id,
-            'student_id' => $grade->student_id,
+            'semester_grade_id' => $semesterGrade->id,
+            'student_id' => $semesterGrade->student_id,
             'field_changed' => $field,
             'old_value' => $oldValue,
             'new_value' => $newValue,
+            'reason' => 'Сабти баҳо аз ҷониби омӯзгор',
             'changed_by' => auth()->id(),
             'ip_address' => request()->ip(),
         ]);

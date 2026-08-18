@@ -9,8 +9,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class SubjectAssignment extends Model
 {
     protected $fillable = [
-        'curriculum_id', 'teacher_id', 'group_id', 'semester_id',
-        'lesson_type', 'hours_per_week', 'is_active',
+        'subject_id',
+        'teacher_id',
+        'group_id',
+        'semester_id',
+        'lesson_type',
+        'hours_per_week',
+        'is_active',
+        'credits',
     ];
 
     protected function casts(): array
@@ -18,9 +24,11 @@ class SubjectAssignment extends Model
         return ['is_active' => 'boolean'];
     }
 
-    public function curriculum(): BelongsTo
+    // ==================== РОБИТАҲО ====================
+
+    public function subject(): BelongsTo
     {
-        return $this->belongsTo(Curriculum::class);
+        return $this->belongsTo(Subject::class);
     }
 
     public function teacher(): BelongsTo
@@ -58,13 +66,42 @@ class SubjectAssignment extends Model
         return $this->hasMany(Schedule::class);
     }
 
+    public function exams(): HasMany
+    {
+        return $this->hasMany(Exam::class);
+    }
+
     /**
      * Номи фан (shortcut)
      */
     public function getSubjectNameAttribute(): string
     {
-        return $this->curriculum?->subject?->name ?? '';
+        return $this->subject?->name ?? '';
     }
+
+    /**
+     * Кредитҳо (shortcut)
+     */
+    /**
+     * Кредит: агар дар журнал дода шуда бошад — ҳамон,
+     * вагарна аз фан
+     */
+    public function getCreditsAttribute(): int
+    {
+        $own = $this->attributes['credits'] ?? null;
+
+        return $own !== null ? (int) $own : (int) ($this->subject?->credits ?? 0);
+    }
+
+    /**
+     * Навъи имтиҳон (shortcut)
+     */
+    public function getExamTypeAttribute(): ?string
+    {
+        return $this->subject?->exam_type;
+    }
+
+    // ==================== SCOPES ====================
 
     public function scopeActive($query)
     {
@@ -84,5 +121,10 @@ class SubjectAssignment extends Model
     public function scopeInSemester($query, int $semesterId)
     {
         return $query->where('semester_id', $semesterId);
+    }
+
+    public function scopeForSubject($query, int $subjectId)
+    {
+        return $query->where('subject_id', $subjectId);
     }
 }

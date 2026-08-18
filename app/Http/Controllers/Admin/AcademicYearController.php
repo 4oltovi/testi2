@@ -4,15 +4,17 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
+use App\Models\Semester;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class AcademicYearController extends Controller
 {
     public function index(): View
     {
-        $academicYears = AcademicYear::with('semesters')
+        $academicYears = AcademicYear::with(['semesters' => fn($q) => $q->orderBy('number')])
             ->orderByDesc('start_date')
             ->paginate(10);
 
@@ -49,16 +51,11 @@ class AcademicYearController extends Controller
             'end_date.required' => 'Санаи анҷом ҳатмӣ аст.',
         ]);
 
-        // Агар is_current бошад — дигаронро false кун
-        if ($request->boolean('is_current')) {
-            AcademicYear::where('is_current', true)->update(['is_current' => false]);
-        }
-
         $year = AcademicYear::create([
             'name' => $validated['name'],
             'start_date' => $validated['start_date'],
             'end_date' => $validated['end_date'],
-            'is_current' => $request->boolean('is_current'),
+            'is_current' => false,
             'status' => $validated['status'],
         ]);
 
@@ -84,6 +81,11 @@ class AcademicYearController extends Controller
             'is_current' => false,
             'status' => 'planning',
         ]);
+
+        // АГАР "Ҷорӣ" интихоб шуда бошад — ҳам сол ва ҳам семестр ҳамоҳанг мешаванд
+        if ($request->boolean('is_current')) {
+            $this->makeYearCurrent($year);
+        }
 
         return redirect()->route('admin.structure.academic-years.index')
             ->with('success', "Соли таҳсилии «{$year->name}» бо 2 семестр сохта шуд.");
@@ -111,17 +113,19 @@ class AcademicYearController extends Controller
             'status' => 'required|in:planning,active,completed',
         ]);
 
-        if ($request->boolean('is_current')) {
-            AcademicYear::where('id', '!=', $academicYear->id)->where('is_current', true)->update(['is_current' => false]);
-        }
-
         $academicYear->update([
             'name' => $validated['name'],
             'start_date' => $validated['start_date'],
             'end_date' => $validated['end_date'],
-            'is_current' => $request->boolean('is_current'),
             'status' => $validated['status'],
         ]);
+
+        if ($request->boolean('is_current')) {
+            // Ҷорӣ шуд — семестрҳо ҳам ҳамоҳанг мешаванд
+            $this->makeYearCurrent($academicYear);
+        } else {
+            $academicYear->update(['is_current' => false]);
+        }
 
         return redirect()->route('admin.structure.academic-years.index')
             ->with('success', "Соли таҳсилии «{$academicYear->name}» навсозӣ шуд.");
@@ -142,5 +146,80 @@ class AcademicYearController extends Controller
 
         return redirect()->route('admin.structure.academic-years.index')
             ->with('success', 'Соли таҳсилӣ нест карда шуд.');
+    }
+
+    // ================================================================
+    // НАВ: Фаъол кардани СОЛ (бо ҳамоҳангсозии семестрҳо)
+    // ================================================================
+    public function activate(AcademicYear $academicYear): RedirectResponse
+    {
+        DB::transaction(function () use ($academicYear) {
+            $this->makeYearCurrent($academicYear);
+        });
+
+        return back()->with('success', "Соли «{$academicYear->name}» фаъол шуд.");
+    }
+
+    // ================================================================
+    // НАВ: Фаъол кардани СЕМЕСТРИ мушаххас
+    // ================================================================
+    public function activateSemester(Semester $semester): RedirectResponse
+    {
+        DB::transaction(function () use ($semester) {
+            // 1) Ҳамаи семестрҳо: ғайриҷорӣ
+            Semester::query()->update(['is_current' => false]);
+
+            // 2) Семестри интихобшуда: ҷорӣ ва фаъол
+            $semester->update(['is_current' => true, 'status' => 'active']);
+
+            // 3) Семестрҳои дигари ҳамон сол, ки фаъол буданд: анҷомёфта
+            Semester::whereKeyNot($semester->id)
+                ->where('academic_year_id', $semester->academic_year_id)
+                ->where('status', 'active')
+                ->update(['status' => 'completed']);
+
+            // 4) Соли ин семестр: ҷорӣ; солҳои дигари фаъол: анҷомёфта
+            $year = $semester->academicYear;
+
+            if ($year) {
+                AcademicYear::whereKeyNot($year->id)->update(['is_current' => false]);
+                AcademicYear::whereKeyNot($year->id)
+                    ->where('status', 'active')
+                    ->update(['status' => 'completed']);
+
+                $year->update(['is_current' => true, 'status' => 'active']);
+            }
+        });
+
+        return back()->with('success', "«{$semester->name}» фаъол шуд.");
+    }
+
+    // ================================================================
+    // Ёрдамчӣ: солро ҷорӣ кунад ва семестри дурустро интихоб кунад
+    // ================================================================
+    private function makeYearCurrent(AcademicYear $academicYear): void
+    {
+        // Солҳои дигар: ғайриҷорӣ (солҳои planning ҳамон planning мемонанд)
+        AcademicYear::whereKeyNot($academicYear->id)->update(['is_current' => false]);
+        AcademicYear::whereKeyNot($academicYear->id)
+            ->where('status', 'active')
+            ->update(['status' => 'completed']);
+
+        // Соли интихобшуда: ҷорӣ ва фаъол
+        $academicYear->update(['is_current' => true, 'status' => 'active']);
+
+        // Ҳамаи семестрҳо: ғайриҷорӣ
+        Semester::query()->update(['is_current' => false]);
+
+        // Семестри ҷорӣ: агар имрӯз дар байни санаҳо бошад — ҳамон,
+        // вагарна семестри аввал
+        $semesters = $academicYear->semesters()->orderBy('number')->get();
+
+        $current = $semesters->first(
+            fn($s) => $s->start_date && $s->end_date
+                && now()->between($s->start_date, $s->end_date)
+        ) ?? $semesters->first();
+
+        $current?->update(['is_current' => true, 'status' => 'active']);
     }
 }

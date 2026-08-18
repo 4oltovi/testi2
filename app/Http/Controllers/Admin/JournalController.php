@@ -8,7 +8,6 @@ use App\Enums\GradeScale;
 use App\Models\Attendance;
 use App\Models\CurrentGrade;
 use App\Models\GradeChangeLog;
-use App\Models\Curriculum;
 use App\Models\Group;
 use App\Models\Semester;
 use App\Models\SemesterGrade;
@@ -42,7 +41,7 @@ class JournalController extends Controller
         $currentSemester = Semester::current();
         $semesterId = $request->get('semester_id', $currentSemester?->id);
 
-        $query = SubjectAssignment::with(['curriculum.subject', 'teacher', 'group', 'semester'])
+        $query = SubjectAssignment::with(['subject', 'teacher', 'group', 'semester'])
             ->where('is_active', true);
 
         if ($semesterId) {
@@ -58,7 +57,12 @@ class JournalController extends Controller
         }
 
         $assignments = $query->orderBy('group_id')->paginate(30)->withQueryString();
-        $semesters = Semester::with('academicYear')->orderByDesc('start_date')->get();
+        $currentYear = \App\Models\AcademicYear::where('is_current', true)->first();
+
+        $semesters = Semester::with('academicYear')
+            ->when($currentYear, fn($q) => $q->where('academic_year_id', $currentYear->id))
+            ->orderBy('number')
+            ->get();
         $groups = Group::active()->orderBy('name')->get();
 
         return view('admin.journal.index', compact('assignments', 'semesters', 'groups', 'currentSemester', 'semesterId'));
@@ -69,7 +73,12 @@ class JournalController extends Controller
         $subjects = Subject::orderBy('name')->get();
         $teachers = Teacher::with('user')->where('status', 'active')->orderBy('user_id')->get();
         $groups = Group::where('is_active', true)->orderBy('name')->get();
-        $semesters = Semester::with('academicYear')->orderByDesc('start_date')->get();
+        $currentYear = \App\Models\AcademicYear::where('is_current', true)->first();
+
+        $semesters = Semester::with('academicYear')
+            ->when($currentYear, fn($q) => $q->where('academic_year_id', $currentYear->id))
+            ->orderBy('number')
+            ->get();
 
         return view('admin.journal.assignment-create', compact('subjects', 'teachers', 'groups', 'semesters'));
     }
@@ -84,24 +93,16 @@ class JournalController extends Controller
             'semester_id' => 'required|exists:semesters,id',
             'lesson_type' => 'nullable|in:lecture,practice,lab',
             'hours_per_week' => 'nullable|integer|min:1|max:20',
+            'credits' => 'nullable|integer|min:1|max:30',   
         ]);
 
         $subjectId = $request->subject_id;
         $semesterId = $request->semester_id;
 
-        $curriculum = Curriculum::where('subject_id', $subjectId)
-            ->where('semester_id', $semesterId)
-            ->where('is_active', true)
-            ->first();
-
-        if (!$curriculum) {
-            $curriculum = Curriculum::where('subject_id', $subjectId)
-                ->where('is_active', true)
-                ->first();
-        }
-
-        if (!$curriculum) {
-            return back()->withErrors(['subject_id' => 'Барои ин фан curriculum барои семестр интихобшуда вуҷуд надорад.'])->withInput();
+        // Санҷиш: оё фан мавҷуд аст?
+        $subject = Subject::find($subjectId);
+        if (!$subject) {
+            return back()->withErrors(['subject_id' => 'Фан ёфт нашуд.'])->withInput();
         }
 
         $created = 0;
@@ -109,7 +110,7 @@ class JournalController extends Controller
         foreach ($request->group_ids as $groupId) {
             $assignment = SubjectAssignment::firstOrCreate(
                 [
-                    'curriculum_id' => $curriculum->id,
+                    'subject_id' => $subjectId,
                     'teacher_id' => $request->teacher_id,
                     'group_id' => $groupId,
                     'semester_id' => $semesterId,
@@ -118,6 +119,7 @@ class JournalController extends Controller
                 [
                     'hours_per_week' => $request->hours_per_week ?? 2,
                     'is_active' => true,
+                    'credits' => $request->credits,
                 ]
             );
 
@@ -131,11 +133,22 @@ class JournalController extends Controller
     }
 
     /**
+     * НАВ: Навсозии кредит аз журнал
+     */
+    public function updateCredits(SubjectAssignment $subjectAssignment, Request $request): RedirectResponse
+    {
+        $request->validate(['credits' => 'required|integer|min:1|max:30']);
+
+        $subjectAssignment->update(['credits' => $request->integer('credits')]);
+
+        return back()->with('success', "Миқдори кредит навсозӣ шуд: {$request->integer('credits')}");
+    }
+    /**
      * Давомот — намоиш ва сабт
      */
     public function attendance(SubjectAssignment $subjectAssignment, Request $request): View
     {
-        $subjectAssignment->load(['curriculum.subject', 'group.activeStudents.user', 'teacher', 'semester']);
+        $subjectAssignment->load(['subject', 'group.activeStudents.user', 'teacher', 'semester']);
         $students = $subjectAssignment->group->activeStudents->sortBy('user.last_name');
 
         // Санаи интихобшуда
@@ -159,8 +172,12 @@ class JournalController extends Controller
             ->keyBy('student_id');
 
         return view('admin.journal.attendance', compact(
-            'subjectAssignment', 'students', 'date', 'lessonNumber',
-            'existingAttendance', 'attendanceStats'
+            'subjectAssignment',
+            'students',
+            'date',
+            'lessonNumber',
+            'existingAttendance',
+            'attendanceStats'
         ));
     }
 
@@ -204,7 +221,7 @@ class JournalController extends Controller
      */
     public function grades(SubjectAssignment $subjectAssignment, Request $request): View
     {
-        $subjectAssignment->load(['curriculum.subject', 'group.activeStudents.user', 'teacher', 'semester']);
+        $subjectAssignment->load(['subject', 'group.activeStudents.user', 'teacher', 'semester']);
         $students = $subjectAssignment->group->activeStudents->sortBy('user.last_name');
         $semester = $subjectAssignment->semester;
 
@@ -219,7 +236,11 @@ class JournalController extends Controller
         $weekNumber = $request->get('week', null);
 
         return view('admin.journal.grades', compact(
-            'subjectAssignment', 'students', 'semester', 'grades', 'weekNumber'
+            'subjectAssignment',
+            'students',
+            'semester',
+            'grades',
+            'weekNumber'
         ));
     }
 
@@ -265,10 +286,10 @@ class JournalController extends Controller
      */
     public function semesterGrades(SubjectAssignment $subjectAssignment): View
     {
-        $subjectAssignment->load(['curriculum.subject', 'group.activeStudents.user', 'teacher', 'semester']);
+        $subjectAssignment->load(['subject', 'group.activeStudents.user', 'teacher', 'semester']);
         $students = $subjectAssignment->group->activeStudents->sortBy('user.last_name');
         $semester = $subjectAssignment->semester;
-        $curriculum = $subjectAssignment->curriculum;
+        $subject = $subjectAssignment->subject;
 
         // Баҳоҳои семестрии мавҷуда
         $semesterGrades = SemesterGrade::where('subject_assignment_id', $subjectAssignment->id)
@@ -286,8 +307,12 @@ class JournalController extends Controller
         }
 
         return view('admin.journal.semester-grades', compact(
-            'subjectAssignment', 'students', 'semester', 'curriculum',
-            'semesterGrades', 'calculatedRatings'
+            'subjectAssignment',
+            'students',
+            'semester',
+            'subject',
+            'semesterGrades',
+            'calculatedRatings'
         ));
     }
 

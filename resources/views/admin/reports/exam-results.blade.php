@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="tg">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 </head>
+
 <body class="bg-light">
     <nav class="navbar navbar-dark bg-primary mb-4">
         <div class="container-fluid">
@@ -26,16 +28,16 @@
                         <select name="group_id" class="form-select form-select-sm">
                             <option value="">Ҳама гурӯҳҳо</option>
                             @foreach($groups as $g)
-                                <option value="{{ $g->id }}" {{ $groupId == $g->id ? 'selected' : '' }}>{{ $g->name }}</option>
+                            <option value="{{ $g->id }}" {{ $groupId == $g->id ? 'selected' : '' }}>{{ $g->name }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="col-md-3">
                         <select name="semester_id" class="form-select form-select-sm">
                             @foreach($semesters as $sem)
-                                <option value="{{ $sem->id }}" {{ $semesterId == $sem->id ? 'selected' : '' }}>
-                                    {{ $sem->name }} — {{ $sem->academicYear?->name }}
-                                </option>
+                            <option value="{{ $sem->id }}" {{ $semesterId == $sem->id ? 'selected' : '' }}>
+                                {{ $sem->name }} — {{ $sem->academicYear?->name }}
+                            </option>
                             @endforeach
                         </select>
                     </div>
@@ -52,36 +54,45 @@
                 <table class="table table-sm table-hover mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>#</th><th>Донишҷӯ</th><th>Гурӯҳ</th><th>Фан</th>
-                            <th>R1</th><th>R2</th><th>КМ</th><th>Имт.</th><th>Ниҳоӣ</th><th>Баҳо</th>
+                            <th>#</th>
+                            <th>Донишҷӯ</th>
+                            <th>Гурӯҳ</th>
+                            <th>Фан</th>
+                            <th>R1</th>
+                            <th>R2</th>
+                            <th>КМ</th>
+                            <th>Имт.</th>
+                            <th>Ниҳоӣ</th>
+                            <th>Баҳо</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($results as $i => $r)
-                            <tr>
-                                <td>{{ $i + 1 }}</td>
-                                <td>{{ $r->student?->user?->short_name }}</td>
-                                <td>{{ $r->student?->group?->name }}</td>
-                                <td>{{ $r->curriculum?->subject?->name }}</td>
-                                <td>{{ $r->rating1_score ?? '—' }}</td>
-                                <td>{{ $r->rating2_score ?? '—' }}</td>
-                                <td>{{ $r->independent_work_score ?? '—' }}</td>
-                                <td>{{ $r->exam_score ?? '—' }}</td>
-                                <td><strong>{{ $r->total_score ? number_format($r->total_score, 1) : '—' }}</strong></td>
-                                <td>
-                                    @if($r->letter_grade)
-                                        <span class="badge {{ $r->isPassed() ? 'bg-success' : 'bg-danger' }}">{{ $r->letter_grade }}</span>
-                                    @endif
-                                </td>
-                            </tr>
+                        <tr>
+                            <td>{{ $i + 1 }}</td>
+                            <td>{{ $r->student?->user?->short_name }}</td>
+                            <td>{{ $r->student?->group?->name }}</td>
+                            <td>{{ $r->subjectAssignment?->subject?->name }}</td>
+                            <td>{{ $r->rating1_score ?? '—' }}</td>
+                            <td>{{ $r->rating2_score ?? '—' }}</td>
+                            <td>{{ $r->independent_work_score ?? '—' }}</td>
+                            <td>{{ $r->exam_score ?? '—' }}</td>
+                            <td><strong>{{ $r->total_score ? number_format($r->total_score, 1) : '—' }}</strong></td>
+                            <td>
+                                @if($r->letter_grade)
+                                <span class="badge {{ $r->isPassed() ? 'bg-success' : 'bg-danger' }}">{{ $r->letter_grade }}</span>
+                                @endif
+                            </td>
+                        </tr>
                         @endforeach
                     </tbody>
                 </table>
             </div>
         </div>
         @else
-            <div class="text-center text-muted py-4">Натиҷае нест. Гурӯҳ ва семестрро интихоб кунед.</div>
+        <div class="text-center text-muted py-4">Натиҷае нест. Гурӯҳ ва семестрро интихоб кунед.</div>
         @endif
     </div>
 </body>
+
 </html>

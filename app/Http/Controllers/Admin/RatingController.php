@@ -20,7 +20,7 @@ class RatingController extends Controller
     }
 
     /**
-     * Саҳифаи рейтингҳо
+     * НАВ: рейтинги гурӯҳҳо бо GPA миёна илова шуд
      */
     public function index(Request $request): View
     {
@@ -31,21 +31,36 @@ class RatingController extends Controller
         $faculties = Faculty::active()->orderBy('sort_order')->get();
         $groups = Group::active()->orderBy('name')->get();
 
-        // Рейтинги факултетҳо
         $facultyRating = $semesterId ? $this->ratingService->getFacultyRating($semesterId) : collect();
-
-        // Топ-10 донишҷӯён
         $topStudents = $semesterId ? $this->ratingService->getTopStudents($semesterId, 10) : collect();
 
+        // Рейтинги гурӯҳҳо (бо GPA миёна) — як дархост, бе N+1
+        $groupStats = Group::active()
+            ->with('activeStudents')
+            ->get()
+            ->map(function ($g) {
+                return [
+                    'id'       => $g->id,
+                    'name'     => $g->name,
+                    'avg_gpa'  => round((float) $g->activeStudents->avg('cumulative_gpa'), 2),
+                    'students' => $g->activeStudents->count(),
+                ];
+            })
+            ->sortByDesc('avg_gpa')
+            ->values();
+
         return view('admin.ratings.index', compact(
-            'semesters', 'faculties', 'groups', 'currentSemester',
-            'semesterId', 'facultyRating', 'topStudents'
+            'semesters',
+            'faculties',
+            'groups',
+            'currentSemester',
+            'semesterId',
+            'facultyRating',
+            'topStudents',
+            'groupStats'
         ));
     }
 
-    /**
-     * Рейтинги як гурӯҳ
-     */
     public function group(Group $group, Request $request): View
     {
         $currentSemester = Semester::current();
@@ -53,15 +68,11 @@ class RatingController extends Controller
         $semesters = Semester::with('academicYear')->orderByDesc('start_date')->get();
 
         $groupRating = $semesterId ? $this->ratingService->getGroupRating($group->id, $semesterId) : collect();
-
         $group->load(['specialty.department.faculty', 'course']);
 
         return view('admin.ratings.group', compact('group', 'groupRating', 'semesters', 'semesterId'));
     }
 
-    /**
-     * Рейтинги як факултет
-     */
     public function faculty(Faculty $faculty, Request $request): View
     {
         $currentSemester = Semester::current();
@@ -79,9 +90,6 @@ class RatingController extends Controller
         return view('admin.ratings.faculty', compact('faculty', 'groupsRating', 'topStudents', 'semesters', 'semesterId'));
     }
 
-    /**
-     * Топ донишҷӯён
-     */
     public function topStudents(Request $request): View
     {
         $currentSemester = Semester::current();

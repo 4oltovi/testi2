@@ -58,7 +58,7 @@
                 @forelse($exams as $exam)
                 <tr>
                     <td class="fw-semibold">{{ $exam->title }}</td>
-                    <td><small>{{ $exam->subjectAssignment?->curriculum?->subject?->name }}</small></td>
+                    <td><small>{{ $exam->subjectAssignment?->subject?->name }}</small></td>
                     <td><span class="badge bg-info">{{ $exam->group?->name }}</span></td>
                     <td><small>{{ $exam->exam_type?->label() ?? $exam->exam_type }}</small></td>
                     <td>

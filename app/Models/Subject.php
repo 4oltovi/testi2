@@ -12,24 +12,40 @@ class Subject extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'department_id', 'name', 'short_name', 'code', 'credits',
-        'total_hours', 'lecture_hours', 'practice_hours', 'lab_hours',
-        'independent_hours', 'exam_type', 'is_active', 'description',
+        'department_id',
+        'name',
+        'short_name',
+        'code',
+        'credits',
+        'total_hours',
+        'lecture_hours',
+        'practice_hours',
+        'lab_hours',
+        'independent_hours',
+        'exam_type',
+        'is_elective',
+        'is_active',
+        'description',
     ];
 
     protected function casts(): array
     {
-        return ['is_active' => 'boolean'];
+        return [
+            'is_active' => 'boolean',
+            'is_elective' => 'boolean',
+        ];
     }
+
+    // ==================== РОБИТАҲО ====================
 
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
     }
 
-    public function curriculum(): HasMany
+    public function subjectAssignments(): HasMany
     {
-        return $this->hasMany(Curriculum::class);
+        return $this->hasMany(SubjectAssignment::class);
     }
 
     public function questionBanks(): HasMany
@@ -37,8 +53,25 @@ class Subject extends Model
         return $this->hasMany(QuestionBank::class);
     }
 
+    public function academicDebts(): HasMany
+    {
+        return $this->hasMany(AcademicDebt::class);
+    }
+
+    // ==================== SCOPES ====================
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    public function scopeElective($query)
+    {
+        return $query->where('is_elective', true);
+    }
+
+    public function scopeMandatory($query)
+    {
+        return $query->where('is_elective', false);
     }
 }

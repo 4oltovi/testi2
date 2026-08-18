@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Student\DashboardController;
+use App\Http\Controllers\Student\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,6 +17,10 @@ Route::middleware(['web', 'auth', 'role:student'])->prefix('student')->name('stu
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Профил
+    Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
+    Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
     // Баҳоҳо ва рейтингҳо
     Route::prefix('grades')->name('grades.')->group(function () {
@@ -42,6 +47,17 @@ Route::middleware(['web', 'auth', 'role:student'])->prefix('student')->name('stu
     // Ҷадвали дарс
     Route::get('/schedule', [\App\Http\Controllers\Student\ScheduleController::class, 'index'])->name('schedule');
 
+    // Давомот
+    Route::get('/attendance', [\App\Http\Controllers\Student\AttendanceController::class, 'index'])->name('attendance');
+
     // Қарздориҳо
     Route::get('/debts', [\App\Http\Controllers\Student\DebtController::class, 'index'])->name('debts');
+
+    // ==================== РЕЙТИНГИ ОНЛАЙН ====================
+    Route::prefix('rating')->name('rating.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Student\RatingController::class, 'index'])->name('index');
+        Route::post('/start/{ratingSession}/{subject}', [\App\Http\Controllers\Student\RatingController::class, 'start'])->name('start');
+        Route::get('/take/{ratingAttempt}', [\App\Http\Controllers\Student\RatingController::class, 'take'])->name('take');
+        Route::post('/submit/{ratingAttempt}', [\App\Http\Controllers\Student\RatingController::class, 'submit'])->name('submit');
+    });
 });

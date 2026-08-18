@@ -39,9 +39,13 @@ class SubjectController extends Controller
     public function create(): View
     {
         $departments = Department::active()->with('faculty')->orderBy('name')->get();
+
         return view('admin.structure.subjects.create', compact('departments'));
     }
 
+    /**
+     * НАВ: Кредитҳо, соатҳо ва навъи санҷиш — ихтиёрӣ (қимати пешфарз автоматӣ)
+     */
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -49,13 +53,13 @@ class SubjectController extends Controller
             'name' => 'required|string|max:255',
             'short_name' => 'nullable|string|max:30',
             'code' => 'required|string|max:20|unique:subjects,code',
-            'credits' => 'required|integer|min:1|max:30',
-            'total_hours' => 'required|integer|min:10|max:500',
+            'credits' => 'nullable|integer|min:1|max:30',
+            'total_hours' => 'nullable|integer|min:0|max:500',
             'lecture_hours' => 'nullable|integer|min:0',
             'practice_hours' => 'nullable|integer|min:0',
             'lab_hours' => 'nullable|integer|min:0',
             'independent_hours' => 'nullable|integer|min:0',
-            'exam_type' => 'required|in:exam,credit,diff_credit',
+            'exam_type' => 'nullable|in:exam,credit,diff_credit',
             'is_active' => 'boolean',
             'description' => 'nullable|string|max:1000',
         ], [
@@ -63,11 +67,12 @@ class SubjectController extends Controller
             'name.required' => 'Номи фан ҳатмӣ аст.',
             'code.required' => 'Рамзи фан ҳатмӣ аст.',
             'code.unique' => 'Ин рамз аллакай мавҷуд аст.',
-            'credits.required' => 'Шумораи кредитҳо ҳатмӣ аст.',
-            'total_hours.required' => 'Соатҳои умумӣ ҳатмӣ аст.',
         ]);
 
         $validated['is_active'] = $request->boolean('is_active', true);
+        $validated['credits'] = (int) ($validated['credits'] ?? 3);
+        $validated['total_hours'] = (int) ($validated['total_hours'] ?? $validated['credits'] * 30);
+        $validated['exam_type'] = $validated['exam_type'] ?? 'exam';
 
         Subject::create($validated);
 
@@ -77,13 +82,20 @@ class SubjectController extends Controller
 
     public function show(Subject $subject): View
     {
-        $subject->load(['department.faculty', 'curriculum.specialty', 'curriculum.semester', 'questionBanks']);
+        $subject->load([
+            'department.faculty',
+            'subjectAssignments.group',
+            'subjectAssignments.semester',
+            'questionBanks'
+        ]);
+
         return view('admin.structure.subjects.show', compact('subject'));
     }
 
     public function edit(Subject $subject): View
     {
         $departments = Department::active()->with('faculty')->orderBy('name')->get();
+
         return view('admin.structure.subjects.edit', compact('subject', 'departments'));
     }
 
@@ -94,18 +106,21 @@ class SubjectController extends Controller
             'name' => 'required|string|max:255',
             'short_name' => 'nullable|string|max:30',
             'code' => "required|string|max:20|unique:subjects,code,{$subject->id}",
-            'credits' => 'required|integer|min:1|max:30',
-            'total_hours' => 'required|integer|min:10|max:500',
+            'credits' => 'nullable|integer|min:1|max:30',
+            'total_hours' => 'nullable|integer|min:0|max:500',
             'lecture_hours' => 'nullable|integer|min:0',
             'practice_hours' => 'nullable|integer|min:0',
             'lab_hours' => 'nullable|integer|min:0',
             'independent_hours' => 'nullable|integer|min:0',
-            'exam_type' => 'required|in:exam,credit,diff_credit',
+            'exam_type' => 'nullable|in:exam,credit,diff_credit',
             'is_active' => 'boolean',
             'description' => 'nullable|string|max:1000',
         ]);
 
         $validated['is_active'] = $request->boolean('is_active', true);
+        $validated['credits'] = (int) ($validated['credits'] ?? $subject->credits ?? 3);
+        $validated['total_hours'] = (int) ($validated['total_hours'] ?? $subject->total_hours ?? $validated['credits'] * 30);
+        $validated['exam_type'] = $validated['exam_type'] ?? 'exam';
 
         $subject->update($validated);
 
@@ -115,8 +130,8 @@ class SubjectController extends Controller
 
     public function destroy(Subject $subject): RedirectResponse
     {
-        if ($subject->curriculum()->exists()) {
-            return back()->with('error', 'Фанро нест кардан мумкин нест — дар нақшаи таълимӣ мавҷуд аст.');
+        if ($subject->subjectAssignments()->exists()) {
+            return back()->with('error', 'Фанро нест кардан мумкин нест — дар таъинотҳо мавҷуд аст.');
         }
 
         $subject->delete();

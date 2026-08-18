@@ -11,6 +11,7 @@ class QuestionBank extends Model
     protected $fillable = [
         'subject_id', 'teacher_id', 'name', 'description',
         'total_questions', 'is_active',
+        'bank_type',
     ];
 
     protected function casts(): array

@@ -9,6 +9,7 @@ use App\Models\Exam;
 use App\Models\ExamAnswer;
 use App\Models\ExamAttempt;
 use App\Models\ExamQuestion;
+use App\Models\SemesterGrade;
 use App\Models\Setting;
 use App\Models\Student;
 use Illuminate\Http\JsonResponse;
@@ -16,6 +17,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use App\Services\GradeCalculator;
 
 class ExamController extends Controller
 {
@@ -30,7 +32,7 @@ class ExamController extends Controller
             ->whereIn('status', ['active', 'scheduled'])
             ->where('is_published', true)
             ->where('format', 'online_test')
-            ->with(['subjectAssignment.curriculum.subject'])
+            ->with(['subjectAssignment.subject'])
             ->orderBy('starts_at')
             ->get();
 
@@ -336,7 +338,39 @@ class ExamController extends Controller
                 'letter_grade' => $grade->value,
                 'grade_point' => $grade->gradePoint(),
             ]);
+
+            // Навсозии SemesterGrade
+            $this->updateSemesterGrade($attempt, $exam, $percentage);
         });
+    }
+
+    private function updateSemesterGrade(ExamAttempt $attempt, Exam $exam, float $percentage): void
+    {
+        $subjectAssignment = $exam->subjectAssignment;
+        if (!$subjectAssignment) {
+            return;
+        }
+
+        $subjectId = $subjectAssignment->subject_id;
+
+        $semesterGrade = SemesterGrade::where('student_id', $attempt->student_id)
+            ->where('semester_id', $exam->semester_id)
+            ->whereHas('subjectAssignment', fn($q) => $q->where('subject_id', $subjectId))
+            ->first();
+
+        if (!$semesterGrade) {
+            $semesterGrade = SemesterGrade::create([
+                'student_id' => $attempt->student_id,
+                'subject_assignment_id' => $subjectAssignment->id,
+                'semester_id' => $exam->semester_id,
+                'status' => 'in_progress',
+            ]);
+        }
+
+        $semesterGrade->exam_score = $percentage;
+        $semesterGrade->save();
+
+        app(GradeCalculator::class)->processAndSaveFinalGrade($semesterGrade);
     }
 
     private function questionWeight($question): float

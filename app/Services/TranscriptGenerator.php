@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\GradeScale;
 use App\Models\SemesterGrade;
 use App\Models\Student;
 use App\Models\Transcript;
@@ -10,7 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Хидмати сохтани Transcript (Ведомости баҳоҳо)
+ * Хидмати сохтани transcript
  */
 class TranscriptGenerator
 {
@@ -30,7 +31,7 @@ class TranscriptGenerator
             // Ҳамаи баҳоҳои тасдиқшуда
             $grades = SemesterGrade::where('student_id', $student->id)
                 ->where('is_finalized', true)
-                ->with(['curriculum.subject', 'semester'])
+                ->with(['subjectAssignment.subject', 'semester'])
                 ->orderBy('semester_id')
                 ->get();
 
@@ -60,14 +61,17 @@ class TranscriptGenerator
             $sortOrder = 0;
             foreach ($grades as $grade) {
                 $sortOrder++;
+
+                $subject = $grade->subjectAssignment?->subject;
+
                 TranscriptLine::create([
                     'transcript_id' => $transcript->id,
                     'semester_id' => $grade->semester_id,
-                    'subject_id' => $grade->curriculum?->subject_id,
+                    'subject_id' => $subject?->id,
                     'semester_grade_id' => $grade->id,
-                    'subject_name' => $grade->curriculum?->subject?->name ?? 'Номаълум',
-                    'subject_code' => $grade->curriculum?->subject?->code ?? '',
-                    'credits' => $grade->curriculum?->credits ?? 0,
+                    'subject_name' => $subject?->name ?? 'Номаълум',
+                    'subject_code' => $subject?->code ?? '',
+                    'credits' => $grade->subjectAssignment?->credits ?? 0,
                     'total_score' => $grade->total_score,
                     'letter_grade' => $grade->letter_grade ?? 'F',
                     'grade_point' => $grade->grade_point ?? 0,
@@ -141,13 +145,37 @@ class TranscriptGenerator
     }
 
     /**
-     * Генератсияи рақами transcript
+     * Сохтани рақами transcript
      */
     private function generateTranscriptNumber(): string
     {
-        $year = date('Y');
-        $lastNumber = Transcript::where('transcript_number', 'like', "TR-{$year}-%")
-            ->count();
-        return sprintf('TR-%s-%04d', $year, $lastNumber + 1);
+        $year = now()->year;
+        $count = Transcript::whereYear('issue_date', $year)->count() + 1;
+
+        return "TR-{$year}-" . str_pad($count, 4, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Муайян кардани дараҷаи ифтихорӣ
+     */
+    public function determineHonors(?float $gpa): string
+    {
+        if ($gpa === null) {
+            return 'none';
+        }
+
+        if ($gpa >= 3.90) {
+            return 'summa_cum_laude';
+        }
+
+        if ($gpa >= 3.70) {
+            return 'magna_cum_laude';
+        }
+
+        if ($gpa >= 3.50) {
+            return 'cum_laude';
+        }
+
+        return 'none';
     }
 }

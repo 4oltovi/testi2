@@ -30,14 +30,14 @@ class DashboardController extends Controller
             $data['debts_count'] = $student->activeDebts()->count();
             $data['grades'] = SemesterGrade::where('student_id', $student->id)
                 ->where('semester_id', $semester->id)
-                ->with('curriculum.subject')
+                ->with('subject')
                 ->get();
             $data['attendance_percentage'] = $student->getAttendancePercentage($semester->id);
 
             // Натиҷаҳои охирини тестҳо
             $data['recent_exams'] = \App\Models\ExamAttempt::where('student_id', $student->id)
                 ->whereIn('status', ['submitted', 'auto_submitted', 'graded'])
-                ->with(['exam.subjectAssignment.curriculum.subject', 'exam.group'])
+                ->with(['exam.subjectAssignment.subject', 'exam.group'])
                 ->orderByDesc('submitted_at')
                 ->limit(5)
                 ->get();

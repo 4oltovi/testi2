@@ -15,7 +15,7 @@ class GradeController extends Controller
         $currentSemester = Semester::current();
 
         $grades = SemesterGrade::where('student_id', $student?->id)
-            ->with(['curriculum.subject', 'semester'])
+            ->with(['subjectAssignment.subject', 'semester'])
             ->orderByDesc('semester_id')
             ->get()
             ->groupBy('semester_id');
@@ -29,7 +29,7 @@ class GradeController extends Controller
 
         $grades = SemesterGrade::where('student_id', $student?->id)
             ->where('semester_id', $semester->id)
-            ->with(['curriculum.subject'])
+            ->with(['subjectAssignment.subject'])
             ->get();
 
         return view('student.grades.semester', compact('grades', 'semester', 'student'));

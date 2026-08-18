@@ -12,7 +12,7 @@
     <div class="col-12 col-lg-10">
         <div class="card border-0 shadow-sm">
             <div class="card-body">
-                <form method="POST" action="{{ route('admin.exams.questions.store') }}">
+                <form method="POST" action="{{ route('admin.exams.questions.store') }}" enctype="multipart/form-data">
                     @csrf
                     <div class="row g-3">
                         <div class="col-12 col-md-4">
@@ -49,6 +49,12 @@
                                 Барои формула: <code>$x^2$</code> = дар сатр, <code>$$\frac{a}{b}$$</code> = алоҳида.
                                 Намунаҳо: <code>$H_2O$</code>, <code>$\sqrt{16}$</code>, <code>$\sum_{i=1}^{n}$</code>
                             </small>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Акси савол (ихтиёрӣ)</label>
+                            <input type="file" name="question_image" class="form-control" accept="image/png,image/jpeg,image/webp">
+                            <small class="text-muted">Акс барои савол (png, jpg, webp), андозаи намуд: 2MB</small>
                         </div>
 
                         {{-- Пешнамоиши формула --}}

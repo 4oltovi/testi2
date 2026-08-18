@@ -17,7 +17,7 @@ class ScheduleController extends Controller
         $schedules = collect();
         if ($student && $semester) {
             $schedules = Schedule::whereHas('subjectAssignment', fn($q) => $q->where('group_id', $student->group_id)->where('semester_id', $semester->id))
-                ->with(['subjectAssignment.curriculum.subject', 'classroom'])
+                ->with(['subjectAssignment.subject', 'classroom'])
                 ->orderBy('day_of_week')
                 ->orderBy('lesson_number')
                 ->get();

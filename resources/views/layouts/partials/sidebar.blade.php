@@ -73,11 +73,6 @@
                     <i class="bi bi-calendar3 me-2"></i> Солҳои таҳсилӣ
                 </a>
             </li>
-            <li class="nav-item">
-                <a class="nav-link text-white {{ request()->is('admin/structure/curriculum*') ? 'active bg-primary rounded' : '' }}" href="/admin/structure/curriculum">
-                    <i class="bi bi-list-check me-2"></i> Нақшаи таълимӣ
-                </a>
-            </li>
 
             <li class="nav-item mt-2">
                 <small class="nav-link text-uppercase fw-bold px-3" style="color:#8a94ff;">Таълим</small>
@@ -103,6 +98,18 @@
                 </a>
             </li>
 
+            {{-- ===== НАВ: РЕЙТИНГҲОИ ОНЛАЙН ===== --}}
+            <li class="nav-item">
+                <a class="nav-link text-white {{ request()->is('admin/rating-sessions*') ? 'active bg-primary rounded' : '' }}" href="{{ route('admin.rating-sessions.index') }}">
+                    <i class="bi bi-lightning-charge me-2"></i> Рейтингҳои онлайн
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {{ request()->is('admin/rating-questions*') ? 'active bg-primary rounded' : '' }}" href="{{ route('admin.rating-questions.index') }}">
+                    <i class="bi bi-patch-question me-2"></i> Саволномаҳои рейтинг
+                </a>
+            </li>
+
             <li class="nav-item mt-2">
                 <small class="nav-link text-uppercase fw-bold px-3" style="color:#8a94ff;">Аналитика</small>
             </li>
@@ -118,7 +125,7 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link text-white {{ request()->is('admin/vedomosts*') ? 'active bg-primary rounded' : '' }}" href="/admin/vedomosts">
-                    <i class="bi bi-file-earmark-spreadsheet me-2"></i> Вeдемостхо
+                    <i class="bi bi-file-earmark-spreadsheet me-2"></i> Ведомостҳо
                 </a>
             </li>
             <li class="nav-item">
@@ -162,7 +169,7 @@
             </li>
 
             @elseif(auth()->user()?->hasRole('teacher'))
-            {{-- ===== SIDEBAR ОМӮЗГОР (МАҲДУД — танҳо журнал) ===== --}}
+            {{-- ===== SIDEBAR ОМӮЗГОР ===== --}}
             <li class="nav-item">
                 <a class="nav-link text-white {{ request()->is('teacher/dashboard') ? 'active bg-primary rounded' : '' }}" href="/teacher/dashboard">
                     <i class="bi bi-speedometer2 me-2"></i> Панели асосӣ
@@ -199,6 +206,11 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link text-white {{ request()->is('student/profile*') ? 'active bg-primary rounded' : '' }}" href="{{ route('student.profile') }}">
+                    <i class="bi bi-person me-2"></i> Профил
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link text-white {{ request()->is('student/grades*') ? 'active bg-primary rounded' : '' }}" href="/student/grades">
                     <i class="bi bi-journal-text me-2"></i> Баҳоҳои ман
                 </a>
@@ -208,9 +220,22 @@
                     <i class="bi bi-pencil-square me-2"></i> Тестҳо
                 </a>
             </li>
+
+            {{-- ===== НАВ: РЕЙТИНГИ МАН ===== --}}
+            <li class="nav-item">
+                <a class="nav-link text-white {{ request()->is('student/rating*') ? 'active bg-primary rounded' : '' }}" href="{{ route('student.rating.index') }}">
+                    <i class="bi bi-lightning-charge me-2"></i> Рейтинги ман
+                </a>
+            </li>
+
             <li class="nav-item">
                 <a class="nav-link text-white {{ request()->is('student/schedule*') ? 'active bg-primary rounded' : '' }}" href="/student/schedule">
                     <i class="bi bi-calendar-week me-2"></i> Ҷадвал
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {{ request()->is('student/attendance*') ? 'active bg-primary rounded' : '' }}" href="{{ route('student.attendance') }}">
+                    <i class="bi bi-calendar-check me-2"></i> Давомот
                 </a>
             </li>
             <li class="nav-item">

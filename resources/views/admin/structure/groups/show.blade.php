@@ -106,7 +106,7 @@
                         <tbody>
                             @foreach($group->subjectAssignments as $assignment)
                                 <tr>
-                                    <td>{{ $assignment->curriculum?->subject?->name }}</td>
+                                    <td>{{ $assignment->subject?->name }}</td>
                                     <td>{{ $assignment->teacher?->short_name ?? '—' }}</td>
                                     <td>
                                         @php

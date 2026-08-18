@@ -27,7 +27,7 @@
                 <tbody>
                     @foreach($semGrades as $grade)
                     <tr>
-                        <td>{{ $grade->curriculum?->subject?->name ?? '—' }}</td>
+                        <td>{{ $grade->subjectAssignment?->subject?->name ?? '—' }}</td>
                         <td class="text-center">{{ $grade->rating1_score !== null ? number_format($grade->rating1_score, 0) : '—' }}</td>
                         <td class="text-center">{{ $grade->rating2_score !== null ? number_format($grade->rating2_score, 0) : '—' }}</td>
                         <td class="text-center">{{ $grade->exam_score !== null ? number_format($grade->exam_score, 0) : '—' }}</td>

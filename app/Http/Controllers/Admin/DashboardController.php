@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
@@ -34,7 +35,11 @@ class DashboardController extends Controller
             $stats['students_with_debts'] = \App\Models\Student::where('has_debts', true)->count();
             $stats['active_debts'] = \App\Models\AcademicDebt::whereIn('status', ['active', 'retake_scheduled', 'escalated'])->count();
         } catch (\Throwable $e) {
-            // skip
+            Log::channel('single')->warning('Dashboard stats query failed', [
+                'exception' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            $stats = array_map(fn($v) => is_numeric($v) ? 0 : $v, $stats);
         }
 
         return view('admin.dashboard.index', compact('stats', 'user'));

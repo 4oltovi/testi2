@@ -19,16 +19,6 @@
             border-collapse: collapse;
         }
 
-        table.info {
-            width: 100%;
-            margin-top: 6px;
-        }
-
-        table.info td {
-            border: none;
-            padding: 2px 4px;
-        }
-
         table.main {
             width: 100%;
             margin-top: 8px;
@@ -37,8 +27,8 @@
         table.main th,
         table.main td {
             border: 1px solid #000;
-            padding: 2px 3px;
-            font-size: 8px;
+            padding: 2px 2px;
+            font-size: 7px;
         }
 
         table.main th {
@@ -59,6 +49,7 @@
         table.sum td {
             border: 1px solid #000;
             padding: 3px 6px;
+            font-size: 8px;
         }
 
         table.sum th {
@@ -87,6 +78,7 @@
 
 <body>
 
+    {{-- Сарлавҳа: логотип дар мобайн --}}
     <div class="center">
         @php
         $logoPath = \App\Models\Setting::get('institution_logo', 'images/logo.png');
@@ -108,9 +100,9 @@
         <div>№ {{ $transcriptNumber ?? '________' }} аз "{{ $date->format('d.m.Y') }}"</div>
     </div>
 
+    {{-- Маълумоти донишҷӯ: аз ду канор, бе фосилаи зиёд --}}
     <table style="width:100%; border:none; border-collapse:collapse; margin-top:6px;">
         <tr>
-            {{-- Блоки чап --}}
             <td style="border:none; vertical-align:top; width:50%;">
                 <table style="border:none; border-collapse:collapse;">
                     <tr>
@@ -127,8 +119,6 @@
                     </tr>
                 </table>
             </td>
-
-            {{-- Блоки рост (ба канори рост часпида) --}}
             <td style="border:none; vertical-align:top; width:50%;">
                 <table style="border:none; border-collapse:collapse; margin-left:auto;">
                     <tr>
@@ -148,6 +138,7 @@
         </tr>
     </table>
 
+    {{-- Ҷадвали асосӣ: 15 сутун --}}
     <table class="main">
         <thead>
             <tr>
@@ -160,10 +151,10 @@
                 <th>Имтиҳон</th>
                 <th>Ҳамагӣ</th>
                 <th>Баҳо</th>
-                <th>Баҳ. анъанавӣ</th>
-                <th>иф. Ададӣ</th>
+                <th>Баҳ. анъ.</th>
+                <th>иф. ад.</th>
                 <th>Кредит</th>
-                <th>Кред. азхуд.</th>
+                <th>Кр. азх.</th>
                 <th>Балл</th>
                 <th>Компонент</th>
             </tr>
@@ -191,6 +182,7 @@
         </tbody>
     </table>
 
+    {{-- Хулоса по семестрҳо --}}
     <table class="sum">
         <thead>
             <tr>
@@ -219,6 +211,7 @@
         <div><b>Аз он ҷумла: Ҳатмӣ: {{ $totalMandatory }}</b></div>
     </div>
 
+    {{-- Имзоҳо --}}
     <div class="sign">
         <div>Директор (ё муовини директор оид ба таълим): _________________ {{ $deputyDirector }}</div>
         <div>Сардори маркази тестӣ: _________________ {{ $centerHead }}</div>

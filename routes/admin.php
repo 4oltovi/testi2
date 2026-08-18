@@ -32,7 +32,10 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
         Route::resource('subjects', \App\Http\Controllers\Admin\SubjectController::class);
         Route::resource('classrooms', \App\Http\Controllers\Admin\ClassroomController::class);
         Route::resource('academic-years', \App\Http\Controllers\Admin\AcademicYearController::class);
-        Route::resource('curriculum', \App\Http\Controllers\Admin\CurriculumController::class);
+
+        // фаъол кардани сол ва семестр
+        Route::post('/academic-years/{academicYear}/activate', [\App\Http\Controllers\Admin\AcademicYearController::class, 'activate'])->name('academic-years.activate');
+        Route::post('/semesters/{semester}/activate', [\App\Http\Controllers\Admin\AcademicYearController::class, 'activateSemester'])->name('semesters.activate');
     });
 
     // Донишҷӯён
@@ -68,6 +71,7 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
         Route::post('/grades/{subjectAssignment}', [\App\Http\Controllers\Admin\JournalController::class, 'storeGrades'])->name('grades.store');
         Route::get('/semester-grades/{subjectAssignment}', [\App\Http\Controllers\Admin\JournalController::class, 'semesterGrades'])->name('semester-grades');
         Route::post('/finalize/{semesterGrade}', [\App\Http\Controllers\Admin\JournalController::class, 'finalize'])->name('finalize');
+        Route::post('/credits/{subjectAssignment}', [\App\Http\Controllers\Admin\JournalController::class, 'updateCredits'])->name('credits.update');
 
         // Категорияҳои баҳо (5 категория: Савод, Сарулибос, Ҷиҳоз, Иштирок, Интизом)
         Route::get('/category-scores/{subjectAssignment}', [\App\Http\Controllers\Teacher\CategoryScoreController::class, 'index'])->name('category-scores');
@@ -145,6 +149,11 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/formula', [\App\Http\Controllers\Admin\SettingsController::class, 'formula'])->name('formula');
         Route::get('/test', [\App\Http\Controllers\Admin\SettingsController::class, 'test'])->name('test');
         Route::post('logo', [\App\Http\Controllers\Admin\SettingsController::class, 'uploadLogo'])->name('logo');
+        Route::post('optimize', [\App\Http\Controllers\Admin\SettingsController::class, 'optimize'])->name('optimize');
+        Route::post('clear-cache', [\App\Http\Controllers\Admin\SettingsController::class, 'clearCache'])->name('clear-cache');
+        Route::post('new-year', [\App\Http\Controllers\Admin\SettingsController::class, 'newYear'])->name('new-year');
+        Route::post('activate-year', [\App\Http\Controllers\Admin\SettingsController::class, 'activateYear'])->name('activate-year');
+        Route::post('promote-all', [\App\Http\Controllers\Admin\SettingsController::class, 'promoteAll'])->name('promote-all');
         });
 
     // Импорти Excel
@@ -158,6 +167,34 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
     Route::prefix('audit')->name('audit.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\AuditController::class, 'index'])->name('index');
     });
+
+    // ==================== РЕЙТИНГҲОИ ОНЛАЙН ====================
+    Route::prefix('rating-sessions')->name('rating-sessions.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\RatingSessionController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Admin\RatingSessionController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Admin\RatingSessionController::class, 'store'])->name('store');
+
+        // ⚠️ МУҲИМ: {session} — на {ratingSession}! (ном бо $session рост ояд)
+        // ⚠️ /create бояд ПЕШ аз /{session} бошад!
+        Route::get('/{session}', [\App\Http\Controllers\Admin\RatingSessionController::class, 'show'])->name('show');
+        Route::post('/{session}/publish', [\App\Http\Controllers\Admin\RatingSessionController::class, 'publish'])->name('publish');
+        Route::post('/{session}/close', [\App\Http\Controllers\Admin\RatingSessionController::class, 'close'])->name('close');
+        Route::post('/{session}/extend', [\App\Http\Controllers\Admin\RatingSessionController::class, 'extend'])->name('extend');
+        Route::get('/{session}/protocol', [\App\Http\Controllers\Admin\RatingSessionController::class, 'protocol'])->name('protocol');
+        Route::delete('/{session}', [\App\Http\Controllers\Admin\RatingSessionController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('rating-questions')->name('rating-questions.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\RatingQuestionController::class, 'index'])->name('index');
+        Route::get('/import', [\App\Http\Controllers\Admin\RatingQuestionController::class, 'importForm'])->name('import-form');
+        Route::post('/import', [\App\Http\Controllers\Admin\RatingQuestionController::class, 'import'])->name('import');
+        Route::get('/template', [\App\Http\Controllers\Admin\RatingQuestionController::class, 'downloadTemplate'])->name('template');
+        Route::get('/export', [\App\Http\Controllers\Admin\RatingQuestionController::class, 'export'])->name('export');
+        Route::post('/', [\App\Http\Controllers\Admin\RatingQuestionController::class, 'store'])->name('store');
+        Route::delete('/{question}', [\App\Http\Controllers\Admin\RatingQuestionController::class, 'destroy'])->name('destroy');
+    });
+
+    // ==================== САВОЛНОМАҲОИ РЕЙТИНГ ====================
 
     // Ведомостҳо (дар поён, берун аз ҳамаи гурӯҳҳо)
     Route::get('vedomosts', [\App\Http\Controllers\Admin\VedomostController::class, 'index'])->name('vedomosts.index');

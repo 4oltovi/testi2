@@ -399,7 +399,7 @@
         <div class="header">
             <div>
                 <h1>{{ $exam->title }}</h1>
-                <div class="header-meta">{{ $exam->subjectAssignment->curriculum->subject->name ?? '' }}</div>
+                <div class="header-meta">{{ $exam->subjectAssignment->subject->name ?? '' }}</div>
             </div>
             <div class="controls">
                 <div class="timer" id="timer">00:00</div>

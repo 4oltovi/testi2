@@ -13,11 +13,26 @@ class AcademicDebt extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'student_id', 'semester_grade_id', 'curriculum_id', 'subject_id', 'semester_id',
-        'reason', 'description', 'debt_date', 'original_score', 'original_grade',
-        'retake_allowed', 'retake_attempts_used', 'max_retake_attempts', 'retake_deadline',
-        'status', 'resolved_date', 'resolved_score', 'resolved_grade',
-        'resolved_by', 'resolution_note', 'created_by',
+        'student_id',
+        'semester_grade_id',
+        'subject_id',
+        'semester_id',
+        'reason',
+        'description',
+        'debt_date',
+        'original_score',
+        'original_grade',
+        'retake_allowed',
+        'retake_attempts_used',
+        'max_retake_attempts',
+        'retake_deadline',
+        'status',
+        'resolved_date',
+        'resolved_score',
+        'resolved_grade',
+        'resolved_by',
+        'resolution_note',
+        'created_by',
     ];
 
     protected function casts(): array
@@ -45,11 +60,6 @@ class AcademicDebt extends Model
         return $this->belongsTo(SemesterGrade::class);
     }
 
-    public function curriculum(): BelongsTo
-    {
-        return $this->belongsTo(Curriculum::class);
-    }
-
     public function subject(): BelongsTo
     {
         return $this->belongsTo(Subject::class);
@@ -73,6 +83,14 @@ class AcademicDebt extends Model
     public function history(): HasMany
     {
         return $this->hasMany(AcademicDebtHistory::class);
+    }
+
+    /**
+     * Таъиноти фан (агар мавҷуд бошад)
+     */
+    public function subjectAssignment(): BelongsTo
+    {
+        return $this->belongsTo(SubjectAssignment::class, 'subject_assignment_id');
     }
 
     // ==================== SCOPES ====================

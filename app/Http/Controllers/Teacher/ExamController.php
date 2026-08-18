@@ -25,7 +25,7 @@ class ExamController extends Controller
         $semester = Semester::current();
         $exams = Exam::where('teacher_id', $request->user()->id)
             ->when($semester, fn($q) => $q->where('semester_id', $semester->id))
-            ->with(['subjectAssignment.curriculum.subject', 'group'])
+            ->with(['subjectAssignment.subject', 'group'])
             ->latest()
             ->paginate(20);
 
@@ -43,7 +43,7 @@ class ExamController extends Controller
         $assignments = SubjectAssignment::where('teacher_id', $teacher->id)
             ->where('semester_id', $semester?->id)
             ->where('is_active', true)
-            ->with(['curriculum.subject', 'group'])
+            ->with(['subject', 'group'])
             ->get();
 
         // Танзимоти тест аз Settings
@@ -125,7 +125,7 @@ class ExamController extends Controller
         $this->authorizeExam($exam, $request);
 
         $exam->load([
-            'subjectAssignment.curriculum.subject',
+            'subjectAssignment.subject',
             'group',
             'examQuestions.question.answerOptions',
         ]);
@@ -134,9 +134,10 @@ class ExamController extends Controller
         $examQuestions = $exam->examQuestions()->with('question.answerOptions')->orderBy('sort_order')->get();
 
         // Саволҳои дастрас барои илова (аз банкҳои ин фан)
-        $subjectId = $exam->subjectAssignment->curriculum->subject_id;
+        $subjectId = $exam->subjectAssignment->subject_id;
         $availableQuestions = Question::where('subject_id', $subjectId)
             ->where('is_active', true)
+            ->whereHas('questionBank', fn($q) => $q->where('bank_type', 'exam'))
             ->whereNotIn('id', $examQuestions->pluck('question_id'))
             ->with('answerOptions')
             ->orderBy('difficulty_level')
@@ -169,7 +170,7 @@ class ExamController extends Controller
         $assignments = SubjectAssignment::where('teacher_id', $teacher->id)
             ->where('semester_id', $semester?->id)
             ->where('is_active', true)
-            ->with(['curriculum.subject', 'group'])
+            ->with(['subject', 'group'])
             ->get();
 
         $testSettings = [
@@ -238,7 +239,7 @@ class ExamController extends Controller
     {
         $this->authorizeExam($exam, $request);
 
-        $exam->load(['group', 'subjectAssignment.curriculum.subject']);
+        $exam->load(['group', 'subjectAssignment.subject']);
 
         $attempts = $exam->attempts()
             ->with(['student.user'])
@@ -302,6 +303,14 @@ class ExamController extends Controller
             'question_ids' => 'required|array',
             'question_ids.*' => 'exists:questions,id',
         ]);
+
+        $invalidQuestions = Question::whereIn('id', $request->question_ids)
+            ->whereHas('questionBank', fn($q) => $q->where('bank_type', '!=', 'exam'))
+            ->count();
+
+        if ($invalidQuestions > 0) {
+            return back()->with('error', 'Баъзе саволҳо ба банки имтиҳон тааллуқ надоранд. Танҳо саволҳои имтиҳонро илова кардан мумкин аст.');
+        }
 
         $currentMax = $exam->examQuestions()->max('sort_order') ?? 0;
         $questionsAdded = 0;

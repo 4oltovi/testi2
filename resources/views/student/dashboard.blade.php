@@ -95,7 +95,7 @@
                         <tbody>
                             @forelse($grades as $grade)
                             <tr>
-                                <td>{{ $grade->curriculum?->subject?->name }}</td>
+                                <td>{{ $grade->subject?->name }}</td>
                                 <td>{{ $grade->rating1_score !== null ? number_format($grade->rating1_score, 0) : '—' }}</td>
                                 <td>{{ $grade->rating2_score !== null ? number_format($grade->rating2_score, 0) : '—' }}</td>
                                 <td>{{ $grade->exam_score !== null ? number_format($grade->exam_score, 0) : '—' }}</td>
@@ -138,7 +138,7 @@
                     <div class="list-group-item">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <strong class="d-block">{{ $ea->exam?->subjectAssignment?->curriculum?->subject?->name ?? 'Тест' }}</strong>
+                                <strong class="d-block">{{ $ea->exam?->subjectAssignment?->subject?->name ?? 'Тест' }}</strong>
                                 <small class="text-muted">{{ $ea->submitted_at?->format('d.m.Y H:i') }}</small>
                             </div>
                             <div class="text-end">

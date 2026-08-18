@@ -65,7 +65,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('student_id')->constrained()->cascadeOnDelete();
             $table->foreignId('subject_assignment_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('curriculum_id')->constrained('curriculum')->cascadeOnDelete();
+            $table->foreignId('subject_id')->constrained('subject')->cascadeOnDelete();
             $table->foreignId('semester_id')->constrained()->cascadeOnDelete();
 
             // Рейтинги 1 (Ҳафтаи 1-8) — аз 100
@@ -116,7 +116,7 @@ return new class extends Migration
             $table->timestamps();
 
             // Як донишҷӯ — як фан — як семестр
-            $table->unique(['student_id', 'curriculum_id', 'semester_id'], 'semester_grade_unique');
+            $table->unique(['student_id', 'subject_id', 'semester_id'], 'semester_grade_unique');
             $table->index(['semester_id', 'status']);
             $table->index(['student_id', 'status']);
             $table->index(['letter_grade']);

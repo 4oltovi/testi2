@@ -13,7 +13,7 @@ class ScheduleController extends Controller
     {
         $semester = Semester::current();
         $schedules = Schedule::whereHas('subjectAssignment', fn($q) => $q->where('teacher_id', $request->user()->id)->when($semester, fn($q2) => $q2->where('semester_id', $semester->id)))
-            ->with(['subjectAssignment.curriculum.subject', 'subjectAssignment.group', 'classroom'])
+            ->with(['subjectAssignment.subject', 'subjectAssignment.group', 'classroom'])
             ->orderBy('day_of_week')
             ->orderBy('lesson_number')
             ->get();

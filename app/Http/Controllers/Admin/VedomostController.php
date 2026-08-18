@@ -33,7 +33,7 @@ class VedomostController extends Controller
         $vedomosts = collect();
 
         if ($groupId && $semesterId) {
-            $assignments = SubjectAssignment::with(['curriculum.subject', 'teacher', 'group'])
+            $assignments = SubjectAssignment::with(['subject', 'teacher', 'group'])
                 ->where('group_id', $groupId)
                 ->where('semester_id', $semesterId)
                 ->get();
@@ -43,7 +43,7 @@ class VedomostController extends Controller
                     ['subject_assignment_id' => $a->id, 'semester_id' => $a->semester_id],
                     [
                         'group_id'         => $a->group_id,
-                        'subject_id'       => $a->curriculum?->subject_id,
+                        'subject_id'       => $a->subject_id,  // ← ИСЛОҲ ШУД
                         'teacher_id'       => $a->teacher_id,
                         'academic_year_id' => $yearId ?: $a->group?->academic_year_id,
                         'status'           => 'draft',

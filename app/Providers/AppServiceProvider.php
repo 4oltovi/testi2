@@ -2,10 +2,10 @@
 
 namespace App\Providers;
 
+use Illuminate\Auth\Events\Login;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Pagination\Paginator;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\View;
+use Illuminate\Support\Str;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,18 +22,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Истифодаи Bootstrap 5 барои пагинатсия
-        Paginator::useBootstrapFive();
-
-        // Кеш барои маълумоти статик дар ҳама саҳифаҳо
-        view()->composer('*', function ($view) {
-            view()->share('currentSemester', Cache::remember('current_semester', 3600, function () {
-                return \App\Models\Semester::current();
-            }));
-
-            view()->share('activeAcademicYear', Cache::remember('active_academic_year', 3600, function () {
-                return \App\Models\AcademicYear::where('is_active', true)->first();
-            }));
+        // Ҳангоми ворид шудан — токени ягонаи сессия сохта мешавад
+        Event::listen(Login::class, function (Login $event) {
+            $token = Str::random(40);
+            $event->user->forceFill(['session_token' => $token])->save();
+            session()->put('single_session_token', $token);
         });
     }
 }

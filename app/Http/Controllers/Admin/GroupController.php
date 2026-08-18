@@ -94,7 +94,7 @@ class GroupController extends Controller
             'academicYear',
             'curator',
             'activeStudents.user',
-            'subjectAssignments.curriculum.subject',
+            'subjectAssignments.subject',
             'subjectAssignments.teacher',
         ]);
 

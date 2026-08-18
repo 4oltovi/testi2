@@ -19,7 +19,7 @@
                 <div class="col-md-6 col-lg-4">
                     <div class="card border-0 shadow-sm h-100">
                         <div class="card-header bg-primary bg-opacity-10 border-0">
-                            <h6 class="mb-0 text-primary">{{ $assignment->curriculum?->subject?->name }}</h6>
+                            <h6 class="mb-0 text-primary">{{ $assignment->subject?->name }}</h6>
                         </div>
                         <div class="card-body">
                             <p class="mb-1">

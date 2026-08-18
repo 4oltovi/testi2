@@ -4,15 +4,6 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordController;
 use Illuminate\Support\Facades\Route;
 
-// ====== ТЕСТ (баъдтар нест кунед) ======
-Route::get('/whoami', function () {
-    if (auth()->check()) {
-        $u = auth()->user();
-        return "LOGGED IN: {$u->login} ({$u->first_name} {$u->last_name}) | Session: " . session()->getId();
-    }
-    return "NOT LOGGED IN | Session: " . session()->getId();
-});
-
 // Саҳифаи асосӣ
 Route::get('/', function () {
     if (auth()->check()) {

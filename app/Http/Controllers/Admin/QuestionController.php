@@ -21,6 +21,7 @@ class QuestionController extends Controller
     public function index(Request $request): View
     {
         $questions = Question::with(['answerOptions'])
+            ->whereHas('questionBank', fn ($q) => $q->where('bank_type', 'exam'))
             ->when($request->subject_id, fn($q) => $q->where('subject_id', $request->subject_id))
             ->when($request->type, fn($q) => $q->where('type', $request->type))
             ->latest()
@@ -52,6 +53,7 @@ class QuestionController extends Controller
             'question_text' => 'required|string|max:5000',
             'difficulty_level' => 'required|integer|min:1|max:5',
             'explanation' => 'nullable|string|max:2000',
+            'question_image' => 'nullable|image|mimes:png,jpg,jpeg,webp|max:2048',
             'options' => 'nullable|array',
             'options.*.text' => 'nullable|string|max:255',
             'options.*.is_correct' => 'nullable|boolean',
@@ -59,10 +61,10 @@ class QuestionController extends Controller
 
         $this->validateQuestionOptions($request);
 
-        // Балл аз танзимот
         $defaultPoints = $this->defaultQuestionPoints($request->type);
+        $questionImagePath = $this->uploadQuestionImage($request->file('question_image'));
 
-        DB::transaction(function () use ($request, $defaultPoints) {
+        DB::transaction(function () use ($request, $defaultPoints, $questionImagePath) {
             $question = Question::create([
                 'question_bank_id' => $this->getOrCreateDefaultBank($request->subject_id),
                 'subject_id' => $request->subject_id,
@@ -71,6 +73,7 @@ class QuestionController extends Controller
                 'difficulty_level' => $request->difficulty_level,
                 'points' => $defaultPoints,
                 'explanation' => $request->explanation,
+                'question_image' => $questionImagePath,
                 'is_active' => true,
             ]);
 
@@ -138,6 +141,7 @@ class QuestionController extends Controller
             'question_text' => 'required|string|max:5000',
             'difficulty_level' => 'required|integer|min:1|max:5',
             'explanation' => 'nullable|string|max:2000',
+            'question_image' => 'nullable|image|mimes:png,jpg,jpeg,webp|max:2048',
             'options' => 'nullable|array',
             'options.*.text' => 'nullable|string|max:255',
             'options.*.is_correct' => 'nullable|boolean',
@@ -145,13 +149,16 @@ class QuestionController extends Controller
 
         $this->validateQuestionOptions($request);
 
-        DB::transaction(function () use ($request, $question) {
+        $questionImagePath = $this->uploadQuestionImage($request->file('question_image'), $question->question_image);
+
+        DB::transaction(function () use ($request, $question, $questionImagePath) {
             $question->update([
                 'subject_id' => $request->subject_id,
                 'type' => $request->type,
                 'question_text' => $request->question_text,
                 'difficulty_level' => $request->difficulty_level,
                 'explanation' => $request->explanation,
+                'question_image' => $questionImagePath,
             ]);
 
             $question->answerOptions()->delete();
@@ -384,7 +391,9 @@ class QuestionController extends Controller
      */
     private function getOrCreateDefaultBank(int $subjectId): int
     {
-        $bank = \App\Models\QuestionBank::where('subject_id', $subjectId)->first();
+        $bank = \App\Models\QuestionBank::where('subject_id', $subjectId)
+            ->where('bank_type', 'exam')
+            ->first();
         if ($bank) return $bank->id;
 
         $subject = Subject::find($subjectId);
@@ -392,6 +401,7 @@ class QuestionController extends Controller
             'subject_id' => $subjectId,
             'teacher_id' => auth()->id(),
             'name' => 'Саволҳои ' . ($subject->name ?? 'Фан'),
+            'bank_type' => 'exam',
             'is_active' => true,
         ]);
         return $bank->id;
@@ -433,5 +443,28 @@ class QuestionController extends Controller
             fclose($handle);
         }
         return $rows;
+    }
+
+    /**
+     * Бор кардани акси савол
+     */
+    private function uploadQuestionImage(?object $file, ?string $existingPath = null): ?string
+    {
+        if (!$file) {
+            return $existingPath;
+        }
+
+        if (!is_dir(public_path('images/questions'))) {
+            mkdir(public_path('images/questions'), 0755, true);
+        }
+
+        if ($existingPath && file_exists(public_path($existingPath))) {
+            unlink(public_path($existingPath));
+        }
+
+        $filename = 'question_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+        $file->move(public_path('images/questions'), $filename);
+
+        return 'images/questions/' . $filename;
     }
 }

@@ -119,8 +119,8 @@
             <tbody>
                 @foreach($grades as $grade)
                 <tr>
-                    <td>{{ $grade->curriculum?->subject?->name ?? '-' }}</td>
-                    <td class="text-center">{{ $grade->curriculum?->credits ?? '-' }}</td>
+                    <td>{{ $grade->subjectAssignment?->subject?->name ?? '-' }}</td>
+                    <td class="text-center">{{ $grade->subjectAssignment?->credits ?? '-' }}</td>
                     <td class="text-center">
                         {{ $grade->total_score !== null ? number_format($grade->total_score, 1) : '—' }}
                     </td>

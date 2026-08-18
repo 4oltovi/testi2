@@ -32,7 +32,7 @@ return new class extends Migration
         });
 
         // Нақшаи таълимӣ (Учебный план) — фан ба ихтисос/курс/семестр
-        Schema::create('curriculum', function (Blueprint $table) {
+        Schema::create('subject', function (Blueprint $table) {
             $table->id();
             $table->foreignId('specialty_id')->constrained()->cascadeOnDelete();
             $table->foreignId('subject_id')->constrained()->cascadeOnDelete();
@@ -57,7 +57,7 @@ return new class extends Migration
         // Таъинкунии омӯзгор ба фан/гурӯҳ дар семестри мушаххас
         Schema::create('subject_assignments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('curriculum_id')->constrained('curriculum')->cascadeOnDelete();
+            $table->foreignId('subject_id')->constrained('subject')->cascadeOnDelete();
             $table->foreignId('teacher_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('group_id')->constrained()->cascadeOnDelete();
             $table->foreignId('semester_id')->constrained()->cascadeOnDelete();
@@ -66,7 +66,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
-            $table->unique(['curriculum_id', 'teacher_id', 'group_id', 'lesson_type'], 'subject_assign_unique');
+            $table->unique(['subject_id', 'teacher_id', 'group_id', 'lesson_type'], 'subject_assign_unique');
             $table->index(['teacher_id', 'semester_id']);
             $table->index(['group_id', 'semester_id']);
         });
@@ -75,7 +75,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('subject_assignments');
-        Schema::dropIfExists('curriculum');
+        Schema::dropIfExists('subject');
         Schema::dropIfExists('subjects');
     }
 };

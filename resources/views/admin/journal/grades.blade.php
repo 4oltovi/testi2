@@ -3,7 +3,7 @@
 @section('title', 'Баҳоҳои ҷорӣ')
 @section('page-header', 'Баҳоҳои ҷорӣ')
 @section('page-description')
-    {{ $subjectAssignment->curriculum?->subject?->name }} | {{ $subjectAssignment->group?->name }} | {{ $semester->name }}
+    {{ $subjectAssignment->subject?->name }} | {{ $subjectAssignment->group?->name }} | {{ $semester->name }}
 @endsection
 
 @section('content')

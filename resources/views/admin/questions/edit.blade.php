@@ -8,7 +8,7 @@
     <div class="col-12 col-lg-10">
         <div class="card border-0 shadow-sm">
             <div class="card-body">
-                <form method="POST" action="{{ route('admin.exams.questions.update', $question) }}">
+                <form method="POST" action="{{ route('admin.exams.questions.update', $question) }}" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
 
@@ -55,6 +55,21 @@
                             @error('question_text')
                             <div class="invalid-feedback d-block">{{ $message }}</div>
                             @enderror
+                        </div>
+
+                        @if($question->question_image)
+                        <div class="col-12">
+                            <label class="form-label">Акси ҷорӣ</label>
+                            <div class="mb-2">
+                                <img src="{{ asset($question->question_image) }}" alt="Акси савол" style="max-height: 200px; border: 1px solid #ddd; border-radius: 4px; padding: 4px;">
+                            </div>
+                        </div>
+                        @endif
+
+                        <div class="col-12">
+                            <label class="form-label">Акси савол (ихтиёрӣ)</label>
+                            <input type="file" name="question_image" class="form-control" accept="image/png,image/jpeg,image/webp">
+                            <small class="text-muted">Акс барои савол (png, jpg, webp), андозаи намуд: 2MB</small>
                         </div>
 
                         <div class="col-12" id="previewSection" style="display:none;">

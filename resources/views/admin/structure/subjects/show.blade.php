@@ -43,10 +43,10 @@
                             <th class="text-muted">Навъи санҷиш</th>
                             <td>
                                 @switch($subject->exam_type)
-                                    @case('exam') Имтиҳон @break
-                                    @case('credit') Синҷиш @break
-                                    @case('diff_credit') Синҷиши бо баҳо @break
-                                    @default {{ $subject->exam_type }}
+                                @case('exam') Имтиҳон @break
+                                @case('credit') Синҷиш @break
+                                @case('diff_credit') Синҷиши бо баҳо @break
+                                @default {{ $subject->exam_type }}
                                 @endswitch
                             </td>
                         </tr>
@@ -54,9 +54,9 @@
                             <th class="text-muted">Ҳолат</th>
                             <td>
                                 @if($subject->is_active)
-                                    <span class="badge bg-success">Фаъол</span>
+                                <span class="badge bg-success">Фаъол</span>
                                 @else
-                                    <span class="badge bg-secondary">Ғайрифаъол</span>
+                                <span class="badge bg-secondary">Ғайрифаъол</span>
                                 @endif
                             </td>
                         </tr>
@@ -75,27 +75,27 @@
                 <h6 class="mb-0"><i class="bi bi-journal-text me-2"></i> Нақшаи таълимӣ</h6>
             </div>
             <div class="card-body">
-                @if($subject->curriculum && $subject->curriculum->count() > 0)
-                    <table class="table table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th>Ихтисос</th>
-                                <th>Семестр</th>
-                                <th>Кредитҳо</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($subject->curriculum as $curr)
-                                <tr>
-                                    <td>{{ $curr->specialty->name }}</td>
-                                    <td>{{ $curr->semester->name }}</td>
-                                    <td>{{ $curr->credits }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                @if($subject->subjectAssignments && $subject->subjectAssignments->count() > 0)
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Ихтисос</th>
+                            <th>Семестр</th>
+                            <th>Кредитҳо</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($subject->subjectAssignments as $assignment)
+                        <tr>
+                            <td>{{ $assignment->specialty->name }}</td>
+                            <td>{{ $assignment->semester->name }}</td>
+                            <td>{{ $subject->credits }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
                 @else
-                    <p class="text-muted mb-0">Дар нақшаи таълимӣ ёфт нашуд</p>
+                <p class="text-muted mb-0">Дар нақшаи таълимӣ ёфт нашуд</p>
                 @endif
             </div>
         </div>

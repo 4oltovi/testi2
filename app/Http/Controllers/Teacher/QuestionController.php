@@ -10,7 +10,7 @@ class QuestionController extends Controller
 {
     public function index(Request $request)
     {
-        $questions = Question::whereHas('questionBank', fn($q) => $q->where('teacher_id', $request->user()->id))
+        $questions = Question::whereHas('questionBank', fn($q) => $q->where('teacher_id', $request->user()->id)->where('bank_type', 'exam'))
             ->with('questionBank')
             ->latest()
             ->paginate(30);

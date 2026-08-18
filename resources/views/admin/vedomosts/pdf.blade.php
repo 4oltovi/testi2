@@ -64,8 +64,8 @@
                 if ($logoPath && file_exists(public_path($logoPath))) {
                 $size = @getimagesize(public_path($logoPath));
                 if ($size && $size[0] > 0 && $size[1] > 0) {
-                $maxW = 100; 
-                $maxH = 100; 
+                $maxW = 100;
+                $maxH = 100;
                 $k = min($maxW / $size[0], $maxH / $size[1], 1);
                 $w = (int) round($size[0] * $k);
                 $h = (int) round($size[1] * $k);
@@ -81,12 +81,12 @@
             {{-- Маълумотҳо аз ду тараф --}}
             <table style="width:100%; border:none; border-collapse:collapse;">
                 <tr>
-                    <td style="border:none; padding:2px 0;">Факултет: {{ optional(optional(optional($v->group)->specialty)->faculty)->name ?? optional(optional($v->group)->specialty)->name ?? '-' }}</td>
+                    <td style="border:none; padding:2px 0;">Факултет: {{ $v->group?->specialty?->department?->faculty?->name ?? '-' }}</td>
                     <td style="border:none; padding:2px 0; text-align:right;"></td>
                 </tr>
                 <tr>
                     <td style="border:none; padding:2px 0;">Ихтисос: {{ optional(optional($v->group)->specialty)->name ?? '-' }}</td>
-                    <td style="border:none; padding:2px 0; text-align:right;">Миқдори кредит: <b>{{ optional($v->subject)->credits ?? '-' }}</b></td>
+                    <td style="border:none; padding:2px 0; text-align:right;">Миқдори кредит: <b>{{ $v->subjectAssignment?->credits ?? $v->subject?->credits }}</b></td>
                 </tr>
                 <tr>
                     <td style="border:none; padding:2px 0;">Гурӯҳ: <b>{{ optional($v->group)->name ?? '-' }}</b></td>

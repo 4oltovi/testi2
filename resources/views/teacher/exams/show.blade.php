@@ -3,7 +3,7 @@
 @section('title', $exam->title)
 @section('page-header', $exam->title)
 @section('page-description')
-    {{ $exam->subjectAssignment?->curriculum?->subject?->name }} | {{ $exam->group?->name }}
+    {{ $exam->subjectAssignment?->subject?->name }} | {{ $exam->group?->name }}
 @endsection
 
 @section('content')

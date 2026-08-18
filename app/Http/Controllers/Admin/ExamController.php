@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Curriculum;
 use App\Models\Exam;
 use App\Models\ExamQuestion;
 use App\Models\Group;
@@ -22,7 +21,7 @@ class ExamController extends Controller
     {
         $semesters = Semester::with('academicYear')->orderByDesc('start_date')->get();
 
-        $query = Exam::query()->with(['subjectAssignment.curriculum.subject', 'group']);
+        $query = Exam::query()->with(['subjectAssignment.subject', 'group']);
 
         if ($request->filled('semester_id')) {
             $query->where('semester_id', $request->semester_id);
@@ -64,12 +63,11 @@ class ExamController extends Controller
 
         $semester = Semester::current();
         $subjectId = $request->subject_id;
-        $curriculum = Curriculum::where('subject_id', $subjectId)
-            ->where('is_active', true)
-            ->first();
 
-        if (!$curriculum) {
-            return back()->withErrors(['subject_id' => 'Барои ин фан программаи фаъол ёфт нашуд.'])->withInput();
+        // Санҷиш: оё фан мавҷуд аст?
+        $subject = Subject::find($subjectId);
+        if (!$subject) {
+            return back()->withErrors(['subject_id' => 'Фан ёфт нашуд.'])->withInput();
         }
 
         $created = 0;
@@ -79,10 +77,10 @@ class ExamController extends Controller
 
             $assignment = SubjectAssignment::firstOrCreate(
                 [
-                    'curriculum_id' => $curriculum->id,
+                    'subject_id' => $subjectId,
                     'teacher_id' => $request->user()->id,
                     'group_id' => $group->id,
-                    'semester_id' => $semester?->id ?? $curriculum->semester_id,
+                    'semester_id' => $semester?->id,
                 ],
                 [
                     'lesson_type' => 'theory',
@@ -93,7 +91,7 @@ class ExamController extends Controller
 
             Exam::create([
                 'subject_assignment_id' => $assignment->id,
-                'semester_id' => $semester?->id ?? $curriculum->semester_id,
+                'semester_id' => $semester?->id,
                 'teacher_id' => $request->user()->id,
                 'group_id' => $group->id,
                 'title' => $request->title ?: 'Имтиҳони ' . $group->name,
@@ -123,7 +121,7 @@ class ExamController extends Controller
 
     public function edit(Exam $exam): View
     {
-        $exam->load(['subjectAssignment.curriculum.subject', 'group']);
+        $exam->load(['subjectAssignment.subject', 'group']);
 
         return view('admin.exams.edit', compact('exam'));
     }
@@ -170,26 +168,27 @@ class ExamController extends Controller
 
     public function show(Exam $exam): View
     {
-        $exam->load(['subjectAssignment.curriculum.subject', 'group', 'attempts']);
+        $exam->load(['subjectAssignment.subject', 'group', 'attempts']);
 
         return view('admin.exams.show', compact('exam'));
     }
 
     public function questions(Exam $exam): View
     {
-        $exam->load(['subjectAssignment.curriculum.subject', 'group']);
+        $exam->load(['subjectAssignment.subject', 'group']);
 
         $examQuestions = $exam->examQuestions()->with('question.answerOptions')->orderBy('sort_order')->get();
 
-        $subjectId = $exam->subjectAssignment?->curriculum?->subject_id;
+        $subjectId = $exam->subjectAssignment?->subject_id;
 
         $availableQuestions = $subjectId
-            ? \App\Models\Question::where('subject_id', $subjectId)
-                ->where('is_active', true)
-                ->whereNotIn('id', $examQuestions->pluck('question_id'))
-                ->with('answerOptions')
-                ->orderBy('difficulty_level')
-                ->get()
+            ? Question::where('subject_id', $subjectId)
+            ->where('is_active', true)
+            ->whereHas('questionBank', fn($q) => $q->where('bank_type', 'exam'))
+            ->whereNotIn('id', $examQuestions->pluck('question_id'))
+            ->with('answerOptions')
+            ->orderBy('difficulty_level')
+            ->get()
             : collect();
 
         return view('admin.exams.questions', compact('exam', 'examQuestions', 'availableQuestions'));
@@ -201,6 +200,14 @@ class ExamController extends Controller
             'question_ids' => 'required|array',
             'question_ids.*' => 'exists:questions,id',
         ]);
+
+        $invalidQuestions = Question::whereIn('id', $request->question_ids)
+            ->whereHas('questionBank', fn($q) => $q->where('bank_type', '!=', 'exam'))
+            ->count();
+
+        if ($invalidQuestions > 0) {
+            return back()->with('error', 'Баъзе саволҳо ба банки имтиҳон тааллуқ надоранд. Танҳо саволҳои имтиҳонро илова кардан мумкин аст.');
+        }
 
         DB::transaction(function () use ($exam, $request) {
             $nextSort = $exam->examQuestions()->max('sort_order') ?? 0;
@@ -215,7 +222,7 @@ class ExamController extends Controller
                     'exam_id' => $exam->id,
                     'question_id' => $questionId,
                     'sort_order' => $nextSort,
-                    'points' => \App\Models\Question::find($questionId)?->weighted_points ?? 2.5,
+                    'points' => Question::find($questionId)?->weighted_points ?? 2.5,
                 ]);
             }
         });
@@ -225,7 +232,7 @@ class ExamController extends Controller
 
     public function results(Exam $exam): View
     {
-        $exam->load(['group', 'subjectAssignment.curriculum.subject', 'attempts.student.user']);
+        $exam->load(['group', 'subjectAssignment.subject', 'attempts.student.user']);
 
         $attempts = $exam->attempts()->with(['student.user'])->orderByDesc('total_score')->get();
 
@@ -234,12 +241,41 @@ class ExamController extends Controller
 
     public function publish(Exam $exam): RedirectResponse
     {
-        $existingQuestionIds = $exam->examQuestions()->pluck('question_id')->all();
-        $subjectId = $exam->subjectAssignment?->curriculum?->subject_id;
+        $subjectAssignment = $exam->subjectAssignment;
+        $subjectId = $subjectAssignment?->subject_id;
 
-        if ($subjectId && empty($existingQuestionIds)) {
+        if (!$subjectId) {
+            return back()->with('error', 'Имтиҳон бо фан алоқаманд нест. Аввал фанро танзим кунед.');
+        }
+
+        $existingQuestionIds = $exam->examQuestions()->pluck('question_id')->all();
+
+        $nonExamQuestions = Question::whereIn('id', $existingQuestionIds)
+            ->whereHas('questionBank', fn($q) => $q->where('bank_type', '!=', 'exam'))
+            ->count();
+
+        if ($nonExamQuestions > 0) {
+            $exam->examQuestions()
+                ->whereHas('question.questionBank', fn($q) => $q->where('bank_type', '!=', 'exam'))
+                ->delete();
+            $existingQuestionIds = $exam->examQuestions()->pluck('question_id')->all();
+        }
+
+        $wrongSubjectQuestions = Question::whereIn('id', $existingQuestionIds)
+            ->where('subject_id', '!=', $subjectId)
+            ->count();
+
+        if ($wrongSubjectQuestions > 0) {
+            $exam->examQuestions()
+                ->whereHas('question', fn($q) => $q->where('subject_id', '!=', $subjectId))
+                ->delete();
+            $existingQuestionIds = $exam->examQuestions()->pluck('question_id')->all();
+        }
+
+        if (empty($existingQuestionIds)) {
             $availableQuestions = Question::where('subject_id', $subjectId)
                 ->where('is_active', true)
+                ->whereHas('questionBank', fn($q) => $q->where('bank_type', 'exam'))
                 ->whereNotIn('id', $existingQuestionIds)
                 ->orderBy('difficulty_level')
                 ->limit((int) $exam->total_questions_count)
@@ -260,7 +296,7 @@ class ExamController extends Controller
         $questionsCount = $exam->examQuestions()->count();
 
         if ($questionsCount < $exam->total_questions_count) {
-            return back()->with('error', 'Барои нашр кардани имтиҳон, шумораи саволҳо бояд ба ' . $exam->total_questions_count . ' расад. Ҳозир ' . $questionsCount . ' мавҷуд аст.');
+            return back()->with('error', 'Барои нашр кардани имтиҳон, шумораи саволҳо бояд ба ' . $exam->total_questions_count . ' расад. Ҳозир ' . $questionsCount . ' мавҷуд аст. Банки саволҳои имтиҳонро санҷед.');
         }
 
         $exam->update([
