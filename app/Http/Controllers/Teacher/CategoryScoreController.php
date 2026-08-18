@@ -32,15 +32,19 @@ class CategoryScoreController extends Controller
         // Сана ва шумораи дарс
         $date = $request->get('date', now()->format('Y-m-d'));
         $lessonNumber = (int) $request->get('lesson_number', 1);
+        $period = $request->get('period', 'rating1');
 
-        // Баҳоҳои мавҷуда барои ин дарс
-        $existingScores = CategoryScore::forLesson($subjectAssignment->id, $date, $lessonNumber)
+        // Баҳоҳои мавҷуда барои ин дарс ва периоде
+        $existingScores = CategoryScore::where('subject_assignment_id', $subjectAssignment->id)
+            ->where('lesson_date', $date)
+            ->where('lesson_number', $lessonNumber)
+            ->where('period', $period)
             ->get()
             ->groupBy(fn($s) => $s->student_id . '_' . $s->category->value);
 
         return view('teacher.journal.category-scores', compact(
             'subjectAssignment', 'students', 'semester',
-            'categorySettings', 'date', 'lessonNumber', 'existingScores'
+            'categorySettings', 'date', 'lessonNumber', 'period', 'existingScores'
         ));
     }
 
@@ -54,6 +58,7 @@ class CategoryScoreController extends Controller
         $request->validate([
             'date' => 'required|date',
             'lesson_number' => 'required|integer|min:1|max:8',
+            'period' => 'required|in:rating1,rating2',
             'scores' => 'required|array',
             'scores.*' => 'array',
             'scores.*.*' => 'nullable|numeric|min:0',
@@ -69,8 +74,9 @@ class CategoryScoreController extends Controller
         }
         $date = $request->input('date');
         $lessonNumber = $request->input('lesson_number');
+        $period = $request->input('period', 'rating1');
 
-        DB::transaction(function () use ($subjectAssignment, $request, $semester, $maxScores, $date, $lessonNumber) {
+        DB::transaction(function () use ($subjectAssignment, $request, $semester, $maxScores, $date, $lessonNumber, $period) {
             foreach ($request->input('scores') as $studentId => $categories) {
                 foreach ($categories as $categoryValue => $score) {
                     if ($score === null || $score === '') continue;
@@ -90,6 +96,7 @@ class CategoryScoreController extends Controller
                             'lesson_date' => $date,
                             'lesson_number' => $lessonNumber,
                             'category' => $categoryValue,
+                            'period' => $period,
                         ],
                         [
                             'semester_id' => $semester->id,

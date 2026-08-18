@@ -58,9 +58,6 @@ class GradeCalculator
     // ================================================================
     public function calculateJournalPercentage(int $studentId, int $subjectAssignmentId, int $semesterId, string $period = 'rating1'): float
     {
-        $weekStart = (int) Setting::get("{$period}_week_start", $period === 'rating1' ? 1 : 9);
-        $weekEnd = (int) Setting::get("{$period}_week_end", $period === 'rating1' ? 8 : 16);
-
         $semester = Semester::find($semesterId);
 
         if (!$semester || !$semester->start_date) {
@@ -70,6 +67,7 @@ class GradeCalculator
         $scores = CategoryScore::where('student_id', $studentId)
             ->where('subject_assignment_id', $subjectAssignmentId)
             ->where('semester_id', $semesterId)
+            ->where('period', $period)
             ->get();
 
         if ($scores->isNotEmpty()) {
@@ -81,7 +79,7 @@ class GradeCalculator
         $grades = CurrentGrade::where('student_id', $studentId)
             ->where('subject_assignment_id', $subjectAssignmentId)
             ->where('semester_id', $semesterId)
-            ->whereBetween('week_number', [$weekStart, $weekEnd])
+            ->whereBetween('week_number', [1, $period === 'rating1' ? 8 : 16])
             ->get();
 
         return $this->calculateAverageScore($grades);

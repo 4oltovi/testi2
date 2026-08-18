@@ -20,16 +20,23 @@
                     <input type="number" name="lesson_number" class="form-control" min="1" max="8" value="{{ $lessonNumber }}">
                 </div>
                 <div class="col-md-2">
+                    <label class="form-label">Рейтинг</label>
+                    <select name="period" class="form-select" onchange="this.form.submit()">
+                        <option value="rating1" {{ $period == 'rating1' ? 'selected' : '' }}>Рейтинги 1 (Ҳафтаҳои 1-8)</option>
+                        <option value="rating2" {{ $period == 'rating2' ? 'selected' : '' }}>Рейтинги 2 (Ҳафтаҳои 9-16)</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
                     <button type="submit" class="btn btn-outline-primary">
                         <i class="bi bi-search me-1"></i> Нишон деҳ
                     </button>
                 </div>
-                <div class="col-md-5 text-end">
+                <div class="col-md-3 text-end">
                     @php
                         $routePrefix = request()->is('admin/*') ? 'admin.journal' : 'teacher.journal';
                     @endphp
                     <a href="{{ route($routePrefix . '.category-settings', $subjectAssignment) }}" class="btn btn-outline-secondary btn-sm">
-                        <i class="bi bi-gear me-1"></i> Танзимоти категорияҳо
+                        <i class="bi bi-gear me-1"></i> Танзимот
                     </a>
                     <a href="{{ route($routePrefix . '.category-report', $subjectAssignment) }}" class="btn btn-outline-info btn-sm">
                         <i class="bi bi-bar-chart me-1"></i> Гузориш
@@ -44,7 +51,8 @@
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
             <h6 class="mb-0">
                 <i class="bi bi-journal-check me-2"></i>
-                Баҳогузорӣ: {{ \Carbon\Carbon::parse($date)->format('d.m.Y') }} — Дарси {{ $lessonNumber }}
+                {{ $period == 'rating1' ? 'Рейтинги 1 (Ҳафтаҳои 1-8)' : 'Рейтинги 2 (Ҳафтаҳои 9-16)' }}:
+                {{ \Carbon\Carbon::parse($date)->format('d.m.Y') }} — Дарси {{ $lessonNumber }}
             </h6>
             <div>
                 @foreach($categorySettings->where('is_active', true) as $cs)
@@ -59,6 +67,7 @@
                 @csrf
                 <input type="hidden" name="date" value="{{ $date }}">
                 <input type="hidden" name="lesson_number" value="{{ $lessonNumber }}">
+                <input type="hidden" name="period" value="{{ $period }}">
 
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered table-hover mb-0">

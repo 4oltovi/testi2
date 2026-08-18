@@ -10,7 +10,7 @@ class CategoryScore extends Model
 {
     protected $fillable = [
         'student_id', 'subject_assignment_id', 'semester_id',
-        'lesson_date', 'lesson_number', 'category',
+        'lesson_date', 'lesson_number', 'category', 'period',
         'score', 'max_score', 'graded_by',
     ];
 
