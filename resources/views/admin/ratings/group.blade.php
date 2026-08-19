@@ -3,7 +3,7 @@
 @section('title', 'Рейтинги гурӯҳ: ' . $group->name)
 @section('page-header', 'Рейтинги гурӯҳ: ' . $group->name)
 @section('page-description')
-    {{ $group->specialty->name ?? '' }} | Курси {{ $group->course }} | {{ $group->specialty->faculty->name ?? '' }}
+    {{ $group->specialty->name ?? '' }} | Курси {{ $group->course?->number ?? $group->course?->name ?? '' }} | {{ $group->specialty->department?->faculty?->name ?? '' }}
 @endsection
 
 @section('content')
