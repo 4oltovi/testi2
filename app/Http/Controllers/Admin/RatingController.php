@@ -26,10 +26,17 @@ class RatingController extends Controller
     {
         $currentSemester = Semester::current();
         $semesterId = $request->get('semester_id', $currentSemester?->id);
+        $academicYearId = $request->get('academic_year_id');
 
-        $semesters = Semester::with('academicYear')->orderByDesc('start_date')->get();
+        $query = Semester::with('academicYear')->orderByDesc('start_date');
+        if ($academicYearId) {
+            $query->where('academic_year_id', $academicYearId);
+        }
+        $semesters = $query->get();
+
         $faculties = Faculty::active()->orderBy('sort_order')->get();
         $groups = Group::active()->orderBy('name')->get();
+        $academicYears = \App\Models\AcademicYear::orderByDesc('start_date')->get();
 
         $facultyRating = $semesterId ? $this->ratingService->getFacultyRating($semesterId) : collect();
         $topStudents = $semesterId ? $this->ratingService->getTopStudents($semesterId, 10) : collect();
@@ -53,8 +60,10 @@ class RatingController extends Controller
             'semesters',
             'faculties',
             'groups',
+            'academicYears',
             'currentSemester',
             'semesterId',
+            'academicYearId',
             'facultyRating',
             'topStudents',
             'groupStats'
@@ -65,19 +74,33 @@ class RatingController extends Controller
     {
         $currentSemester = Semester::current();
         $semesterId = $request->get('semester_id', $currentSemester?->id);
-        $semesters = Semester::with('academicYear')->orderByDesc('start_date')->get();
+        $academicYearId = $request->get('academic_year_id');
+
+        $query = Semester::with('academicYear')->orderByDesc('start_date');
+        if ($academicYearId) {
+            $query->where('academic_year_id', $academicYearId);
+        }
+        $semesters = $query->get();
+        $academicYears = \App\Models\AcademicYear::orderByDesc('start_date')->get();
 
         $groupRating = $semesterId ? $this->ratingService->getGroupRating($group->id, $semesterId) : collect();
         $group->load(['specialty.department.faculty', 'course']);
 
-        return view('admin.ratings.group', compact('group', 'groupRating', 'semesters', 'semesterId'));
+        return view('admin.ratings.group', compact('group', 'groupRating', 'semesters', 'semesterId', 'academicYears', 'academicYearId'));
     }
 
     public function faculty(Faculty $faculty, Request $request): View
     {
         $currentSemester = Semester::current();
         $semesterId = $request->get('semester_id', $currentSemester?->id);
-        $semesters = Semester::with('academicYear')->orderByDesc('start_date')->get();
+        $academicYearId = $request->get('academic_year_id');
+
+        $query = Semester::with('academicYear')->orderByDesc('start_date');
+        if ($academicYearId) {
+            $query->where('academic_year_id', $academicYearId);
+        }
+        $semesters = $query->get();
+        $academicYears = \App\Models\AcademicYear::orderByDesc('start_date')->get();
 
         $groupsRating = $semesterId
             ? $this->ratingService->getGroupsRating($semesterId, $faculty->id)
@@ -87,14 +110,21 @@ class RatingController extends Controller
             ? $this->ratingService->getTopStudents($semesterId, 20, $faculty->id)
             : collect();
 
-        return view('admin.ratings.faculty', compact('faculty', 'groupsRating', 'topStudents', 'semesters', 'semesterId'));
+        return view('admin.ratings.faculty', compact('faculty', 'groupsRating', 'topStudents', 'semesters', 'semesterId', 'academicYears', 'academicYearId'));
     }
 
     public function topStudents(Request $request): View
     {
         $currentSemester = Semester::current();
         $semesterId = $request->get('semester_id', $currentSemester?->id);
-        $semesters = Semester::with('academicYear')->orderByDesc('start_date')->get();
+        $academicYearId = $request->get('academic_year_id');
+
+        $query = Semester::with('academicYear')->orderByDesc('start_date');
+        if ($academicYearId) {
+            $query->where('academic_year_id', $academicYearId);
+        }
+        $semesters = $query->get();
+        $academicYears = \App\Models\AcademicYear::orderByDesc('start_date')->get();
         $faculties = Faculty::active()->get();
         $facultyId = $request->get('faculty_id');
 
@@ -102,6 +132,6 @@ class RatingController extends Controller
             ? $this->ratingService->getTopStudents($semesterId, 50, $facultyId)
             : collect();
 
-        return view('admin.ratings.top-students', compact('topStudents', 'semesters', 'faculties', 'semesterId', 'facultyId'));
+        return view('admin.ratings.top-students', compact('topStudents', 'semesters', 'semesterId', 'academicYears', 'academicYearId', 'faculties'));
     }
 }

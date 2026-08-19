@@ -8,12 +8,23 @@
 <div class="card mb-4">
     <div class="card-body">
         <form method="GET" action="{{ url()->current() }}" class="row g-3 align-items-end">
-            <div class="col-md-4">
+            <div class="col-md-3">
+                <label for="academic_year_id" class="form-label">Соли таҳсил</label>
+                <select name="academic_year_id" id="academic_year_id" class="form-select">
+                    <option value="">Ҳамаи солҳо</option>
+                    @foreach($academicYears ?? [] as $year)
+                        <option value="{{ $year->id }}" {{ ($academicYearId ?? '') == $year->id ? 'selected' : '' }}>
+                            {{ $year->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-3">
                 <label for="semester_id" class="form-label">Семестр</label>
                 <select name="semester_id" id="semester_id" class="form-select">
                     <option value="">Ҳамаи семестрҳо</option>
                     @foreach($semesters as $semester)
-                        <option value="{{ $semester->id }}" {{ $semesterId == $semester->id ? 'selected' : '' }}>
+                        <option value="{{ $semester->id }}" {{ $semesterId == $semester->id ? 'selected' : '' }} data-year="{{ $semester->academic_year_id }}">
                             {{ $semester->name }}
                         </option>
                     @endforeach
@@ -129,4 +140,39 @@
         <i class="bi bi-arrow-left"></i> Бозгашт
     </a>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const yearSelect = document.getElementById('academic_year_id');
+    const semesterSelect = document.getElementById('semester_id');
+
+    if (yearSelect && semesterSelect) {
+        function filterSemesters() {
+            const selectedYear = yearSelect.value;
+            const options = semesterSelect.querySelectorAll('option[data-year]');
+
+            options.forEach(option => {
+                if (!selectedYear || option.dataset.year === selectedYear) {
+                    option.hidden = false;
+                } else {
+                    option.hidden = true;
+                }
+            });
+
+            const currentOption = semesterSelect.querySelector('option:checked');
+            if (currentOption && currentOption.hidden) {
+                const visibleOptions = semesterSelect.querySelectorAll('option[data-year]:not([hidden])');
+                if (visibleOptions.length > 0) {
+                    visibleOptions[0].selected = true;
+                }
+            }
+        }
+
+        yearSelect.addEventListener('change', filterSemesters);
+        filterSemesters();
+    }
+});
+</script>
 @endsection
