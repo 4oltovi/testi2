@@ -23,12 +23,17 @@ class VedomostController extends Controller
     public function index(Request $request)
     {
         $academicYears = AcademicYear::orderBy('id', 'desc')->get();
-        $semesters     = Semester::orderBy('id')->get();
-        $groups        = Group::orderBy('name')->get();
+        $yearId = $request->input('academic_year_id');
 
-        $groupId    = $request->input('group_id');
+        $semesterQuery = Semester::orderBy('id');
+        if ($yearId) {
+            $semesterQuery->where('academic_year_id', $yearId);
+        }
+        $semesters = $semesterQuery->get();
+        $groups = Group::orderBy('name')->get();
+
+        $groupId = $request->input('group_id');
         $semesterId = $request->input('semester_id');
-        $yearId     = $request->input('academic_year_id');
 
         $vedomosts = collect();
 
@@ -43,7 +48,7 @@ class VedomostController extends Controller
                     ['subject_assignment_id' => $a->id, 'semester_id' => $a->semester_id],
                     [
                         'group_id'         => $a->group_id,
-                        'subject_id'       => $a->subject_id,  // ← ИСЛОҲ ШУД
+                        'subject_id'       => $a->subject_id,
                         'teacher_id'       => $a->teacher_id,
                         'academic_year_id' => $yearId ?: $a->group?->academic_year_id,
                         'status'           => 'draft',

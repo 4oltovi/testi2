@@ -23,7 +23,7 @@
             <form method="GET" action="{{ url('admin/vedomosts') }}" class="row g-3">
                 <div class="col-md-3">
                     <label class="form-label">Соли хониш</label>
-                    <select name="academic_year_id" class="form-select">
+                    <select name="academic_year_id" id="academic_year_id" class="form-select">
                         <option value="">— Интихоб кунед —</option>
                         @foreach($academicYears as $y)
                         <option value="{{ $y->id }}" {{ $yearId == $y->id ? 'selected' : '' }}>
@@ -34,10 +34,10 @@
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Семестр</label>
-                    <select name="semester_id" class="form-select">
+                    <select name="semester_id" id="semester_id" class="form-select">
                         <option value="">— Интихоб кунед —</option>
                         @foreach($semesters as $s)
-                        <option value="{{ $s->id }}" {{ $semesterId == $s->id ? 'selected' : '' }}>
+                        <option value="{{ $s->id }}" {{ $semesterId == $s->id ? 'selected' : '' }} data-year="{{ $s->academic_year_id ?? '' }}">
                             {{ $s->name ?? ('Семестри ' . ($s->number ?? $s->id)) }}
                         </option>
                         @endforeach
@@ -101,4 +101,39 @@
     </div>
     @endif
 </div>
+@endsection
+
+@section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const yearSelect = document.getElementById('academic_year_id');
+    const semesterSelect = document.getElementById('semester_id');
+
+    if (yearSelect && semesterSelect) {
+        function filterSemesters() {
+            const selectedYear = yearSelect.value;
+            const options = semesterSelect.querySelectorAll('option[data-year]');
+
+            options.forEach(option => {
+                if (!selectedYear || option.dataset.year === selectedYear) {
+                    option.hidden = false;
+                } else {
+                    option.hidden = true;
+                }
+            });
+
+            const currentOption = semesterSelect.querySelector('option:checked');
+            if (currentOption && currentOption.hidden) {
+                const visibleOptions = semesterSelect.querySelectorAll('option[data-year]:not([hidden])');
+                if (visibleOptions.length > 0) {
+                    visibleOptions[0].selected = true;
+                }
+            }
+        }
+
+        yearSelect.addEventListener('change', filterSemesters);
+        filterSemesters();
+    }
+});
+</script>
 @endsection

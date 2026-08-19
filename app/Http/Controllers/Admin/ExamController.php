@@ -19,7 +19,15 @@ class ExamController extends Controller
 {
     public function index(Request $request): View
     {
-        $semesters = Semester::with('academicYear')->orderByDesc('start_date')->get();
+        $academicYearId = $request->get('academic_year_id');
+        $semesterId = $request->get('semester_id');
+
+        $query = Semester::with('academicYear')->orderByDesc('start_date');
+        if ($academicYearId) {
+            $query->where('academic_year_id', $academicYearId);
+        }
+        $semesters = $query->get();
+        $academicYears = \App\Models\AcademicYear::orderByDesc('start_date')->get();
 
         $query = Exam::query()->with(['subjectAssignment.subject', 'group']);
 
@@ -33,7 +41,7 @@ class ExamController extends Controller
 
         $exams = $query->latest()->paginate(20);
 
-        return view('admin.exams.index', compact('exams', 'semesters'));
+        return view('admin.exams.index', compact('exams', 'semesters', 'academicYears', 'academicYearId'));
     }
 
     public function create(): View

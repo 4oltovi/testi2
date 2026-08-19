@@ -144,6 +144,14 @@ class ReportController extends Controller
         $currentSemester = Semester::current();
         $semesterId = $request->get('semester_id', $currentSemester?->id);
         $groupId = $request->get('group_id');
+        $academicYearId = $request->get('academic_year_id');
+
+        $query = Semester::with('academicYear')->orderByDesc('start_date');
+        if ($academicYearId) {
+            $query->where('academic_year_id', $academicYearId);
+        }
+        $semesters = $query->get();
+        $academicYears = \App\Models\AcademicYear::orderByDesc('start_date')->get();
 
         $results = collect();
 
@@ -160,9 +168,8 @@ class ReportController extends Controller
         }
 
         $groups = Group::active()->orderBy('name')->get();
-        $semesters = Semester::with('academicYear')->orderByDesc('start_date')->get();
 
-        return view('admin.reports.exam-results', compact('results', 'groups', 'semesters', 'semesterId', 'groupId'));
+        return view('admin.reports.exam-results', compact('results', 'groups', 'semesters', 'semesterId', 'groupId', 'academicYears', 'academicYearId'));
     }
 
     public function export(string $type, Request $request)
