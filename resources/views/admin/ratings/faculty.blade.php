@@ -55,27 +55,27 @@
                                     <tr>
                                         <td>{{ $index + 1 }}</td>
                                         <td>
-                                            <a href="{{ url('/admin/ratings/group/' . ($group->group_id ?? $group->id)) }}">
-                                                {{ $group->group_name }}
+                                            <a href="{{ url('/admin/ratings/group/' . ($group['group_id'] ?? $group['id'] ?? '')) }}">
+                                                {{ $group['group_name'] }}
                                             </a>
                                         </td>
-                                        <td>{{ $group->specialty }}</td>
+                                        <td>{{ $group['specialty'] }}</td>
                                         <td>
-                                            <span class="fw-bold {{ $group->avg_gpa >= 4.0 ? 'text-success' : ($group->avg_gpa >= 3.0 ? 'text-primary' : 'text-warning') }}">
-                                                {{ number_format($group->avg_gpa, 2) }}
+                                            <span class="fw-bold {{ $group['avg_gpa'] >= 4.0 ? 'text-success' : ($group['avg_gpa'] >= 3.0 ? 'text-primary' : 'text-warning') }}">
+                                                {{ number_format($group['avg_gpa'], 2) }}
                                             </span>
                                         </td>
-                                        <td>{{ $group->total_students }}</td>
+                                        <td>{{ $group['total_students'] }}</td>
                                         <td>
-                                            @if($group->students_with_debts > 0)
-                                                <span class="text-danger">{{ $group->students_with_debts }}</span>
+                                            @if($group['students_with_debts'] > 0)
+                                                <span class="text-danger">{{ $group['students_with_debts'] }}</span>
                                             @else
                                                 <span class="text-success">0</span>
                                             @endif
                                         </td>
                                         <td>
-                                            <span class="badge {{ $group->quality_percentage >= 70 ? 'bg-success' : ($group->quality_percentage >= 50 ? 'bg-warning' : 'bg-danger') }}">
-                                                {{ number_format($group->quality_percentage, 1) }}%
+                                            <span class="badge {{ $group['quality_percentage'] >= 70 ? 'bg-success' : ($group['quality_percentage'] >= 50 ? 'bg-warning' : 'bg-danger') }}">
+                                                {{ number_format($group['quality_percentage'], 1) }}%
                                             </span>
                                         </td>
                                     </tr>
@@ -101,19 +101,19 @@
             </div>
             <div class="card-body p-0">
                 @if($topStudents->count() > 0)
-                    <ul class="list-group list-group-flush">
-                        @foreach($topStudents as $index => $student)
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <span class="badge bg-secondary me-2">{{ $index + 1 }}</span>
-                                    <strong>{{ $student->student_name }}</strong>
-                                    <br>
-                                    <small class="text-muted">{{ $student->group }}</small>
-                                </div>
-                                <span class="badge bg-primary rounded-pill">{{ number_format($student->gpa, 2) }}</span>
-                            </li>
-                        @endforeach
-                    </ul>
+                        <ul class="list-group list-group-flush">
+                            @foreach($topStudents as $index => $student)
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="badge bg-secondary me-2">{{ $index + 1 }}</span>
+                                        <strong>{{ $student['student_name'] }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ $student['group'] }}</small>
+                                    </div>
+                                    <span class="badge bg-primary rounded-pill">{{ number_format($student['gpa'], 2) }}</span>
+                                </li>
+                            @endforeach
+                        </ul>
                 @else
                     <div class="text-center py-4 text-muted">
                         <p class="mb-0">Маълумот вуҷуд надорад</p>

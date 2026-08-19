@@ -51,18 +51,18 @@
                         @foreach($groupRating as $index => $rating)
                             <tr>
                                 <td>{{ $index + 1 }}</td>
-                                <td>{{ $rating->student_name }}</td>
+                                <td>{{ $rating['student_name'] }}</td>
                                 <td>
-                                    <span class="fw-bold {{ $rating->gpa >= 4.0 ? 'text-success' : ($rating->gpa >= 3.0 ? 'text-primary' : ($rating->gpa >= 2.0 ? 'text-warning' : 'text-danger')) }}">
-                                        {{ number_format($rating->gpa, 2) }}
+                                    <span class="fw-bold {{ $rating['gpa'] >= 4.0 ? 'text-success' : ($rating['gpa'] >= 3.0 ? 'text-primary' : ($rating['gpa'] >= 2.0 ? 'text-warning' : 'text-danger')) }}">
+                                        {{ number_format($rating['gpa'], 2) }}
                                     </span>
                                 </td>
-                                <td>{{ number_format($rating->cumulative_gpa, 2) }}</td>
-                                <td>{{ $rating->credits_earned }}</td>
-                                <td><span class="text-success">{{ $rating->subjects_passed }}</span></td>
-                                <td><span class="text-danger">{{ $rating->subjects_failed }}</span></td>
+                                <td>{{ number_format($rating['cumulative_gpa'], 2) }}</td>
+                                <td>{{ $rating['credits_earned'] }}</td>
+                                <td><span class="text-success">{{ $rating['subjects_passed'] }}</span></td>
+                                <td><span class="text-danger">{{ $rating['subjects_failed'] }}</span></td>
                                 <td>
-                                    @if($rating->has_debts)
+                                    @if($rating['has_debts'])
                                         <span class="badge bg-danger">Ҳа</span>
                                     @else
                                         <span class="badge bg-success">Не</span>
