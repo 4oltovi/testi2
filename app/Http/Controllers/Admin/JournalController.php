@@ -108,15 +108,15 @@ class JournalController extends Controller
         $created = 0;
 
         foreach ($request->group_ids as $groupId) {
-            $assignment = SubjectAssignment::firstOrCreate(
+            $assignment = SubjectAssignment::updateOrCreate(
                 [
                     'subject_id' => $subjectId,
                     'teacher_id' => $request->teacher_id,
                     'group_id' => $groupId,
-                    'semester_id' => $semesterId,
                     'lesson_type' => $request->lesson_type ?? 'practice',
                 ],
                 [
+                    'semester_id' => $semesterId,
                     'hours_per_week' => $request->hours_per_week ?? 2,
                     'is_active' => true,
                     'credits' => $request->credits,
