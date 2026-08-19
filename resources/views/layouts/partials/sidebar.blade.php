@@ -253,3 +253,12 @@
         </ul>
     </nav>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const activeLink = document.querySelector('.sidebar .nav-link.active');
+    if (activeLink) {
+        activeLink.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+});
+</script>
