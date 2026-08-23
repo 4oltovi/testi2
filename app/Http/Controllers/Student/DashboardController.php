@@ -30,7 +30,7 @@ class DashboardController extends Controller
             $data['debts_count'] = $student->activeDebts()->count();
             $data['grades'] = SemesterGrade::where('student_id', $student->id)
                 ->where('semester_id', $semester->id)
-                ->with('subject')
+                ->with('subjectAssignment.subject')
                 ->get();
             $data['attendance_percentage'] = $student->getAttendancePercentage($semester->id);
 

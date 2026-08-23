@@ -4,9 +4,14 @@
 @section('page-description', 'Фанро интихоб кунед ва саволҳоро ворид кунед')
 
 @section('page-actions')
-    <a href="{{ route('admin.exams.questions.import-form') }}" class="btn btn-outline-success btn-sm">
-        <i class="bi bi-upload me-1"></i> Импорт
-    </a>
+    <div class="btn-group">
+        <a href="{{ route('admin.exams.questions.import-form') }}" class="btn btn-outline-success btn-sm">
+            <i class="bi bi-upload me-1"></i> Импорт CSV
+        </a>
+        <a href="{{ route('admin.questions.excel-import-form') }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i> Импорт Excel
+        </a>
+    </div>
 @endsection
 
 @section('content')

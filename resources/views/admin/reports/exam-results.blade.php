@@ -71,7 +71,6 @@
                             <th>Фан</th>
                             <th>R1</th>
                             <th>R2</th>
-                            <th>КМ</th>
                             <th>Имт.</th>
                             <th>Ниҳоӣ</th>
                             <th>Баҳо</th>
@@ -86,7 +85,6 @@
                             <td>{{ $r->subjectAssignment?->subject?->name }}</td>
                             <td>{{ $r->rating1_score ?? '—' }}</td>
                             <td>{{ $r->rating2_score ?? '—' }}</td>
-                            <td>{{ $r->independent_work_score ?? '—' }}</td>
                             <td>{{ $r->exam_score ?? '—' }}</td>
                             <td><strong>{{ $r->total_score ? number_format($r->total_score, 1) : '—' }}</strong></td>
                             <td>

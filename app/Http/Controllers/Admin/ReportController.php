@@ -47,6 +47,9 @@ class ReportController extends Controller
         if ($facultyId = $request->get('faculty_id')) {
             $query->whereHas('specialty.department', fn($q) => $q->where('faculty_id', $facultyId));
         }
+        if ($orphanType = $request->get('orphan_type')) {
+            $query->where('orphan_type', $orphanType);
+        }
 
         $students = $query->orderBy('id')->paginate(50)->withQueryString();
         $groups = Group::active()->orderBy('name')->get();

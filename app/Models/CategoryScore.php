@@ -12,6 +12,7 @@ class CategoryScore extends Model
         'student_id', 'subject_assignment_id', 'semester_id',
         'lesson_date', 'lesson_number', 'category', 'period',
         'score', 'max_score', 'graded_by',
+        'is_locked', 'locked_at', 'locked_by',
     ];
 
     protected function casts(): array
@@ -21,6 +22,8 @@ class CategoryScore extends Model
             'score' => 'decimal:2',
             'max_score' => 'decimal:2',
             'category' => GradeCategory::class,
+            'is_locked' => 'boolean',
+            'locked_at' => 'datetime',
         ];
     }
 
@@ -44,6 +47,11 @@ class CategoryScore extends Model
     public function gradedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'graded_by');
+    }
+
+    public function lockedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'locked_by');
     }
 
     // ==================== SCOPES ====================

@@ -63,7 +63,7 @@ class TranscriptController extends Controller
             'group',
             'specialty.department.faculty',
             'course',
-            'semesterGrades' => fn($q) => $q->where('is_finalized', true)->with(['subject', 'semester']),
+            'semesterGrades' => fn($q) => $q->where('is_finalized', true)->with(['subjectAssignment.subject', 'semester']),
             'semesterGpas.semester',
         ]);
 

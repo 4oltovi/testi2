@@ -61,10 +61,8 @@
                         <th class="student-name">Донишҷӯ</th>
                         <th title="Рейтинги 1 (ҳафтаи 1-8)">R1</th>
                         <th title="Рейтинги 2 (ҳафтаи 9-16)">R2</th>
-                        <th title="Корҳои мустақилона">КМ</th>
                         <th title="Имтиҳони асосӣ">Имт.</th>
                         <th title="Такрорсупорӣ">Такр.</th>
-                        <th title="Комиссионӣ">Ком.</th>
                         <th title="Баҳои ниҳоӣ (%)">Ниҳоӣ</th>
                         <th title="Баҳои ҳарфӣ">Баҳо</th>
                         <th title="Grade Point">GP</th>
@@ -95,10 +93,8 @@
                                 {{ $calc['rating2'] !== null ? number_format($calc['rating2'], 0) : '—' }}
                             </span>
                         </td>
-                        <td>{{ $grade?->independent_work_score !== null ? number_format($grade->independent_work_score, 0) : '—' }}</td>
                         <td>{{ $calc['exam'] !== null ? number_format($calc['exam'], 0) : '—' }}</td>
                         <td>{{ $grade?->retake_score !== null ? number_format($grade->retake_score, 0) : '—' }}</td>
-                        <td>{{ $grade?->retake2_score !== null ? number_format($grade->retake2_score, 0) : '—' }}</td>
                         <td>
                             @if($calc['total_score'] !== null)
                             <strong>{{ number_format($calc['total_score'], 1) }}</strong>

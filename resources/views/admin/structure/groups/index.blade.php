@@ -101,6 +101,14 @@
                                     <a href="{{ route('admin.structure.groups.edit', $group) }}" class="btn btn-sm btn-outline-primary" title="Таҳрир">
                                         <i class="bi bi-pencil"></i>
                                     </a>
+                                    <form action="{{ route('admin.structure.groups.destroy', $group) }}" method="POST" class="d-inline"
+                                          onsubmit="return confirm('Оё мутмаин ҳастед? Гурӯҳ нест карда шавад.')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Нест кардан">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
                                 </td>
                             </tr>
                         @empty

@@ -15,12 +15,33 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         // Бастан бо клик берун аз sidebar
+        const overlay = document.getElementById('sidebarOverlay');
         document.addEventListener('click', function (e) {
             if (window.innerWidth < 992 && sidebar.classList.contains('show')) {
-                if (!sidebar.contains(e.target) && e.target !== toggleBtn) {
+                if (!sidebar.contains(e.target) && e.target !== toggleBtn && e.target !== overlay) {
                     sidebar.classList.remove('show');
+                    if (overlay) overlay.classList.remove('show');
                 }
             }
+        });
+
+        // Бастан бо клик ба overlay
+        if (overlay) {
+            overlay.addEventListener('click', function() {
+                sidebar.classList.remove('show');
+                overlay.classList.remove('show');
+            });
+        }
+
+        // Автоматики бастан пас аз клик ба сӯи роҳи sidebar дар мобил
+        const sidebarLinks = sidebar.querySelectorAll('.nav-link');
+        sidebarLinks.forEach(function(link) {
+            link.addEventListener('click', function() {
+                if (window.innerWidth < 992) {
+                    sidebar.classList.remove('show');
+                    if (overlay) overlay.classList.remove('show');
+                }
+            });
         });
     }
 

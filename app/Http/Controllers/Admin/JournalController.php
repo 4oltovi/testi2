@@ -132,6 +132,14 @@ class JournalController extends Controller
             ->with('success', $created . ' таъин барои семестри интихобшуда сохта шуд.');
     }
 
+    public function destroyAssignment(SubjectAssignment $subjectAssignment): RedirectResponse
+    {
+        $subjectAssignment->delete();
+
+        return redirect()->route('admin.journal.index')
+            ->with('success', 'Журнали электронӣ нест шуд.');
+    }
+
     /**
      * НАВ: Навсозии кредит аз журнал
      */
@@ -282,7 +290,7 @@ class JournalController extends Controller
     }
 
     /**
-     * Баҳоҳои семестрӣ (R1, R2, КМ, Имтиҳон, Ниҳоӣ)
+      * Баҳоҳои семестрӣ (R1, R2, Имтиҳон, Ниҳоӣ)
      */
     public function semesterGrades(SubjectAssignment $subjectAssignment): View
     {

@@ -59,17 +59,17 @@ class LoginController extends Controller
      */
     private function redirectByRole($user): string
     {
-        // Мустақиман аз DB бубинем
         $topRole = $user->roles()->orderByDesc('level')->first();
 
         if (!$topRole) {
-            return '/student/dashboard'; // default
+            return '/student/dashboard';
         }
 
         return match ($topRole->name) {
             'super_admin', 'admin' => '/admin/dashboard',
             'teacher' => '/teacher/dashboard',
             'operator' => '/operator/attendance',
+            'dean', 'vice_dean', 'department_head', 'registrar', 'accountant' => '/management/dashboard',
             default => '/student/dashboard',
         };
     }

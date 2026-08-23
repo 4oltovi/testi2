@@ -128,6 +128,7 @@ class AttendanceController extends Controller
                         'lesson_date' => $date,
                         'lesson_number' => 1,
                         'category' => $catValue,
+                        'period' => 'rating1',
                     ],
                     [
                         'semester_id' => $semesterId,

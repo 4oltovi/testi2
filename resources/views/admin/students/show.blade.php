@@ -69,6 +69,16 @@
                     <tr><td class="text-muted">Телефон:</td><td>{{ $student->user?->phone ?? '—' }}</td></tr>
                     <tr><td class="text-muted">Email:</td><td>{{ $student->user?->email ?? '—' }}</td></tr>
                     <tr><td class="text-muted">Волидон:</td><td>{{ $student->parent_name ?? '—' }}<br><small>{{ $student->parent_phone ?? '' }}</small></td></tr>
+                    <tr><td class="text-muted">Ятимӣ:</td><td>
+                        @if($student->orphan_type)
+                            <span class="badge {{ $student->orphan_type->badgeClass() }}">{{ $student->orphan_type->label() }}</span>
+                            @if($student->guardian_name)
+                                <br><small>{{ $student->guardian_name }} ({{ $student->guardian_relation ?? 'Восеъ' }})</small>
+                            @endif
+                        @else
+                            —
+                        @endif
+                    </td></tr>
                 </table>
             </div>
         </div>
@@ -144,7 +154,6 @@
                                 <th>Семестр</th>
                                 <th>R1</th>
                                 <th>R2</th>
-                                <th>КМ</th>
                                 <th>Имт.</th>
                                 <th>Ниҳоӣ</th>
                                 <th>Баҳо</th>
@@ -158,7 +167,6 @@
                                     <td><small>{{ $grade->semester?->name }}</small></td>
                                     <td>{{ $grade->rating1_score ?? '—' }}</td>
                                     <td>{{ $grade->rating2_score ?? '—' }}</td>
-                                    <td>{{ $grade->independent_work_score ?? '—' }}</td>
                                     <td>{{ $grade->exam_score ?? ($grade->retake_score ? "Т:{$grade->retake_score}" : '—') }}</td>
                                     <td><strong>{{ $grade->total_score ?? '—' }}</strong></td>
                                     <td>

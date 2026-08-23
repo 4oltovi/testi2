@@ -36,28 +36,24 @@
     </button>
 </form>
 
-<script>
-    const end = {
-        {
-            $endsAt
-        }
-    };
-    const timer = document.getElementById('timer');
-    const form = document.getElementById('ratingForm');
+    <script>
+        const end = {{ $endsAt }};
+        const timer = document.getElementById('timer');
+        const form = document.getElementById('ratingForm');
 
-    const iv = setInterval(() => {
-        let s = end - Math.floor(Date.now() / 1000);
+        const iv = setInterval(() => {
+            let s = end - Math.floor(Date.now() / 1000);
 
-        if (s <= 0) {
-            clearInterval(iv);
-            timer.textContent = '0:00';
-            form.submit(); // автоматӣ супоридан
-            return;
-        }
+            if (s <= 0) {
+                clearInterval(iv);
+                timer.textContent = '0:00';
+                form.submit();
+                return;
+            }
 
-        const m = Math.floor(s / 60);
-        const ss = s % 60;
-        timer.textContent = m + ':' + (ss < 10 ? '0' : '') + ss;
-    }, 1000);
-</script>
+            const m = Math.floor(s / 60);
+            const ss = s % 60;
+            timer.textContent = m + ':' + (ss < 10 ? '0' : '') + ss;
+        }, 1000);
+    </script>
 @endsection

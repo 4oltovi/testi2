@@ -161,6 +161,27 @@
                             <label class="form-label">Суроғаи ҳозира</label>
                             <input type="text" class="form-control" name="address_current" value="{{ old('address_current', $student->address_current) }}">
                         </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Ятимӣ</label>
+                            <select name="orphan_type" class="form-select">
+                                <option value="">—</option>
+                                @foreach(\App\Enums\OrphanType::cases() as $type)
+                                    <option value="{{ $type->value }}" {{ old('orphan_type', $student->orphan_type?->value) === $type->value ? 'selected' : '' }}>
+                                        {{ $type->label() }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        @if($student->orphan_type && $student->orphan_type->value !== 'none')
+                        <div class="col-md-4">
+                            <label class="form-label">Номи восеъ</label>
+                            <input type="text" class="form-control" name="guardian_name" value="{{ old('guardian_name', $student->guardian_name) }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Телефони восеъ</label>
+                            <input type="text" class="form-control" name="guardian_phone" value="{{ old('guardian_phone', $student->guardian_phone) }}">
+                        </div>
+                        @endif
                     </div>
                 </div>
             </div>

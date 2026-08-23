@@ -86,8 +86,12 @@
                     <input type="number" name="max_attempts" class="form-control" value="{{ old('max_attempts', 1) }}" min="1" max="5">
                 </div>
                 <div class="col-6 col-md-3">
-                    <label class="form-label">Шумораи саволҳо</label>
-                    <input type="number" name="total_questions_count" class="form-control" value="{{ old('total_questions_count', 25) }}" min="5" max="100">
+                    <label class="form-label">Шумораи саволҳои оддӣ</label>
+                    <input type="number" name="simple_questions_count" class="form-control" value="{{ old('simple_questions_count', 20) }}" min="0" max="100">
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label">Шумораи саволҳои мувофиқоварӣ</label>
+                    <input type="number" name="matching_questions_count" class="form-control" value="{{ old('matching_questions_count', 5) }}" min="0" max="50">
                 </div>
 
                 {{-- Checkboxes --}}

@@ -18,6 +18,9 @@
 <body class="d-flex flex-column min-vh-100">
     @auth
         <div class="d-flex" id="wrapper">
+            <!-- Sidebar Overlay (Mobile) -->
+            <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
             <!-- Sidebar -->
             @include('layouts.partials.sidebar')
 

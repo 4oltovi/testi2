@@ -351,11 +351,9 @@ class ExamController extends Controller
             return;
         }
 
-        $subjectId = $subjectAssignment->subject_id;
-
         $semesterGrade = SemesterGrade::where('student_id', $attempt->student_id)
+            ->where('subject_assignment_id', $subjectAssignment->id)
             ->where('semester_id', $exam->semester_id)
-            ->whereHas('subjectAssignment', fn($q) => $q->where('subject_id', $subjectId))
             ->first();
 
         if (!$semesterGrade) {

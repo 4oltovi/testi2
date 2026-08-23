@@ -82,4 +82,51 @@
         @endif
     </div>
 </div>
+
+{{-- Огоҳиҳо дар бораи тағйироти охирин --}}
+@if($recentChanges->isNotEmpty())
+<div class="card border-0 shadow-sm mt-3">
+    <div class="card-header bg-white">
+        <h6 class="mb-0"><i class="bi bi-bell me-2"></i> Тағйироти охирин (7 рӯзи охир)</h6>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Сана</th>
+                        <th>Фан</th>
+                        <th>Донишҷӯ</th>
+                        <th>Категория</th>
+                        <th>Бал</th>
+                        <th>Ҳолат</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($recentChanges as $change)
+                    <tr>
+                        <td><small>{{ $change->locked_at?->format('d.m.Y H:i') }}</small></td>
+                        <td>{{ $change->subjectAssignment?->subject?->name }}</td>
+                        <td>{{ $change->student?->user?->full_name }}</td>
+                        <td>
+                            <span class="badge bg-{{ $change->category->colorClass() }}">
+                                {{ $change->category->shortLabel() }}
+                            </span>
+                        </td>
+                        <td><strong>{{ $change->score }}/{{ $change->max_score }}</strong></td>
+                        <td>
+                            @if($change->is_locked)
+                                <span class="badge bg-success">Қулф шуд</span>
+                            @else
+                                <span class="badge bg-secondary">Озод</span>
+                            @endif
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+@endif
 @endsection

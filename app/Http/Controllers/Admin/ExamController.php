@@ -64,7 +64,8 @@ class ExamController extends Controller
             'duration_minutes' => 'required|integer|min:5|max:180',
             'passing_score' => 'required|numeric|min:0|max:100',
             'max_attempts' => 'required|integer|min:1|max:5',
-            'total_questions_count' => 'required|integer|min:1|max:100',
+            'simple_questions_count' => 'required|integer|min:0|max:100',
+            'matching_questions_count' => 'required|integer|min:0|max:50',
             'starts_at' => 'nullable|date',
             'ends_at' => 'nullable|date|after:starts_at',
         ]);
@@ -83,19 +84,22 @@ class ExamController extends Controller
         foreach ($request->group_ids as $groupId) {
             $group = Group::findOrFail($groupId);
 
-            $assignment = SubjectAssignment::firstOrCreate(
-                [
+            $assignment = SubjectAssignment::where('subject_id', $subjectId)
+                ->where('group_id', $group->id)
+                ->where('semester_id', $semester?->id)
+                ->first();
+
+            if (!$assignment) {
+                $assignment = SubjectAssignment::create([
                     'subject_id' => $subjectId,
                     'teacher_id' => $request->user()->id,
                     'group_id' => $group->id,
                     'semester_id' => $semester?->id,
-                ],
-                [
                     'lesson_type' => 'theory',
                     'hours_per_week' => 2,
                     'is_active' => true,
-                ]
-            );
+                ]);
+            }
 
             Exam::create([
                 'subject_assignment_id' => $assignment->id,
@@ -107,7 +111,9 @@ class ExamController extends Controller
                 'exam_type' => $request->exam_type,
                 'format' => $request->format,
                 'duration_minutes' => $request->duration_minutes,
-                'total_questions_count' => $request->total_questions_count,
+                'total_questions_count' => (int) $request->simple_questions_count + (int) $request->matching_questions_count,
+                'simple_questions_count' => $request->simple_questions_count,
+                'matching_questions_count' => $request->matching_questions_count,
                 'passing_score' => $request->passing_score,
                 'shuffle_questions' => $request->boolean('shuffle_questions', true),
                 'shuffle_answers' => $request->boolean('shuffle_answers', true),
@@ -129,9 +135,24 @@ class ExamController extends Controller
 
     public function edit(Exam $exam): View
     {
-        $exam->load(['subjectAssignment.subject', 'group']);
+        $exam->load(['subjectAssignment.subject', 'group', 'examQuestions.question']);
 
-        return view('admin.exams.edit', compact('exam'));
+        $examQuestions = $exam->examQuestions()->with('question.answerOptions')->orderBy('sort_order')->get();
+        
+        $subjectId = $exam->subjectAssignment?->subject_id;
+        $availableQuestions = collect();
+        
+        if ($subjectId) {
+            $availableQuestions = Question::where('subject_id', $subjectId)
+                ->where('is_active', true)
+                ->whereHas('questionBank', fn($q) => $q->where('bank_type', 'exam'))
+                ->whereNotIn('id', $examQuestions->pluck('question_id'))
+                ->with('answerOptions')
+                ->orderBy('difficulty_level')
+                ->get();
+        }
+
+        return view('admin.exams.edit', compact('exam', 'examQuestions', 'availableQuestions'));
     }
 
     public function update(Request $request, Exam $exam): RedirectResponse
@@ -142,7 +163,8 @@ class ExamController extends Controller
             'exam_type' => 'required|in:main,retake,retake_commission,rating1,rating2,midterm,quiz',
             'format' => 'required|in:online_test,written,oral,mixed',
             'duration_minutes' => 'required|integer|min:5|max:180',
-            'total_questions_count' => 'required|integer|min:1|max:100',
+            'simple_questions_count' => 'required|integer|min:0|max:100',
+            'matching_questions_count' => 'required|integer|min:0|max:50',
             'passing_score' => 'required|numeric|min:0|max:100',
             'max_attempts' => 'required|integer|min:1|max:5',
             'starts_at' => 'nullable|date',
@@ -159,7 +181,9 @@ class ExamController extends Controller
             'exam_type' => $request->exam_type,
             'format' => $request->format,
             'duration_minutes' => $request->duration_minutes,
-            'total_questions_count' => $request->total_questions_count,
+            'total_questions_count' => (int) $request->simple_questions_count + (int) $request->matching_questions_count,
+            'simple_questions_count' => $request->simple_questions_count,
+            'matching_questions_count' => $request->matching_questions_count,
             'passing_score' => $request->passing_score,
             'max_attempts' => $request->max_attempts,
             'shuffle_questions' => $request->boolean('shuffle_questions', false),
@@ -238,6 +262,17 @@ class ExamController extends Controller
         return back()->with('success', 'Саволҳо ба имтиҳон илова карда шуданд.');
     }
 
+    public function removeQuestion(Exam $exam, ExamQuestion $examQuestion): RedirectResponse
+    {
+        if ($examQuestion->exam_id !== $exam->id) {
+            abort(403);
+        }
+
+        $examQuestion->delete();
+
+        return back()->with('success', 'Савол аз имтиҳон хориҷ карда шуд.');
+    }
+
     public function results(Exam $exam): View
     {
         $exam->load(['group', 'subjectAssignment.subject', 'attempts.student.user']);
@@ -281,16 +316,31 @@ class ExamController extends Controller
         }
 
         if (empty($existingQuestionIds)) {
-            $availableQuestions = Question::where('subject_id', $subjectId)
+            $simpleCount = (int) $exam->simple_questions_count;
+            $matchingCount = (int) $exam->matching_questions_count;
+            $totalNeeded = $simpleCount + $matchingCount;
+
+            $baseQuery = Question::where('subject_id', $subjectId)
                 ->where('is_active', true)
                 ->whereHas('questionBank', fn($q) => $q->where('bank_type', 'exam'))
-                ->whereNotIn('id', $existingQuestionIds)
-                ->orderBy('difficulty_level')
-                ->limit((int) $exam->total_questions_count)
+                ->whereNotIn('id', $existingQuestionIds);
+
+            $simpleQuestions = (clone $baseQuery)
+                ->where('type', 'single_choice')
+                ->inRandomOrder()
+                ->limit($simpleCount)
                 ->get();
 
-            if ($availableQuestions->count() >= $exam->total_questions_count) {
-                foreach ($availableQuestions as $index => $question) {
+            $matchingQuestions = (clone $baseQuery)
+                ->where('type', 'matching')
+                ->inRandomOrder()
+                ->limit($matchingCount)
+                ->get();
+
+            $selectedQuestions = $simpleQuestions->merge($matchingQuestions);
+
+            if ($selectedQuestions->count() >= $totalNeeded && $totalNeeded > 0) {
+                foreach ($selectedQuestions as $index => $question) {
                     ExamQuestion::create([
                         'exam_id' => $exam->id,
                         'question_id' => $question->id,
@@ -313,5 +363,13 @@ class ExamController extends Controller
         ]);
 
         return back()->with('success', 'Имтиҳон нашр шуд.');
+    }
+
+    public function destroy(Exam $exam): RedirectResponse
+    {
+        $exam->delete();
+
+        return redirect()->route('admin.exams.index')
+            ->with('success', 'Имтиҳон нест шуд.');
     }
 }

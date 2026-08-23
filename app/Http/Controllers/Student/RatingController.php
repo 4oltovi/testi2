@@ -8,7 +8,9 @@ use App\Models\Question;
 use App\Models\RatingAttempt;
 use App\Models\RatingSession;
 use App\Models\Semester;
+use App\Models\SemesterGrade;
 use App\Models\Student;
+use App\Models\SubjectAssignment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -202,7 +204,80 @@ class RatingController extends Controller
             'finished_at' => now(),
         ]);
 
-        return redirect()->route('student.rating.index')
+        $this->updateSemesterGrade($ratingAttempt, $percentage);
+
+        return redirect()->route('student.rating.result', $ratingAttempt)
             ->with('success', "✅ Рейтинг супорида шуд: {$percentage}%");
+    }
+
+    public function result(RatingAttempt $ratingAttempt): View|RedirectResponse
+    {
+        $attempt = $ratingAttempt;
+        $student = $this->student();
+        abort_unless($student && $attempt->student_id === $student->id, 403);
+
+        if ($attempt->status !== 'finished') {
+            return redirect()->route('student.rating.index');
+        }
+
+        $session = $attempt->session;
+        $attempts = RatingAttempt::where('rating_session_id', $session->id)
+            ->where('student_id', $student->id)
+            ->where('subject_id', $attempt->subject_id)
+            ->get();
+        $used = $attempts->whereIn('status', ['finished', 'in_progress'])->count();
+
+        $ids = $attempt->answers_json['ids'] ?? [];
+        $questions = Question::whereIn('id', $ids)
+            ->with('answerOptions')
+            ->get();
+
+        return view('student.rating.result', compact('attempt', 'session', 'questions', 'used'));
+    }
+
+    private function updateSemesterGrade(RatingAttempt $ratingAttempt, float $percentage): void
+    {
+        $session = $ratingAttempt->session;
+        if (!$session) {
+            return;
+        }
+
+        $subjectId = $ratingAttempt->subject_id;
+        $student = $ratingAttempt->student;
+        $groupId = $student?->group_id;
+
+        $subjectAssignment = SubjectAssignment::where('subject_id', $subjectId)
+            ->when($groupId, fn($q, $g) => $q->where('group_id', $g))
+            ->where('semester_id', $session->semester_id)
+            ->first();
+
+        if (!$subjectAssignment) {
+            return;
+        }
+
+        $semesterGrade = SemesterGrade::where('student_id', $ratingAttempt->student_id)
+            ->where('subject_assignment_id', $subjectAssignment->id)
+            ->where('semester_id', $session->semester_id)
+            ->first();
+
+        if (!$semesterGrade) {
+            $semesterGrade = SemesterGrade::create([
+                'student_id' => $ratingAttempt->student_id,
+                'subject_assignment_id' => $subjectAssignment->id,
+                'semester_id' => $session->semester_id,
+                'status' => 'in_progress',
+            ]);
+        }
+
+        $period = $session->period;
+        if ($period === 'rating1') {
+            $semesterGrade->rating1_score = $percentage;
+        } elseif ($period === 'rating2') {
+            $semesterGrade->rating2_score = $percentage;
+        }
+
+        $semesterGrade->save();
+
+        app(\App\Services\GradeCalculator::class)->processAndSaveFinalGrade($semesterGrade);
     }
 }

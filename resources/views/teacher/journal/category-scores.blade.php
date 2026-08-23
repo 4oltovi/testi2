@@ -95,16 +95,27 @@
                                             $key = $student->id . '_' . $cs->category->value;
                                             $existing = $existingScores[$key] ?? null;
                                             $existingScore = $existing ? $existing->first()->score : '';
+                                            $isLocked = $existing && $existing->first()->is_locked;
+                                            $isAdmin = auth()->user()->hasRole('admin') || auth()->user()->hasRole('super_admin');
                                         @endphp
                                         <td class="text-center">
-                                            <input type="number"
-                                                   name="scores[{{ $student->id }}][{{ $cs->category->value }}]"
-                                                   class="form-control form-control-sm text-center score-input"
-                                                   min="0" max="{{ $cs->max_score }}" step="0.5"
-                                                   value="{{ $existingScore }}"
-                                                   data-max="{{ $cs->max_score }}"
-                                                   data-student="{{ $student->id }}"
-                                                   placeholder="—">
+                                            @if($isLocked && !$isAdmin)
+                                                <input type="text"
+                                                       class="form-control form-control-sm text-center score-input"
+                                                       value="{{ $existingScore }}"
+                                                       disabled
+                                                       data-student="{{ $student->id }}"
+                                                       style="background-color: #f8f9fa; border-color: #dee2e6; color: #495057; cursor: not-allowed;">
+                                            @else
+                                                <input type="number"
+                                                       name="scores[{{ $student->id }}][{{ $cs->category->value }}]"
+                                                       class="form-control form-control-sm text-center score-input"
+                                                       min="0" max="{{ $cs->max_score }}" step="0.5"
+                                                       value="{{ $existingScore }}"
+                                                       data-max="{{ $cs->max_score }}"
+                                                       data-student="{{ $student->id }}"
+                                                       placeholder="—">
+                                            @endif
                                         </td>
                                     @endforeach
                                     <td class="text-center">

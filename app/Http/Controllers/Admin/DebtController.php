@@ -28,8 +28,6 @@ class DebtController extends Controller
         // Филтр
         if ($status = $request->get('status')) {
             $query->where('status', $status);
-        } else {
-            $query->open(); // Ба таври пешфарз — танҳо кушодҳо
         }
 
         if ($groupId = $request->get('group_id')) {

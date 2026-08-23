@@ -30,7 +30,7 @@
                                         'quiz' => 'Тести кӯтоҳ',
                                     ];
                                 @endphp
-                                {{ $typeLabels[$exam->exam_type] ?? $exam->exam_type }}
+                                {{ $typeLabels[$exam->exam_type->value] ?? $exam->exam_type->value }}
                             </td>
                         </tr>
                         <tr>
@@ -173,9 +173,22 @@
     </div>
 </div>
 
-<div class="mt-3">
+<div class="mt-3 d-flex justify-content-between">
     <a href="{{ url('/admin/exams') }}" class="btn btn-outline-secondary">
         <i class="bi bi-arrow-left"></i> Бозгашт
     </a>
+    <div>
+        <a href="{{ route('admin.exams.edit', $exam) }}" class="btn btn-outline-primary me-2">
+            <i class="bi bi-pencil"></i> Таҳрир
+        </a>
+        <form action="{{ route('admin.exams.destroy', $exam) }}" method="POST" class="d-inline"
+              onsubmit="return confirm('Оё мутмаин ҳастед, ки ин имтиҳонро нест кардан мехоҳед? Ҳамаи маълумоти кӯшишҳо низ нест мешаванд.')">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="btn btn-outline-danger">
+                <i class="bi bi-trash"></i> Нест кардан
+            </button>
+        </form>
+    </div>
 </div>
 @endsection

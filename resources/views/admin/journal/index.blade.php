@@ -87,6 +87,16 @@
                                     class="btn btn-outline-warning" title="Рейтинг/Имтиҳон">
                                     <i class="bi bi-trophy"></i> Рейтинг
                                 </a>
+                                <form action="{{ route('admin.journal.assignments.destroy', $assignment) }}" 
+                                      method="POST" 
+                                      class="d-inline"
+                                      onsubmit="return confirm('Оё мутмаин ҳастед, ки ин журналро нест кардан мехоҳед? Ҳамаи маълумоти донишҷӯён (давомот, баҳоҳо, имтиҳонҳо) ҳамчун ҳамроҳ нест мешаванд.')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-outline-danger" title="Нест кардан">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
                             </div>
                         </td>
                     </tr>

@@ -227,6 +227,10 @@ class StudentController extends Controller
             'study_form' => 'required|in:full_time,part_time,evening',
             'enrollment_date' => 'required|date',
             'enrollment_order' => 'nullable|string|max:50',
+            'orphan_type' => 'nullable|in:none,orphan,half_orphan',
+            'guardian_name' => 'nullable|string|max:200',
+            'guardian_phone' => 'nullable|string|max:20',
+            'guardian_relation' => 'nullable|string|max:50',
         ]);
 
         DB::transaction(function () use ($student, $validated) {
@@ -261,6 +265,10 @@ class StudentController extends Controller
                 'study_form' => $validated['study_form'],
                 'enrollment_date' => $validated['enrollment_date'],
                 'enrollment_order' => $validated['enrollment_order'] ?? null,
+                'orphan_type' => $validated['orphan_type'] ?? 'none',
+                'guardian_name' => $validated['guardian_name'] ?? null,
+                'guardian_phone' => $validated['guardian_phone'] ?? null,
+                'guardian_relation' => $validated['guardian_relation'] ?? null,
             ]);
         });
 

@@ -59,5 +59,6 @@ Route::middleware(['web', 'auth', 'role:student'])->prefix('student')->name('stu
         Route::post('/start/{ratingSession}/{subject}', [\App\Http\Controllers\Student\RatingController::class, 'start'])->name('start');
         Route::get('/take/{ratingAttempt}', [\App\Http\Controllers\Student\RatingController::class, 'take'])->name('take');
         Route::post('/submit/{ratingAttempt}', [\App\Http\Controllers\Student\RatingController::class, 'submit'])->name('submit');
+        Route::get('/result/{ratingAttempt}', [\App\Http\Controllers\Student\RatingController::class, 'result'])->name('result');
     });
 });

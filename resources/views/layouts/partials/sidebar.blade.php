@@ -2,7 +2,15 @@
 <div class="bg-dark text-white sidebar" id="sidebar" style="min-width: 260px; max-width: 260px; min-height: 100vh;">
     <!-- Logo -->
     <div class="sidebar-header p-3 border-bottom border-secondary">
-        <a href="{{ auth()->user()?->hasRole('admin') ? '/admin/dashboard' : (auth()->user()?->hasRole('teacher') ? '/teacher/dashboard' : '/student/dashboard') }}" class="text-decoration-none text-white d-flex align-items-center">
+        @php
+            $user = auth()->user();
+            $dashboardUrl = match(true) {
+                $user?->hasRole('admin') || $user?->hasRole('super_admin') => '/admin/dashboard',
+                $user?->hasRole('teacher') => '/teacher/dashboard',
+                default => '/student/dashboard',
+            };
+        @endphp
+        <a href="{{ $dashboardUrl }}" class="text-decoration-none text-white d-flex align-items-center">
             @php $logoPath = \App\Models\Setting::get('institution_logo'); @endphp
             @if($logoPath && file_exists(public_path($logoPath)))
             <img src="{{ asset($logoPath) }}" alt="Логотип" style="height:40px; width:40px; object-fit:contain;" class="me-2">

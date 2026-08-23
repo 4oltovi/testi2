@@ -16,10 +16,8 @@ class SemesterGrade extends Model
         'semester_id',
         'rating1_score',
         'rating2_score',
-        'independent_work_score',
         'exam_score',
         'retake_score',
-        'retake2_score',
         'total_score',
         'letter_grade',
         'grade_point',
@@ -30,7 +28,6 @@ class SemesterGrade extends Model
         'rating2_date',
         'exam_date',
         'retake_date',
-        'retake2_date',
         'finalized_at',
         'exam_teacher_id',
         'finalized_by',
@@ -42,10 +39,8 @@ class SemesterGrade extends Model
         return [
             'rating1_score' => 'decimal:2',
             'rating2_score' => 'decimal:2',
-            'independent_work_score' => 'decimal:2',
             'exam_score' => 'decimal:2',
             'retake_score' => 'decimal:2',
-            'retake2_score' => 'decimal:2',
             'total_score' => 'decimal:2',
             'grade_point' => 'decimal:2',
             'is_finalized' => 'boolean',
@@ -53,7 +48,6 @@ class SemesterGrade extends Model
             'rating2_date' => 'datetime',
             'exam_date' => 'datetime',
             'retake_date' => 'datetime',
-            'retake2_date' => 'datetime',
             'finalized_at' => 'datetime',
         ];
     }
@@ -68,11 +62,6 @@ class SemesterGrade extends Model
     public function subjectAssignment(): BelongsTo
     {
         return $this->belongsTo(SubjectAssignment::class);
-    }
-
-    public function subject(): BelongsTo
-    {
-        return $this->belongsTo(Subject::class, 'subject_assignment_id');
     }
 
     public function semester(): BelongsTo
@@ -148,10 +137,10 @@ class SemesterGrade extends Model
      */
     public function calculateTotalScore(): ?float
     {
-        $examScore = $this->retake2_score ?? $this->retake_score ?? $this->exam_score;
+        $examScore = $this->retake_score ?? $this->exam_score;
 
         $ratingScore = $this->rating1_score;
-        $journalScore = $this->rating2_score ?? $this->independent_work_score ?? null;
+        $journalScore = $this->rating2_score;
 
         if (is_null($ratingScore) || is_null($journalScore) || is_null($examScore)) {
             return null;
@@ -168,7 +157,7 @@ class SemesterGrade extends Model
      */
     public function calculateAndSetFinalGrade(): void
     {
-        $examScore = $this->retake2_score ?? $this->retake_score ?? $this->exam_score;
+        $examScore = $this->retake_score ?? $this->exam_score;
 
         if (is_null($examScore)) {
             return;

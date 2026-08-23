@@ -54,9 +54,10 @@ class DebtDetector
     private function createDebt(SemesterGrade $semesterGrade, GradeScale $grade): AcademicDebt
     {
         return DB::transaction(function () use ($semesterGrade, $grade) {
-            // Оё аллакай қарздорӣ барои ин фан/семестр мавҷуд аст?
+            $subjectId = $semesterGrade->subjectAssignment?->subject_id;
+
             $existingDebt = AcademicDebt::where('student_id', $semesterGrade->student_id)
-                ->where('subject_assignment_id', $semesterGrade->subject_assignment_id)
+                ->where('subject_id', $subjectId)
                 ->where('semester_id', $semesterGrade->semester_id)
                 ->whereIn('status', ['active', 'retake_scheduled', 'escalated'])
                 ->first();
@@ -70,14 +71,13 @@ class DebtDetector
             $debt = AcademicDebt::create([
                 'student_id' => $semesterGrade->student_id,
                 'semester_grade_id' => $semesterGrade->id,
-                'subject_assignment_id' => $semesterGrade->subject_assignment_id,
-                'subject_id' => $semesterGrade->subjectAssignment?->subject_id,
+                'subject_id' => $subjectId,
                 'semester_id' => $semesterGrade->semester_id,
                 'reason' => $reason,
                 'debt_date' => now(),
                 'original_score' => $semesterGrade->total_score,
                 'original_grade' => $grade->value,
-                'retake_allowed' => $grade->canRetake(), // Fx = true, F = false
+                'retake_allowed' => $grade->canRetake(),
                 'max_retake_attempts' => $grade->canRetake() ? 2 : 0,
                 'retake_deadline' => $grade->canRetake()
                     ? $semesterGrade->semester?->retake_end_date

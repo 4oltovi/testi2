@@ -57,9 +57,17 @@
                             @endif
                         </td>
                         <td class="text-center">
+                            @php
+                                $lastFinished = $atts->where('status', 'finished')->sortByDesc('finished_at')->first();
+                            @endphp
+                            @if($lastFinished)
+                                <a href="{{ route('student.rating.result', $lastFinished) }}" class="btn btn-sm btn-outline-info" title="Натиҷа">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            @endif
                             @if($open)
-                            <a href="{{ route('student.rating.take', $open) }}" class="btn btn-sm btn-warning">
-                                <i class="bi bi-play-fill me-1"></i>Идома додан
+                            <a href="{{ route('student.rating.take', $open) }}" class="btn btn-sm btn-warning" title="Идома додан">
+                                <i class="bi bi-play-fill"></i>
                             </a>
                             @elseif($used < $session->max_attempts)
                                 <form method="POST" action="{{ route('student.rating.start', [$session, $subject]) }}" class="d-inline"

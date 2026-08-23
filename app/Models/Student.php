@@ -44,6 +44,10 @@ class Student extends Model
         'cumulative_gpa',
         'total_credits_earned',
         'has_debts',
+        'orphan_type',
+        'guardian_name',
+        'guardian_phone',
+        'guardian_relation',
     ];
 
     protected function casts(): array
@@ -56,6 +60,7 @@ class Student extends Model
             'status_date' => 'date',
             'cumulative_gpa' => 'decimal:2',
             'has_debts' => 'boolean',
+            'orphan_type' => \App\Enums\OrphanType::class,
         ];
     }
 

@@ -40,17 +40,14 @@ class GradeCalculator
 
     private function calculateCombinedRating(int $studentId, int $subjectAssignmentId, int $semesterId, string $period): float
     {
-        // Аз танзимот: 60 (ё дилхоҳ)
         $journalMax = (float) Setting::get('journal_part_points', 60);
-        $testMax = max(0, 100 - $journalMax); // 40
+        $testMax = max(0, 100 - $journalMax);
 
-        // Фоизи журнал (0-100) → ба 60 оварда мешавад
-        $journalPct = $this->calculateJournalPercentage($studentId, $subjectAssignmentId, $semesterId, $period);
+        $journalScore = $this->calculateJournalPercentage($studentId, $subjectAssignmentId, $semesterId, $period);
 
-        // Фоизи тест (0-100) → ба 40 оварда мешавад
         $testPct = $this->calculateTestPercentage($studentId, $subjectAssignmentId, $semesterId, $period);
 
-        return round(($journalPct / 100 * $journalMax) + ($testPct / 100 * $testMax), 2);
+        return round(min($journalScore, $journalMax) + ($testPct / 100 * $testMax), 2);
     }
 
     // ================================================================
@@ -71,9 +68,7 @@ class GradeCalculator
             ->get();
 
         if ($scores->isNotEmpty()) {
-            $total = $scores->sum('score');
-            $max = $scores->sum('max_score');
-            return $max > 0 ? round(($total / $max) * 100, 2) : 0;
+            return round($scores->sum('score'), 2);
         }
 
         $grades = CurrentGrade::where('student_id', $studentId)
@@ -175,16 +170,12 @@ class GradeCalculator
         $scores = CategoryScore::where('student_id', $studentId)
             ->where('subject_assignment_id', $subjectAssignmentId)
             ->where('semester_id', $semesterId)
+            ->where('period', $period)
             ->get();
 
         if ($scores->isEmpty()) return 0;
 
-        $totalScore = $scores->sum('score');
-        $totalMax = $scores->sum('max_score');
-
-        if ($totalMax == 0) return 0;
-
-        return round(($totalScore / $totalMax) * 100, 2);
+        return round($scores->sum('score'), 2);
     }
 
     // ================================================================
@@ -196,8 +187,7 @@ class GradeCalculator
      */
     public function calculateFinalGrade(SemesterGrade $semesterGrade): array
     {
-        $examScore = $semesterGrade->retake2_score
-            ?? $semesterGrade->retake_score
+        $examScore = $semesterGrade->retake_score
             ?? $semesterGrade->exam_score;
 
         $rating1 = (float) ($semesterGrade->rating1_score ?? 0);

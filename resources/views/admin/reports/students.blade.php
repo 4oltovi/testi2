@@ -40,6 +40,16 @@
                             @endforeach
                         </select>
                     </div>
+                    <div class="col-md-3">
+                        <select name="orphan_type" class="form-select form-select-sm">
+                            <option value="">Ҳама</option>
+                            @foreach(\App\Enums\OrphanType::cases() as $type)
+                                <option value="{{ $type->value }}" {{ request('orphan_type') == $type->value ? 'selected' : '' }}>
+                                    {{ $type->label() }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
                     <div class="col-md-2">
                         <button class="btn btn-primary btn-sm w-100">Филтр</button>
                     </div>

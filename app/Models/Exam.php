@@ -16,7 +16,7 @@ class Exam extends Model
     protected $fillable = [
         'subject_assignment_id', 'semester_id', 'teacher_id', 'group_id',
         'title', 'description', 'exam_type', 'format',
-        'duration_minutes', 'total_questions_count', 'passing_score',
+        'duration_minutes', 'total_questions_count', 'simple_questions_count', 'matching_questions_count', 'passing_score',
         'shuffle_questions', 'shuffle_answers', 'show_results_immediately',
         'allow_back_navigation', 'max_attempts', 'auto_save',
         'starts_at', 'ends_at', 'status', 'is_published',

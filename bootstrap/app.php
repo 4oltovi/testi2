@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
             require base_path('routes/teacher.php');
             require base_path('routes/student.php');
             require base_path('routes/operator.php');
+            require base_path('routes/management.php');
         },
     )
     ->withMiddleware(function (Middleware $middleware) {

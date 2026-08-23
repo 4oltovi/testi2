@@ -36,15 +36,17 @@
                 <div class="col-md-2">
                     <input type="text" name="search" class="form-control" placeholder="Ном..." value="{{ request('search') }}">
                 </div>
-                <div class="col-md-2">
-                    <select name="status" class="form-select">
-                        <option value="">Кушодҳо</option>
-                        <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Фаъол</option>
-                        <option value="retake_scheduled" {{ request('status') == 'retake_scheduled' ? 'selected' : '' }}>Такрорсупорӣ</option>
-                        <option value="resolved" {{ request('status') == 'resolved' ? 'selected' : '' }}>Ҳалшуда</option>
-                        <option value="escalated" {{ request('status') == 'escalated' ? 'selected' : '' }}>Комиссия</option>
-                    </select>
-                </div>
+                    <div class="col-md-2">
+                        <select name="status" class="form-select">
+                            <option value="">Ҳама ҳолатҳо</option>
+                            <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Фаъол</option>
+                            <option value="retake_scheduled" {{ request('status') == 'retake_scheduled' ? 'selected' : '' }}>Такрорсупорӣ</option>
+                            <option value="resolved" {{ request('status') == 'resolved' ? 'selected' : '' }}>Ҳалшуда</option>
+                            <option value="escalated" {{ request('status') == 'escalated' ? 'selected' : '' }}>Комиссия</option>
+                            <option value="repeat_course" {{ request('status') == 'repeat_course' ? 'selected' : '' }}>Дубора хондан</option>
+                            <option value="expelled" {{ request('status') == 'expelled' ? 'selected' : '' }}>Хориҷшуда</option>
+                        </select>
+                    </div>
                 <div class="col-md-2">
                     <select name="group_id" class="form-select">
                         <option value="">Ҳама гурӯҳҳо</option>

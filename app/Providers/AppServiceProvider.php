@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Auth\Events\Login;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -28,5 +29,8 @@ class AppServiceProvider extends ServiceProvider
             $event->user->forceFill(['session_token' => $token])->save();
             session()->put('single_session_token', $token);
         });
+
+        // Custom pagination view with smaller arrows
+        Paginator::defaultView('vendor.pagination.bootstrap-5');
     }
 }

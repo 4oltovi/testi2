@@ -5,7 +5,7 @@
 
 @section('content')
 @forelse($grades as $semesterId => $semGrades)
-@php $sem = $semGrades->first()?->semester; @endphp
+@php $sem = $semGrades->first()['semester'] ?? null; @endphp
 <div class="card border-0 shadow-sm mb-3">
     <div class="card-header bg-white">
         <h6 class="mb-0"><i class="bi bi-calendar me-2"></i> {{ $sem?->name ?? "Семестр #{$semesterId}" }}</h6>
@@ -25,27 +25,31 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($semGrades as $grade)
+                    @foreach($semGrades as $item)
+                    @php
+                        $grade = $item['semester_grade'];
+                        $calc = $item;
+                    @endphp
                     <tr>
-                        <td>{{ $grade->subjectAssignment?->subject?->name ?? '—' }}</td>
-                        <td class="text-center">{{ $grade->rating1_score !== null ? number_format($grade->rating1_score, 0) : '—' }}</td>
-                        <td class="text-center">{{ $grade->rating2_score !== null ? number_format($grade->rating2_score, 0) : '—' }}</td>
-                        <td class="text-center">{{ $grade->exam_score !== null ? number_format($grade->exam_score, 0) : '—' }}</td>
-                        <td class="text-center"><strong>{{ $grade->total_score !== null ? number_format($grade->total_score, 0) : '—' }}</strong></td>
+                        <td>{{ $item['subject']?->name ?? '—' }}</td>
+                        <td class="text-center">{{ $calc['rating1'] !== null ? number_format($calc['rating1'], 0) : '—' }}</td>
+                        <td class="text-center">{{ $calc['rating2'] !== null ? number_format($calc['rating2'], 0) : '—' }}</td>
+                        <td class="text-center">{{ $calc['exam'] !== null ? number_format($calc['exam'], 0) : '—' }}</td>
+                        <td class="text-center"><strong>{{ $calc['total_score'] !== null ? number_format($calc['total_score'], 1) : '—' }}</strong></td>
                         <td class="text-center">
-                            @if($grade->letter_grade)
-                            @php $g = \App\Enums\GradeScale::tryFrom($grade->letter_grade); @endphp
-                            <span class="badge {{ $g?->badgeClass() ?? 'bg-secondary' }}">{{ $grade->letter_grade }}</span>
+                            @if($calc['letter_grade'])
+                            @php $g = \App\Enums\GradeScale::tryFrom($calc['letter_grade']); @endphp
+                            <span class="badge {{ $g?->badgeClass() ?? 'bg-secondary' }}">{{ $calc['letter_grade'] }}</span>
                             @else — @endif
                         </td>
                         <td class="text-center">
                             @php
-                            $statusLabel = match($grade->status) {
-                            'passed' => ['Гузашт', 'success'],
-                            'failed' => ['Нагузашт', 'danger'],
-                            'retake' => ['Такрорсупорӣ', 'warning'],
-                            'in_progress' => ['Дар ҷараён', 'info'],
-                            default => [$grade->status, 'secondary'],
+                            $statusLabel = match($calc['status']) {
+                                'passed' => ['Гузашт', 'success'],
+                                'failed' => ['Нагузашт', 'danger'],
+                                'retake' => ['Такрорсупорӣ', 'warning'],
+                                'in_progress' => ['Дар ҷараён', 'info'],
+                                default => [$calc['status'] ?? '—', 'secondary'],
                             };
                             @endphp
                             <span class="badge bg-{{ $statusLabel[1] }}">{{ $statusLabel[0] }}</span>

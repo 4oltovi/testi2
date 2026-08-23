@@ -266,7 +266,7 @@ class JournalController extends Controller
     }
 
     /**
-     * Сабти рейтинг (R1/R2/КМ)
+     * Сабти рейтинг (R1/R2)
      */
     public function setRating(SubjectAssignment $subjectAssignment, Request $request): RedirectResponse
     {
@@ -277,7 +277,6 @@ class JournalController extends Controller
             'ratings.*.student_id' => 'required|exists:students,id',
             'ratings.*.rating1_score' => 'nullable|numeric|min:0|max:100',
             'ratings.*.rating2_score' => 'nullable|numeric|min:0|max:100',
-            'ratings.*.independent_work_score' => 'nullable|numeric|min:0|max:100',
         ]);
 
         $semester = $subjectAssignment->semester;
@@ -308,10 +307,6 @@ class JournalController extends Controller
                         $updates['rating2_date'] = now();
                     }
 
-                    if (isset($rating['independent_work_score']) && $rating['independent_work_score'] !== '') {
-                        $updates['independent_work_score'] = $rating['independent_work_score'];
-                    }
-
                     if (!empty($updates)) {
                         $semesterGrade->update($updates);
                         $this->gradeCalculator->processAndSaveFinalGrade($semesterGrade);
@@ -334,7 +329,7 @@ class JournalController extends Controller
             'exam_scores' => 'required|array',
             'exam_scores.*.student_id' => 'required|exists:students,id',
             'exam_scores.*.exam_score' => 'nullable|numeric|min:0|max:100',
-            'exam_type' => 'required|in:main,retake,retake2',
+            'exam_type' => 'required|in:main,retake',
         ]);
 
         $semester = $subjectAssignment->semester;
@@ -361,12 +356,10 @@ class JournalController extends Controller
                 $field = match ($examType) {
                     'main' => 'exam_score',
                     'retake' => 'retake_score',
-                    'retake2' => 'retake2_score',
                 };
                 $dateField = match ($examType) {
                     'main' => 'exam_date',
                     'retake' => 'retake_date',
-                    'retake2' => 'retake2_date',
                 };
 
                 $this->logChange($semesterGrade, $field, $semesterGrade->$field, $score);

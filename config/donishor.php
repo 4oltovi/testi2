@@ -18,17 +18,9 @@ return [
         'formula_type' => env('GRADE_FORMULA_TYPE', 'with_independent_work'),
 
         'weights' => [
-            'with_iw' => [
-                'rating1' => 0.15,
-                'rating2' => 0.15,
-                'independent_work' => 0.30,
-                'exam' => 0.40,
-            ],
-            'without_iw' => [
-                'rating1' => 0.30,
-                'rating2' => 0.30,
-                'exam' => 0.40,
-            ],
+            'rating1' => 0.30,
+            'rating2' => 0.30,
+            'exam' => 0.40,
         ],
 
         // Рейтингҳо: ҳафтаҳо

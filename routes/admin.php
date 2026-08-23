@@ -65,6 +65,7 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\JournalController::class, 'index'])->name('index');
         Route::get('/assignments/create', [\App\Http\Controllers\Admin\JournalController::class, 'createAssignment'])->name('assignments.create');
         Route::post('/assignments', [\App\Http\Controllers\Admin\JournalController::class, 'storeAssignment'])->name('assignments.store');
+        Route::delete('/assignments/{subjectAssignment}', [\App\Http\Controllers\Admin\JournalController::class, 'destroyAssignment'])->name('assignments.destroy');
         Route::get('/attendance/{subjectAssignment}', [\App\Http\Controllers\Admin\JournalController::class, 'attendance'])->name('attendance');
         Route::post('/attendance/{subjectAssignment}', [\App\Http\Controllers\Admin\JournalController::class, 'storeAttendance'])->name('attendance.store');
         Route::get('/grades/{subjectAssignment}', [\App\Http\Controllers\Admin\JournalController::class, 'grades'])->name('grades');
@@ -103,15 +104,23 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
         Route::post('/questions-import', [\App\Http\Controllers\Admin\QuestionController::class, 'import'])->name('questions.import');
         Route::get('/questions-template', [\App\Http\Controllers\Admin\QuestionController::class, 'downloadTemplate'])->name('questions.download-template');
 
-        // Имтиҳони мушаххас (бо ID)
         Route::get('/{exam}/edit', [\App\Http\Controllers\Admin\ExamController::class, 'edit'])->name('edit');
         Route::put('/{exam}', [\App\Http\Controllers\Admin\ExamController::class, 'update'])->name('update');
+        Route::delete('/{exam}', [\App\Http\Controllers\Admin\ExamController::class, 'destroy'])->name('destroy');
         Route::get('/{exam}', [\App\Http\Controllers\Admin\ExamController::class, 'show'])->name('show');
         Route::get('/{exam}/questions', [\App\Http\Controllers\Admin\ExamController::class, 'questions'])->name('exam-questions');
         Route::post('/{exam}/questions', [\App\Http\Controllers\Admin\ExamController::class, 'addQuestions'])->name('exam-questions.add');
+        Route::delete('/{exam}/questions/{examQuestion}', [\App\Http\Controllers\Admin\ExamController::class, 'removeQuestion'])->name('exam-questions.remove');
         Route::get('/{exam}/results', [\App\Http\Controllers\Admin\ExamController::class, 'results'])->name('results');
         Route::post('/{exam}/publish', [\App\Http\Controllers\Admin\ExamController::class, 'publish'])->name('publish');
     });
+
+    // Импорти саволҳо аз Excel (BERUNI гурӯҳи exams)
+        Route::get('/questions/excel-import', [\App\Http\Controllers\Admin\QuestionExcelImportController::class, 'importForm'])->name('questions.excel-import-form');
+        Route::get('/questions/excel-import/template', [\App\Http\Controllers\Admin\QuestionExcelImportController::class, 'downloadTemplate'])->name('questions.excel-import-template');
+        Route::post('/questions/excel-import', [\App\Http\Controllers\Admin\QuestionExcelImportController::class, 'upload'])->name('questions.excel-import-upload');
+        Route::get('/questions/excel-import/preview', [\App\Http\Controllers\Admin\QuestionExcelImportController::class, 'preview'])->name('questions.excel-import-preview');
+        Route::post('/questions/excel-import/confirm', [\App\Http\Controllers\Admin\QuestionExcelImportController::class, 'confirm'])->name('questions.excel-import-confirm');
 
     // Қарздорӣ
     Route::prefix('debts')->name('debts.')->group(function () {

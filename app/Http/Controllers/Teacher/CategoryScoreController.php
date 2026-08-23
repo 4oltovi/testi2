@@ -42,9 +42,18 @@ class CategoryScoreController extends Controller
             ->get()
             ->groupBy(fn($s) => $s->student_id . '_' . $s->category->value);
 
+        $currentUserId = auth()->id();
+        $lockedScores = [];
+        foreach ($existingScores as $key => $scores) {
+            $score = $scores->first();
+            if ($score->is_locked && $score->locked_by !== $currentUserId) {
+                $lockedScores[$key] = $score;
+            }
+        }
+
         return view('teacher.journal.category-scores', compact(
             'subjectAssignment', 'students', 'semester',
-            'categorySettings', 'date', 'lessonNumber', 'period', 'existingScores'
+            'categorySettings', 'date', 'lessonNumber', 'period', 'existingScores', 'lockedScores'
         ));
     }
 
@@ -66,7 +75,6 @@ class CategoryScoreController extends Controller
 
         $semester = $subjectAssignment->semester;
         $categorySettings = GradeCategorySetting::getOrCreateDefaults($subjectAssignment->id);
-        // Pluck max_score бо category string value (на Enum object)
         $maxScores = [];
         foreach ($categorySettings as $cs) {
             $catValue = $cs->category instanceof GradeCategory ? $cs->category->value : $cs->category;
@@ -75,8 +83,9 @@ class CategoryScoreController extends Controller
         $date = $request->input('date');
         $lessonNumber = $request->input('lesson_number');
         $period = $request->input('period', 'rating1');
+        $currentUserId = auth()->id();
 
-        DB::transaction(function () use ($subjectAssignment, $request, $semester, $maxScores, $date, $lessonNumber, $period) {
+        DB::transaction(function () use ($subjectAssignment, $request, $semester, $maxScores, $date, $lessonNumber, $period, $currentUserId) {
             foreach ($request->input('scores') as $studentId => $categories) {
                 foreach ($categories as $categoryValue => $score) {
                     if ($score === null || $score === '') continue;
@@ -85,30 +94,50 @@ class CategoryScoreController extends Controller
                     if (!$category) continue;
 
                     $maxScore = $maxScores[$categoryValue] ?? $category->defaultMaxScore();
-
-                    // Ҳадди аксарро санҷед
                     $score = min((float) $score, $maxScore);
 
-                    CategoryScore::updateOrCreate(
-                        [
+                    $existing = CategoryScore::where('student_id', $studentId)
+                        ->where('subject_assignment_id', $subjectAssignment->id)
+                        ->where('lesson_date', $date)
+                        ->where('lesson_number', $lessonNumber)
+                        ->where('category', $categoryValue)
+                        ->where('period', $period)
+                        ->first();
+
+                    $isAdmin = $request->user()->hasRole('admin') || $request->user()->hasRole('super_admin');
+
+                    if ($existing) {
+                        if ($existing->is_locked && !$isAdmin) {
+                            continue;
+                        }
+                        $existing->update([
+                            'score' => $score,
+                            'max_score' => $maxScore,
+                            'graded_by' => $currentUserId,
+                            'is_locked' => true,
+                            'locked_at' => now(),
+                            'locked_by' => $currentUserId,
+                        ]);
+                    } else {
+                        CategoryScore::create([
                             'student_id' => $studentId,
                             'subject_assignment_id' => $subjectAssignment->id,
+                            'semester_id' => $semester->id,
                             'lesson_date' => $date,
                             'lesson_number' => $lessonNumber,
                             'category' => $categoryValue,
                             'period' => $period,
-                        ],
-                        [
-                            'semester_id' => $semester->id,
                             'score' => $score,
                             'max_score' => $maxScore,
-                            'graded_by' => auth()->id(),
-                        ]
-                    );
+                            'graded_by' => $currentUserId,
+                            'is_locked' => true,
+                            'locked_at' => now(),
+                            'locked_by' => $currentUserId,
+                        ]);
+                    }
                 }
             }
 
-            // Ҳисоби баҳои ниҳоӣ барои ҳамаи донишҷӯён
             $gradeCalc = app(\App\Services\GradeCalculator::class);
             $studentsToRecalc = $subjectAssignment->group->activeStudents;
             foreach ($studentsToRecalc as $student) {

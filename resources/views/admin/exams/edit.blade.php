@@ -51,8 +51,13 @@
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label">Шумораи саволҳо</label>
-                    <input type="number" name="total_questions_count" class="form-control" value="{{ old('total_questions_count', $exam->total_questions_count) }}" min="1" max="100" required>
+                    <label class="form-label">Шумораи саволҳои оддӣ</label>
+                    <input type="number" name="simple_questions_count" class="form-control" value="{{ old('simple_questions_count', $exam->simple_questions_count ?? 20) }}" min="0" max="100" required>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Шумораи саволҳои мувофиқоварӣ</label>
+                    <input type="number" name="matching_questions_count" class="form-control" value="{{ old('matching_questions_count', $exam->matching_questions_count ?? 5) }}" min="0" max="50" required>
                 </div>
 
                 <div class="col-md-3">
@@ -101,6 +106,93 @@
                 <div class="col-md-6">
                     <label class="form-label">Санаи анҷом</label>
                     <input type="datetime-local" name="ends_at" class="form-control" value="{{ old('ends_at', optional($exam->ends_at)->format('Y-m-d\TH:i')) }}">
+                </div>
+            </div>
+
+            {{-- Саволҳои имтиҳон --}}
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="bi bi-question-circle me-2"></i> Саволҳои имтиҳон</h6>
+                    <span class="badge bg-primary">{{ $examQuestions->count() }} / {{ $exam->total_questions_count }}</span>
+                </div>
+                <div class="card-body">
+                    @if($examQuestions->isNotEmpty())
+                    <div class="table-responsive mb-3">
+                        <table class="table table-sm table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Савол</th>
+                                    <th>Навъ</th>
+                                    <th>Душворӣ</th>
+                                    <th>Балл</th>
+                                    <th class="text-center">Амал</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($examQuestions as $eq)
+                                <tr>
+                                    <td>{{ $loop->iteration }}</td>
+                                    <td>{{ Str::limit($eq->question->question_text, 80) }}</td>
+                                    <td>
+                                        @php
+                                            $typeLabels = [
+                                                'single_choice' => 'Якҷавобӣ',
+                                                'multiple_choice' => 'Чандҷавобӣ',
+                                                'matching' => 'Мувофиқоварӣ',
+                                                'true_false' => 'Дуруст/Нодуруст',
+                                                'open_text' => 'Кушод',
+                                            ];
+                                        @endphp
+                                        {{ $typeLabels[$eq->question->type] ?? $eq->question->type }}
+                                    </td>
+                                    <td>
+                                        @for($i = 1; $i <= 5; $i++)
+                                            <i class="bi bi-star{{ $i <= $eq->question->difficulty_level ? '-fill text-warning' : ' text-muted' }}"></i>
+                                        @endfor
+                                    </td>
+                                    <td>{{ $eq->points }}</td>
+                                    <td class="text-center">
+                                        <form action="{{ route('admin.exams.exam-questions.remove', [$exam, $eq]) }}" method="POST" class="d-inline"
+                                              onsubmit="return confirm('Саволро аз имтиҳон хориҷ кардан мехоҳед?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Хориҷ кардан">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    @else
+                    <p class="text-muted text-center py-3">Ҳоло саволҳо илова карда нашудаанд.</p>
+                    @endif
+
+                    @if($availableQuestions->isNotEmpty())
+                    <hr>
+                    <h6 class="mb-3">Саволҳои дастрас барои илова кардан</h6>
+                    <form action="{{ route('admin.exams.exam-questions.add', $exam) }}" method="POST" class="row g-2 align-items-end">
+                        @csrf
+                        <div class="col-md-8">
+                            <select name="question_ids[]" class="form-select" multiple size="5">
+                                @foreach($availableQuestions as $q)
+                                    <option value="{{ $q->id }}">
+                                        [{{ $q->difficulty_level }}/5] {{ Str::limit($q->question_text, 100) }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted">Барои интихоби якчанд, клавиши Ctrl ё Shift-ро истифода баред.</small>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="bi bi-plus-lg me-1"></i> Илова кардан
+                            </button>
+                        </div>
+                    </form>
+                    @endif
                 </div>
             </div>
 
