@@ -7,7 +7,6 @@ use App\Enums\AttendanceStatus;
 use App\Enums\GradeScale;
 use App\Models\Attendance;
 use App\Models\CurrentGrade;
-use App\Models\GradeChangeLog;
 use App\Models\Group;
 use App\Models\Semester;
 use App\Models\SemesterGrade;
@@ -357,47 +356,12 @@ class JournalController extends Controller
     }
 
     /**
-     * Тасдиқи баҳои ниҳоӣ
+     * Санҷиш ва эҷоди AcademicDebt
      */
-    public function finalize(SemesterGrade $semesterGrade): RedirectResponse
+    public function checkDebt(SemesterGrade $semesterGrade): RedirectResponse
     {
-        if ($semesterGrade->is_finalized) {
-            return back()->with('error', 'Ин баҳо аллакай тасдиқ шудааст.');
-        }
+        $this->debtDetector->checkAndCreateDebt($semesterGrade);
 
-        DB::transaction(function () use ($semesterGrade) {
-            // Ҳисоби баҳои ниҳоӣ
-            $this->gradeCalculator->processAndSaveFinalGrade($semesterGrade);
-
-            // Тасдиқ
-            $semesterGrade->update([
-                'is_finalized' => true,
-                'finalized_at' => now(),
-                'finalized_by' => auth()->id(),
-            ]);
-
-            // Санҷиши қарздорӣ
-            $this->debtDetector->checkAndCreateDebt($semesterGrade);
-
-            // Сабти лог
-            GradeChangeLog::create([
-                'semester_grade_id' => $semesterGrade->id,
-                'student_id' => $semesterGrade->student_id,
-                'field_changed' => 'finalized',
-                'old_value' => 'false',
-                'new_value' => 'true',
-                'reason' => 'Тасдиқи баҳои ниҳоӣ',
-                'changed_by' => auth()->id(),
-                'ip_address' => request()->ip(),
-            ]);
-        });
-
-        $grade = GradeScale::tryFrom($semesterGrade->letter_grade);
-        $message = "Баҳо тасдиқ шуд: {$semesterGrade->letter_grade} ({$semesterGrade->total_score}%)";
-        if ($grade && !$grade->isPassing()) {
-            $message .= ' — ҚАРЗДОР!';
-        }
-
-        return back()->with('success', $message);
+        return back()->with('success', 'Санҷиши қарздорӣ анҷом шуд.');
     }
 }

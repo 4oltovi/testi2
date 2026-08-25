@@ -64,8 +64,6 @@ class RolesAndPermissionsSeeder extends Seeder
             ['name' => 'journal.attendance', 'display_name' => 'Сабти давомот', 'module' => 'journal'],
             ['name' => 'journal.grades', 'display_name' => 'Сабти баҳо', 'module' => 'journal'],
             ['name' => 'journal.ratings', 'display_name' => 'Сабти рейтинг', 'module' => 'journal'],
-            ['name' => 'journal.finalize', 'display_name' => 'Тасдиқи баҳои ниҳоӣ', 'module' => 'journal'],
-            ['name' => 'journal.edit_finalized', 'display_name' => 'Таҳрири баҳои тасдиқшуда', 'module' => 'journal'],
 
             // Рейтингҳо
             ['name' => 'ratings.view', 'display_name' => 'Дидани рейтингҳо', 'module' => 'ratings'],
@@ -128,7 +126,7 @@ class RolesAndPermissionsSeeder extends Seeder
                 ->pluck('id')->toArray(),
 
             'teacher' => Permission::whereIn('name', [
-                'journal.view', 'journal.attendance', 'journal.grades', 'journal.ratings', 'journal.finalize',
+                'journal.view', 'journal.attendance', 'journal.grades', 'journal.ratings',
                 'exams.view', 'exams.create', 'exams.edit', 'exams.manage_questions', 'exams.grade',
                 'ratings.view', 'students.view',
             ])->pluck('id')->toArray(),

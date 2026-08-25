@@ -17,6 +17,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use App\Services\DebtDetector;
 use App\Services\GradeCalculator;
 
 class ExamController extends Controller
@@ -369,6 +370,10 @@ class ExamController extends Controller
         $semesterGrade->save();
 
         app(GradeCalculator::class)->processAndSaveFinalGrade($semesterGrade);
+
+        if (!$semesterGrade->isPassed()) {
+            app(\App\Services\DebtDetector::class)->checkAndCreateDebt($semesterGrade);
+        }
     }
 
     private function questionWeight($question): float

@@ -50,8 +50,8 @@
                         <a href="{{ route('admin.rating-questions.export', ['subject_id' => $subjectId]) }}" class="btn btn-sm btn-outline-success">
                             <i class="bi bi-file-earmark-excel"></i> Excel
                         </a>
-                        <a href="{{ route('admin.rating-questions.import-form') }}" class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-upload"></i> Импорт
+                        <a href="{{ route('admin.rating-questions.import-form') }}" class="btn btn-sm btn-outline-warning">
+                            <i class="bi bi-file-earmark-excel"></i> Импорти Excel
                         </a>
                     </div>
                 </div>

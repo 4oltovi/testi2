@@ -96,11 +96,9 @@ class RatingQuestionController extends Controller
     /**
      * Саҳифаи импорт барои саволномаи рейтинг
      */
-    public function importForm(): View
+    public function importForm(): RedirectResponse
     {
-        $subjects = Subject::active()->orderBy('name')->get();
-
-        return view('admin.rating-questions.import', compact('subjects'));
+        return redirect()->route('admin.rating-questions.excel-import');
     }
 
     /**
@@ -108,110 +106,7 @@ class RatingQuestionController extends Controller
      */
     public function import(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'subject_id' => 'required|exists:subjects,id',
-            'file' => 'required|file|mimes:csv,txt|max:2048',
-        ], [
-            'subject_id.required' => 'Фанро интихоб кунед.',
-            'file.required' => 'Файли CSV-ро боргузорӣ кунед.',
-            'file.mimes' => 'Танҳо файлҳои CSV ё TXT қабул мешаванд.',
-        ]);
-
-        $subjectId = (int) $validated['subject_id'];
-        $file = $request->file('file');
-        $subject = Subject::findOrFail($subjectId);
-
-        $handle = fopen($file->getPathname(), 'r');
-        if ($handle === false) {
-            return back()->with('error', 'Файл кушода намешавад.');
-        }
-
-        $header = fgetcsv($handle, 5000, ',');
-        if ($header === false || !in_array('question_text', $header) || !in_array('correct', $header)) {
-            fclose($handle);
-            return back()->with('error', 'Шакли файл нодуруст аст. Сатри сарлавҳа бояд дорад: question_text, options, correct, difficulty_level, explanation.');
-        }
-
-        $imported = 0;
-        $skipped = 0;
-        $errors = [];
-
-        DB::transaction(function () use ($handle, $header, $subjectId, $subject, &$imported, &$skipped, &$errors) {
-            $bank = QuestionBank::firstOrCreate(
-                ['subject_id' => $subjectId, 'bank_type' => 'rating'],
-                [
-                    'name' => 'Рейтинг: ' . $subject->name,
-                    'teacher_id' => auth()->id(),
-                    'is_active' => true,
-                ]
-            );
-
-            while (($row = fgetcsv($handle, 5000, ',')) !== false) {
-                if (count($row) < 5) {
-                    $skipped++;
-                    continue;
-                }
-
-                $data = array_combine($header, $row);
-                if ($data === false) {
-                    $skipped++;
-                    continue;
-                }
-
-                $questionText = trim($data['question_text'] ?? '');
-                $optionsRaw = trim($data['options'] ?? '');
-                $correctIndex = (int) ($data['correct'] ?? 0);
-                $difficulty = (int) ($data['difficulty_level'] ?? 1);
-                $explanation = trim($data['explanation'] ?? '');
-
-                if ($questionText === '' || $optionsRaw === '') {
-                    $skipped++;
-                    continue;
-                }
-
-                $options = array_map('trim', explode('|', $optionsRaw));
-                $options = array_slice($options, 0, 4);
-                while (count($options) < 4) {
-                    $options[] = 'Варианти ' . (count($options) + 1);
-                }
-
-                if ($correctIndex < 0 || $correctIndex > 3) {
-                    $correctIndex = 0;
-                }
-
-                $difficulty = max(1, min(3, $difficulty));
-
-                $question = Question::create([
-                    'question_bank_id' => $bank->id,
-                    'subject_id' => $subjectId,
-                    'type' => 'single_choice',
-                    'question_text' => $questionText,
-                    'difficulty_level' => $difficulty,
-                    'points' => 2.5,
-                    'explanation' => $explanation ?: null,
-                    'is_active' => true,
-                ]);
-
-                foreach ($options as $i => $text) {
-                    AnswerOption::create([
-                        'question_id' => $question->id,
-                        'option_text' => $text ?: 'Варианти ' . ($i + 1),
-                        'is_correct' => $i === $correctIndex,
-                        'sort_order' => $i + 1,
-                    ]);
-                }
-
-                $imported++;
-            }
-        });
-
-        fclose($handle);
-
-        if ($imported > 0) {
-            return back()->with('success', "✅ {$imported} савол импорт карда шуд." . ($skipped ? " ({$skipped} сатр ронда шуд.)" : ''));
-        }
-
-        return back()->with('error', 'Ягон савол импорт карда нашудааст. Лутфан файлро санҷед.');
+        return redirect()->route('admin.rating-questions.excel-import-upload');
     }
 
     /**

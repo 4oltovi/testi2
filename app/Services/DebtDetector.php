@@ -56,6 +56,10 @@ class DebtDetector
         return DB::transaction(function () use ($semesterGrade, $grade) {
             $subjectId = $semesterGrade->subjectAssignment?->subject_id;
 
+            if (!$subjectId) {
+                throw new \RuntimeException('Имкони эҷоди қарздорӣ нест: subject_id ё subject_assignment_id муайян нашудааст.');
+            }
+
             $existingDebt = AcademicDebt::where('student_id', $semesterGrade->student_id)
                 ->where('subject_id', $subjectId)
                 ->where('semester_id', $semesterGrade->semester_id)

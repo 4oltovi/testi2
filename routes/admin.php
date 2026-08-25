@@ -71,7 +71,6 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/grades/{subjectAssignment}', [\App\Http\Controllers\Admin\JournalController::class, 'grades'])->name('grades');
         Route::post('/grades/{subjectAssignment}', [\App\Http\Controllers\Admin\JournalController::class, 'storeGrades'])->name('grades.store');
         Route::get('/semester-grades/{subjectAssignment}', [\App\Http\Controllers\Admin\JournalController::class, 'semesterGrades'])->name('semester-grades');
-        Route::post('/finalize/{semesterGrade}', [\App\Http\Controllers\Admin\JournalController::class, 'finalize'])->name('finalize');
         Route::post('/credits/{subjectAssignment}', [\App\Http\Controllers\Admin\JournalController::class, 'updateCredits'])->name('credits.update');
 
         // Категорияҳои баҳо (5 категория: Савод, Сарулибос, Ҷиҳоз, Иштирок, Интизом)
@@ -195,9 +194,11 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
 
     Route::prefix('rating-questions')->name('rating-questions.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\RatingQuestionController::class, 'index'])->name('index');
-        Route::get('/import', [\App\Http\Controllers\Admin\RatingQuestionController::class, 'importForm'])->name('import-form');
-        Route::post('/import', [\App\Http\Controllers\Admin\RatingQuestionController::class, 'import'])->name('import');
-        Route::get('/template', [\App\Http\Controllers\Admin\RatingQuestionController::class, 'downloadTemplate'])->name('template');
+        Route::get('/import', [\App\Http\Controllers\Admin\RatingQuestionExcelImportController::class, 'importForm'])->name('import-form');
+        Route::post('/import', [\App\Http\Controllers\Admin\RatingQuestionExcelImportController::class, 'upload'])->name('import');
+        Route::get('/import/preview', [\App\Http\Controllers\Admin\RatingQuestionExcelImportController::class, 'preview'])->name('import-preview');
+        Route::post('/import/confirm', [\App\Http\Controllers\Admin\RatingQuestionExcelImportController::class, 'confirm'])->name('import-confirm');
+        Route::get('/template', [\App\Http\Controllers\Admin\RatingQuestionExcelImportController::class, 'downloadTemplate'])->name('template');
         Route::get('/export', [\App\Http\Controllers\Admin\RatingQuestionController::class, 'export'])->name('export');
         Route::post('/', [\App\Http\Controllers\Admin\RatingQuestionController::class, 'store'])->name('store');
         Route::delete('/{question}', [\App\Http\Controllers\Admin\RatingQuestionController::class, 'destroy'])->name('destroy');

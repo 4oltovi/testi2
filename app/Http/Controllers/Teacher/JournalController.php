@@ -310,6 +310,10 @@ class JournalController extends Controller
                     if (!empty($updates)) {
                         $semesterGrade->update($updates);
                         $this->gradeCalculator->processAndSaveFinalGrade($semesterGrade);
+
+                        if (!$semesterGrade->isPassed()) {
+                            $this->debtDetector->checkAndCreateDebt($semesterGrade);
+                        }
                     }
                 }
             }
@@ -371,6 +375,10 @@ class JournalController extends Controller
                 ]);
 
                 $this->gradeCalculator->processAndSaveFinalGrade($semesterGrade);
+
+                if (!$semesterGrade->isPassed()) {
+                    $this->debtDetector->checkAndCreateDebt($semesterGrade);
+                }
             }
         });
 

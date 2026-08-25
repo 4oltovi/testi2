@@ -63,10 +63,13 @@
                         <tr>
                             <td><span class="badge bg-{{ $item['rank'] <= 3 ? 'warning' : 'secondary' }}">{{ $item['rank'] }}</span></td>
                             <td>
-                                {{-- ИСЛОҲ: линк ба факултети ҳақиқӣ --}}
-                                <a href="{{ route('admin.ratings.faculty', ['faculty' => $item['faculty_id'] ?? 1, 'semester_id' => $semesterId]) }}">
+                                @if(!empty($item['faculty_id']))
+                                    <a href="{{ route('admin.ratings.faculty', ['faculty' => $item['faculty_id'], 'semester_id' => $semesterId]) }}">
+                                        {{ $item['faculty_name'] }}
+                                    </a>
+                                @else
                                     {{ $item['faculty_name'] }}
-                                </a>
+                                @endif
                             </td>
                             <td><strong class="{{ $item['avg_gpa'] >= 3.0 ? 'text-success' : 'text-warning' }}">{{ number_format($item['avg_gpa'], 2) }}</strong></td>
                             <td>{{ $item['total_students'] }}</td>

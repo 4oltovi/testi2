@@ -67,7 +67,6 @@
                         <th title="Баҳои ҳарфӣ">Баҳо</th>
                         <th title="Grade Point">GP</th>
                         <th>Ҳолат</th>
-                        <th>Тасдиқ</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -136,20 +135,6 @@
                             <span class="badge {{ $statusBadge }}">{{ $statusLabel }}</span>
                             @else
                             —
-                            @endif
-                        </td>
-                        <td>
-                            @if($grade && !$grade->is_finalized && $calc['total_score'] !== null)
-                            <form action="{{ route('admin.journal.finalize', $grade) }}" method="POST" class="d-inline">
-                                @csrf
-                                <button type="submit" class="btn btn-sm btn-success"
-                                    data-confirm="Тасдиқ кардан? Баъд тағйир додан мушкил аст."
-                                    title="Тасдиқ">
-                                    <i class="bi bi-check-lg"></i>
-                                </button>
-                            </form>
-                            @elseif($grade?->is_finalized)
-                            <i class="bi bi-lock-fill text-muted" title="Тасдиқ шуда: {{ $grade->finalized_at?->format('d.m.Y') }}"></i>
                             @endif
                         </td>
                     </tr>

@@ -14,6 +14,8 @@ use App\Models\QuestionBank;
 use App\Models\Question;
 use App\Models\AnswerOption;
 use Illuminate\Http\UploadedFile;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class RatingQuestionImportTest extends TestCase
 {
@@ -92,15 +94,31 @@ class RatingQuestionImportTest extends TestCase
         $user = $this->createAdmin();
         $subject = $this->createSubject('Тест Фан', 'TF101');
 
-        $csvContent = "question_text,options,correct,difficulty_level,explanation\n";
-        $csvContent .= "Саволи тестӣ?,Варианти 1|Варианти 2|Варианти 3|Варианти 4,2,1,Сабаби тест\n";
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setCellValue('A1', '@Саволи тестӣ?');
+        $sheet->setCellValue('A2', '$Варианти дуруст');
+        $sheet->setCellValue('A3', '&Варианти нодуруст 1');
+        $sheet->setCellValue('A4', '&Варианти нодуруст 2');
+        $sheet->setCellValue('A5', '&Варианти нодуруст 3');
+        $sheet->setCellValue('A6', '');
+
+        $tmpFile = tempnam(sys_get_temp_dir(), 'rating_excel_') . '.xlsx';
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($tmpFile);
 
         $response = $this->actingAs($user)->post('/admin/rating-questions/import', [
             'subject_id' => $subject->id,
-            'file' => UploadedFile::fake()->createWithContent('test.csv', $csvContent),
+            'file' => new UploadedFile($tmpFile, 'test.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true),
         ]);
 
-        $response->assertSessionHas('success');
+        $response->assertRedirect(route('admin.rating-questions.import-preview'));
+
+        $confirmResponse = $this->actingAs($user)->post('/admin/rating-questions/import/confirm', [
+            'confirm' => '1',
+        ]);
+
+        $confirmResponse->assertSessionHas('success');
 
         $this->assertDatabaseHas('questions', [
             'subject_id' => $subject->id,

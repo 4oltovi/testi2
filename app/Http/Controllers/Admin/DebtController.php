@@ -121,6 +121,10 @@ class DebtController extends Controller
             // Аз нав ҳисоб
             $gradeCalc = app(\App\Services\GradeCalculator::class);
             $gradeCalc->processAndSaveFinalGrade($debt->semesterGrade);
+
+            if (!$debt->semesterGrade->isPassed()) {
+                $this->debtDetector->checkAndCreateDebt($debt->semesterGrade);
+            }
         }
 
         return back()->with('success', "Қарздорӣ ҳал шуд! Баҳо: {$grade->value} ({$score}%)");

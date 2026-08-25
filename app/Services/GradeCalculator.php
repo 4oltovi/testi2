@@ -290,6 +290,15 @@ class GradeCalculator
 
         $semesterGrade->save();
 
+        if (!$semesterGrade->is_finalized) {
+            $semesterGrade->update([
+                'is_finalized' => true,
+                'finalized_at' => now(),
+                'finalized_by' => auth()->id(),
+            ]);
+            $semesterGrade->refresh();
+        }
+
         return $semesterGrade;
     }
 

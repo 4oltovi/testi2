@@ -8,6 +8,7 @@ use App\Models\CategoryScore;
 use App\Models\GradeCategorySetting;
 use App\Models\Semester;
 use App\Models\SubjectAssignment;
+use App\Services\DebtDetector;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -148,6 +149,10 @@ class CategoryScoreController extends Controller
 
                 if ($semesterGrade && !$semesterGrade->is_finalized) {
                     $gradeCalc->processAndSaveFinalGrade($semesterGrade);
+
+                    if (!$semesterGrade->isPassed()) {
+                        app(\App\Services\DebtDetector::class)->checkAndCreateDebt($semesterGrade);
+                    }
                 }
             }
         });

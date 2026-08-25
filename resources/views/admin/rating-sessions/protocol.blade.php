@@ -60,7 +60,7 @@
 
     <div class="info">
         Семестр: {{ $session->semester?->name }} — {{ $session->semester?->academicYear?->name }}<br>
-        Давраи супориш: {{ $session->start?->format('d.m.Y H:i') ?? '—' }} — {{ $session->end?->format('d.m.Y H:i') ?? '—' }}<br>
+        Давраи супориш: {{ $session->start_at?->format('d.m.Y H:i') ?? '—' }} — {{ $session->end_at?->format('d.m.Y H:i') ?? '—' }}<br>
         Журнал: {{ $results['journal_max'] }} бал + Тест: {{ $results['test_max'] }} бал = 100 бал<br>
         Санаи барориш: {{ now()->format('d.m.Y') }}
     </div>
