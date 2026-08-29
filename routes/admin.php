@@ -50,6 +50,14 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
         Route::post('/{student}/promote', [\App\Http\Controllers\Admin\StudentController::class, 'promote'])->name('promote');
     });
 
+    // Гузариши донишҷӯён
+    Route::prefix('student-transfers')->name('student-transfers.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\StudentTransferController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Admin\StudentTransferController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Admin\StudentTransferController::class, 'store'])->name('store');
+        Route::get('/{transfer}', [\App\Http\Controllers\Admin\StudentTransferController::class, 'show'])->name('show');
+    });
+
     // Омӯзгорон
     Route::prefix('teachers')->name('teachers.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\TeacherController::class, 'index'])->name('index');
@@ -211,4 +219,15 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('vedomosts-zip', [\App\Http\Controllers\Admin\VedomostController::class, 'downloadZip'])->name('vedomosts.zip');
     Route::get('vedomosts/{vedomost}/pdf', [\App\Http\Controllers\Admin\VedomostController::class, 'downloadPdf'])->name('vedomosts.pdf');
     Route::get('vedomosts/{vedomost}/preview', [\App\Http\Controllers\Admin\VedomostController::class, 'preview'])->name('vedomosts.preview');
+
+    // ==================== ИМТИҲОНИ ТАКРОРӢ ====================
+    Route::prefix('retake-exams')->name('retake-exams.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\RetakeExamController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Admin\RetakeExamController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Admin\RetakeExamController::class, 'store'])->name('store');
+        Route::get('/{retakeExam}', [\App\Http\Controllers\Admin\RetakeExamController::class, 'show'])->name('show');
+        Route::post('/students/{retakeExamStudent}/score', [\App\Http\Controllers\Admin\RetakeExamController::class, 'enterScore'])->name('enter-score');
+        Route::get('/{retakeExam}/vedomost', [\App\Http\Controllers\Admin\RetakeExamController::class, 'vedomost'])->name('vedomost');
+        Route::get('/{retakeExam}/print-vedomost', [\App\Http\Controllers\Admin\RetakeExamController::class, 'printVedomost'])->name('print-vedomost');
     });
+});

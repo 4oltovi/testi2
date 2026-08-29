@@ -29,9 +29,10 @@ class QuestionBankController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        QuestionBank::create([...$validated, 'teacher_id' => auth()->id(), 'is_active' => true]);
+        $questionBank = QuestionBank::create([...$validated, 'teacher_id' => auth()->id(), 'is_active' => true]);
 
-        return redirect()->route('admin.exams.question-banks.index')->with('success', 'Банки саволҳо сохта шуд.');
+        return redirect()->route('admin.exams.question-banks.show', $questionBank)
+            ->with('success', 'Банки саволҳо сохта шуд.');
     }
 
     public function show(QuestionBank $questionBank)
@@ -55,7 +56,9 @@ class QuestionBankController extends Controller
         ]);
 
         $questionBank->update($validated);
-        return redirect()->route('admin.exams.question-banks.index')->with('success', 'Навсозӣ шуд.');
+
+        return redirect()->route('admin.exams.question-banks.show', $questionBank)
+            ->with('success', 'Навсозӣ шуд.');
     }
 
     public function destroy(QuestionBank $questionBank)

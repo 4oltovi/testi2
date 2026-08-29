@@ -139,7 +139,7 @@ class TeacherController extends Controller
 
             AuditLog::log('create', "Омӯзгори нав: {$user->full_name}", Teacher::class, $teacher->id);
 
-            return redirect()->route('admin.teachers.index')
+            return redirect()->route('admin.teachers.show', $teacher)
                 ->with('success', "Омӯзгор «{$user->full_name}» бомуваффақият сабт шуд.");
         });
     }

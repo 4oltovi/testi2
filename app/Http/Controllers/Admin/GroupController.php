@@ -80,9 +80,9 @@ class GroupController extends Controller
         $validated['is_active'] = $request->boolean('is_active', true);
         $validated['max_students'] = $validated['max_students'] ?? 25;
 
-        Group::create($validated);
+        $group = Group::create($validated);
 
-        return redirect()->route('admin.structure.groups.index')
+        return redirect()->route('admin.structure.groups.show', $group)
             ->with('success', 'Гурӯҳ бомуваффақият сохта шуд.');
     }
 
@@ -129,7 +129,7 @@ class GroupController extends Controller
 
         $group->update($validated);
 
-        return redirect()->route('admin.structure.groups.index')
+        return redirect()->route('admin.structure.groups.show', $group)
             ->with('success', 'Гурӯҳ бомуваффақият навсозӣ шуд.');
     }
 

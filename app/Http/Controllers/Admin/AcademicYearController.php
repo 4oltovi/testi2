@@ -87,7 +87,7 @@ class AcademicYearController extends Controller
             $this->makeYearCurrent($year);
         }
 
-        return redirect()->route('admin.structure.academic-years.index')
+        return redirect()->route('admin.structure.academic-years.show', $year)
             ->with('success', "Соли таҳсилии «{$year->name}» бо 2 семестр сохта шуд.");
     }
 
@@ -127,7 +127,7 @@ class AcademicYearController extends Controller
             $academicYear->update(['is_current' => false]);
         }
 
-        return redirect()->route('admin.structure.academic-years.index')
+        return redirect()->route('admin.structure.academic-years.show', $academicYear)
             ->with('success', "Соли таҳсилии «{$academicYear->name}» навсозӣ шуд.");
     }
 

@@ -37,13 +37,20 @@ class ExamController extends Controller
             ->orderBy('starts_at')
             ->get();
 
-        // Кӯшишҳои мавҷудаи донишҷӯ
         $attempts = ExamAttempt::where('student_id', $student->id)
             ->whereIn('exam_id', $exams->pluck('id'))
             ->get()
             ->groupBy('exam_id');
 
-        return view('student.exams.index', compact('exams', 'attempts', 'student'));
+        $retakeExams = \App\Models\RetakeExam::whereHas('retakeExamStudents', function ($query) use ($student) {
+            $query->where('student_id', $student->id)
+                ->whereIn('status', ['pending', 'scheduled']);
+        })
+        ->with(['subject', 'semester'])
+        ->orderByDesc('exam_date')
+        ->get();
+
+        return view('student.exams.index', compact('exams', 'attempts', 'student', 'retakeExams'));
     }
 
     /**

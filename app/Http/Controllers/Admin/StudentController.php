@@ -165,7 +165,7 @@ class StudentController extends Controller
 
             AuditLog::log('create', "Донишҷӯи нав: {$user->full_name} ({$validated['student_id_number']})", Student::class, $student->id);
 
-            return redirect()->route('admin.students.index')
+            return redirect()->route('admin.students.show', $student)
                 ->with('success', "Донишҷӯ «{$user->full_name}» бомуваффақият сабт шуд.");
         });
     }
@@ -180,7 +180,7 @@ class StudentController extends Controller
             'statusHistory.createdByUser',
             'promotions.fromGroup',
             'promotions.toGroup',
-            'semesterGrades.subject',
+            'semesterGrades.subjectAssignment.subject',
             'semesterGrades.semester',
             'activeDebts.subject',
             'semesterGpas.semester',

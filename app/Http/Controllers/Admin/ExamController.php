@@ -80,6 +80,7 @@ class ExamController extends Controller
         }
 
         $created = 0;
+        $lastExam = null;
 
         foreach ($request->group_ids as $groupId) {
             $group = Group::findOrFail($groupId);
@@ -101,7 +102,7 @@ class ExamController extends Controller
                 ]);
             }
 
-            Exam::create([
+            $lastExam = Exam::create([
                 'subject_assignment_id' => $assignment->id,
                 'semester_id' => $semester?->id,
                 'teacher_id' => $request->user()->id,
@@ -130,7 +131,7 @@ class ExamController extends Controller
             $created++;
         }
 
-        return redirect()->route('admin.exams.index')->with('success', $created . ' имтиҳон сохта шуд.');
+        return redirect()->route('admin.exams.show', $lastExam)->with('success', $created . ' имтиҳон сохта шуд.');
     }
 
     public function edit(Exam $exam): View

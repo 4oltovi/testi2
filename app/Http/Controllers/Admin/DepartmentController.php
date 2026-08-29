@@ -63,9 +63,9 @@ class DepartmentController extends Controller
 
         $validated['is_active'] = $request->boolean('is_active', true);
 
-        Department::create($validated);
+        $department = Department::create($validated);
 
-        return redirect()->route('admin.structure.departments.index')
+        return redirect()->route('admin.structure.departments.show', $department)
             ->with('success', 'Кафедра бомуваффақият сохта шуд.');
     }
 
@@ -101,7 +101,7 @@ class DepartmentController extends Controller
 
         $department->update($validated);
 
-        return redirect()->route('admin.structure.departments.index')
+        return redirect()->route('admin.structure.departments.show', $department)
             ->with('success', 'Кафедра бомуваффақият навсозӣ шуд.');
     }
 

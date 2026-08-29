@@ -65,9 +65,9 @@ class SpecialtyController extends Controller
         $validated['is_active'] = $request->boolean('is_active', true);
         $validated['total_credits'] = (int) ($validated['total_credits'] ?? 0);
 
-        Specialty::create($validated);
+        $specialty = Specialty::create($validated);
 
-        return redirect()->route('admin.structure.specialties.index')
+        return redirect()->route('admin.structure.specialties.show', $specialty)
             ->with('success', 'Ихтисос бомуваффақият сохта шуд.');
     }
 
@@ -108,7 +108,7 @@ class SpecialtyController extends Controller
 
         $specialty->update($validated);
 
-        return redirect()->route('admin.structure.specialties.index')
+        return redirect()->route('admin.structure.specialties.show', $specialty)
             ->with('success', 'Ихтисос бомуваффақият навсозӣ шуд.');
     }
 

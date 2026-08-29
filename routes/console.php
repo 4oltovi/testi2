@@ -15,3 +15,6 @@ Schedule::command('model:prune', ['--model' => \App\Models\AuditLog::class])->we
 
 // Тоза кардани сессияҳои гузашта (ҳар рӯз)
 Schedule::command('session:gc')->daily();
+
+// Коркарди донишҷӯёни бенишондаш (ҳар дақиқа)
+Schedule::command('app:process-exam-no-shows')->everyMinute();

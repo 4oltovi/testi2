@@ -99,7 +99,7 @@ class UserController extends Controller
 
         AuditLog::log('create', "Корбари нав сохта шуд: {$user->login}", User::class, $user->id);
 
-        return redirect()->route('admin.users.index')
+        return redirect()->route('admin.users.show', $user)
             ->with('success', "Корбар «{$user->full_name}» бомуваффақият сохта шуд.");
     }
 
@@ -169,7 +169,7 @@ class UserController extends Controller
             $user->fresh()->toArray()
         );
 
-        return redirect()->route('admin.users.index')
+        return redirect()->route('admin.users.show', $user)
             ->with('success', "Корбар «{$user->full_name}» бомуваффақият навсозӣ шуд.");
     }
 

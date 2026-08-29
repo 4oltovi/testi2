@@ -59,9 +59,9 @@ class FacultyController extends Controller
 
         $validated['is_active'] = $request->boolean('is_active', true);
 
-        Faculty::create($validated);
+        $faculty = Faculty::create($validated);
 
-        return redirect()->route('admin.structure.faculties.index')
+        return redirect()->route('admin.structure.faculties.show', $faculty)
             ->with('success', 'Факултет бомуваффақият сохта шуд.');
     }
 
@@ -98,7 +98,7 @@ class FacultyController extends Controller
 
         $faculty->update($validated);
 
-        return redirect()->route('admin.structure.faculties.index')
+        return redirect()->route('admin.structure.faculties.show', $faculty)
             ->with('success', 'Факултет бомуваффақият навсозӣ шуд.');
     }
 

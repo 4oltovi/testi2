@@ -74,9 +74,9 @@ class SubjectController extends Controller
         $validated['total_hours'] = (int) ($validated['total_hours'] ?? $validated['credits'] * 30);
         $validated['exam_type'] = $validated['exam_type'] ?? 'exam';
 
-        Subject::create($validated);
+        $subject = Subject::create($validated);
 
-        return redirect()->route('admin.structure.subjects.index')
+        return redirect()->route('admin.structure.subjects.show', $subject)
             ->with('success', 'Фан бомуваффақият сохта шуд.');
     }
 
@@ -124,7 +124,7 @@ class SubjectController extends Controller
 
         $subject->update($validated);
 
-        return redirect()->route('admin.structure.subjects.index')
+        return redirect()->route('admin.structure.subjects.show', $subject)
             ->with('success', 'Фан бомуваффақият навсозӣ шуд.');
     }
 

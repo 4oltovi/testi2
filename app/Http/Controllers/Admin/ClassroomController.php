@@ -61,9 +61,9 @@ class ClassroomController extends Controller
         $validated['has_computers'] = $request->boolean('has_computers');
         $validated['is_active'] = $request->boolean('is_active', true);
 
-        Classroom::create($validated);
+        $classroom = Classroom::create($validated);
 
-        return redirect()->route('admin.structure.classrooms.index')
+        return redirect()->route('admin.structure.classrooms.show', $classroom)
             ->with('success', 'Аудитория бомуваффақият сохта шуд.');
     }
 
@@ -91,7 +91,7 @@ class ClassroomController extends Controller
 
         $classroom->update($validated);
 
-        return redirect()->route('admin.structure.classrooms.index')
+        return redirect()->route('admin.structure.classrooms.show', $classroom)
             ->with('success', 'Аудитория бомуваффақият навсозӣ шуд.');
     }
 

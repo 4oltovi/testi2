@@ -10,6 +10,9 @@
     <a href="{{ route('admin.students.edit', $student) }}" class="btn btn-outline-primary me-1">
         <i class="bi bi-pencil me-1"></i> Таҳрир
     </a>
+    <a href="{{ route('admin.student-transfers.create', ['student_id' => $student->id]) }}" class="btn btn-outline-warning">
+        <i class="bi bi-arrow-left-right me-1"></i> Гузариш
+    </a>
 @endsection
 
 @section('content')
