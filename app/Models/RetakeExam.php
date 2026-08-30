@@ -15,6 +15,7 @@ class RetakeExam extends Model
         'subject_id',
         'semester_id',
         'teacher_id',
+        'main_exam_id',
         'title',
         'description',
         'format',
@@ -55,6 +56,11 @@ class RetakeExam extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function mainExam(): BelongsTo
+    {
+        return $this->belongsTo(Exam::class, 'main_exam_id');
     }
 
     public function retakeExamStudents(): HasMany

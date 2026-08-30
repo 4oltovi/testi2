@@ -44,8 +44,9 @@ class ExamController extends Controller
 
         $retakeExams = \App\Models\RetakeExam::whereHas('retakeExamStudents', function ($query) use ($student) {
             $query->where('student_id', $student->id)
-                ->whereIn('status', ['pending', 'scheduled']);
+                ->whereIn('status', ['pending']);
         })
+        ->whereIn('status', ['scheduled', 'active'])
         ->with(['subject', 'semester'])
         ->orderByDesc('exam_date')
         ->get();

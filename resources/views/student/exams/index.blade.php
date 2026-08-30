@@ -45,21 +45,25 @@
                                     <li><i class="bi bi-bullseye me-1"></i> Ҳадди гузариш: {{ $exam->passing_score }}%</li>
                                 </ul>
                             </div>
-                            <div class="card-footer bg-white border-0">
-                                @if($exam->status === 'scheduled')
-                                <button class="btn btn-primary btn-sm w-100" disabled>
-                                    <i class="bi bi-clock me-1"></i> Интизорӣ
-                                </button>
-                                @elseif($exam->status === 'completed')
-                                <a href="{{ route('admin.retake-exams.vedomost', $exam) }}" class="btn btn-outline-success btn-sm w-100">
-                                    <i class="bi bi-file-earmark-excel me-1"></i> Ведомост
-                                </a>
-                                @else
-                                <button class="btn btn-primary btn-sm w-100">
-                                    <i class="bi bi-play-circle me-1"></i> Оғоз кардан
-                                </button>
-                                @endif
-                            </div>
+                                <div class="card-footer bg-white border-0">
+                                    @if($exam->status === 'scheduled')
+                                    <button class="btn btn-primary btn-sm w-100" disabled>
+                                        <i class="bi bi-clock me-1"></i> Интизорӣ
+                                    </button>
+                                    @elseif($exam->status === 'completed')
+                                    <a href="{{ route('admin.retake-exams.vedomost', $exam) }}" class="btn btn-outline-success btn-sm w-100">
+                                        <i class="bi bi-file-earmark-excel me-1"></i> Ведомост
+                                    </a>
+                                    @else
+                                    <form method="POST" action="{{ route('student.retake-exams.start', $exam) }}" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="btn btn-primary btn-sm w-100"
+                                                onclick="return confirm('Имтиҳони такрорӣ-ро оғоз мекунед? Вақт: {{ $exam->duration_minutes }} дақиқа.')">
+                                            <i class="bi bi-play-circle me-1"></i> Оғоз кардан
+                                        </button>
+                                    </form>
+                                    @endif
+                                </div>
                         </div>
                     </div>
                     @endforeach

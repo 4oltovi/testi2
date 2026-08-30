@@ -224,9 +224,10 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
     Route::prefix('retake-exams')->name('retake-exams.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\RetakeExamController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\Admin\RetakeExamController::class, 'create'])->name('create');
+        Route::get('/check-main-exam', [\App\Http\Controllers\Admin\RetakeExamController::class, 'checkMainExam'])->name('check-main-exam');
         Route::post('/', [\App\Http\Controllers\Admin\RetakeExamController::class, 'store'])->name('store');
         Route::get('/{retakeExam}', [\App\Http\Controllers\Admin\RetakeExamController::class, 'show'])->name('show');
-        Route::post('/students/{retakeExamStudent}/score', [\App\Http\Controllers\Admin\RetakeExamController::class, 'enterScore'])->name('enter-score');
+        Route::delete('/{retakeExam}', [\App\Http\Controllers\Admin\RetakeExamController::class, 'destroy'])->name('destroy');
         Route::get('/{retakeExam}/vedomost', [\App\Http\Controllers\Admin\RetakeExamController::class, 'vedomost'])->name('vedomost');
         Route::get('/{retakeExam}/print-vedomost', [\App\Http\Controllers\Admin\RetakeExamController::class, 'printVedomost'])->name('print-vedomost');
     });

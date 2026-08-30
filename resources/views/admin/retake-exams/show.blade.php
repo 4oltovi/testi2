@@ -24,6 +24,13 @@
                     <a href="{{ route('admin.retake-exams.print-vedomost', $retakeExam) }}" class="btn btn-sm btn-outline-primary" target="_blank">
                         <i class="bi bi-printer me-1"></i> Чоп
                     </a>
+                    <form method="POST" action="{{ route('admin.retake-exams.destroy', $retakeExam) }}" class="d-inline" onsubmit="return confirm('Имтиҳони такрорӣ нест карда шавад?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash me-1"></i> Нест кардан
+                        </button>
+                    </form>
                 </div>
             </div>
             <div class="card-body">
@@ -58,6 +65,15 @@
                     </div>
                 </div>
 
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Саволнома аз <strong>имтиҳони асосӣ</strong> гирифта шудааст.
+                    @if($retakeExam->mainExam)
+                        <br>Имтиҳони асосӣ: <strong>{{ $retakeExam->mainExam->title ?? '-' }}</strong>
+                        ({{ $retakeExam->mainExam->examQuestions()->count() }} савол)
+                    @endif
+                </div>
+
                 <div class="table-responsive">
                     <table class="table table-bordered">
                         <thead class="table-light">
@@ -66,54 +82,57 @@
                                 <th>Донишҷӯ</th>
                                 <th>Гурӯҳ</th>
                                 <th>Баҳои аслӣ</th>
-                                <th>Баҳои такрорӣ</th>
                                 <th>Кӯшиш</th>
+                                <th>Натиҷа</th>
+                                <th>Баҳо</th>
                                 <th>Ҳолат</th>
-                                <th>Амал</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($retakeExam->retakeExamStudents as $student)
+                            @php
+                                $studentAttempts = $attempts[$student->student_id] ?? collect();
+                                $latestAttempt = $studentAttempts->sortByDesc('attempt_number')->first();
+                                $originalGrade = $student->academicDebt->semesterGrade->letter_grade ?? '-';
+                                $originalScore = $student->academicDebt->semesterGrade->total_score ?? '-';
+                            @endphp
                             <tr>
                                 <td>{{ $loop->iteration }}</td>
                                 <td>{{ $student->student->user?->short_name ?? 'Донишҷӯ #' . $student->student->id }}</td>
                                 <td>{{ $student->student->group?->name ?? '-' }}</td>
                                 <td>
-                                    {{ $student->academicDebt->original_grade ?? '-' }}
-                                    ({{ $student->academicDebt->original_score ?? '-' }})
+                                    {{ $originalGrade }}
+                                    ({{ $originalScore !== '-' ? number_format($originalScore, 2) : '-' }})
                                 </td>
                                 <td>
-                                    @if($student->score !== null)
-                                    <strong>{{ $student->letter_grade }}</strong>
-                                    ({{ number_format($student->score, 2) }}%)
+                                    {{ $student->attempt_number }}/{{ $retakeExam->max_attempts }}
+                                </td>
+                                <td>
+                                    @if($latestAttempt && $latestAttempt->percentage !== null)
+                                        <strong>{{ $latestAttempt->letter_grade }}</strong>
+                                        ({{ number_format($latestAttempt->percentage, 2) }}%)
                                     @else
-                                    <span class="text-muted">—</span>
+                                        <span class="text-muted">—</span>
                                     @endif
                                 </td>
-                                <td>{{ $student->attempt_number }}</td>
+                                <td>
+                                    @if($latestAttempt && $latestAttempt->percentage !== null)
+                                        <strong>{{ number_format($latestAttempt->percentage, 2) }}%</strong>
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
+                                </td>
                                 <td>
                                     @php
-                                    $statusBadge = match($student->status) {
-                                        'pending' => 'bg-warning',
-                                        'passed' => 'bg-success',
-                                        'failed' => 'bg-danger',
-                                        'absent' => 'bg-secondary',
-                                        default => 'bg-secondary',
-                                    };
+                                        $statusBadge = match($student->status) {
+                                            'pending' => 'bg-warning',
+                                            'passed' => 'bg-success',
+                                            'failed' => 'bg-danger',
+                                            'absent' => 'bg-secondary',
+                                            default => 'bg-secondary',
+                                        };
                                     @endphp
                                     <span class="badge {{ $statusBadge }}">{{ $student->status }}</span>
-                                </td>
-                                <td>
-                                    @if($student->status === 'pending')
-                                    <button class="btn btn-sm btn-primary"
-                                        onclick="openScoreModal({{ $student->id }}, '{{ $student->student->user?->short_name ?? 'Донишҷӯ' }}')">
-                                        <i class="bi bi-pencil"></i> Баҳо
-                                    </button>
-                                    @else
-                                    <span class="text-muted">
-                                        {{ $student->examined_at?->format('d.m.Y H:i') ?? '-' }}
-                                    </span>
-                                    @endif
                                 </td>
                             </tr>
                             @endforeach
@@ -130,47 +149,4 @@
         </div>
     </div>
 </div>
-
-<!-- Modal for entering score -->
-<div class="modal fade" id="scoreModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Вориди натиҷа</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="POST" id="scoreForm">
-                @csrf
-                <div class="modal-body">
-                    <input type="hidden" name="retake_exam_student_id" id="scoreStudentId">
-                    <div class="mb-3">
-                        <label class="form-label">Донишҷӯ</label>
-                        <input type="text" class="form-control" id="scoreStudentName" readonly>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Баҳо (%) <span class="text-danger">*</span></label>
-                        <input type="number" name="score" class="form-control" required min="0" max="100" step="0.01">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Тавзеҳот</label>
-                        <textarea name="note" class="form-control" rows="2"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Бозгашт</button>
-                    <button type="submit" class="btn btn-primary">Сабт кардан</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<script>
-function openScoreModal(studentId, studentName) {
-    document.getElementById('scoreStudentId').value = studentId;
-    document.getElementById('scoreStudentName').value = studentName;
-    document.getElementById('scoreForm').action = '/admin/retake-exams/students/' + studentId + '/score';
-    new bootstrap.Modal(document.getElementById('scoreModal')).show();
-}
-</script>
 @endsection

@@ -38,6 +38,16 @@ Route::middleware(['web', 'auth', 'role:student'])->prefix('student')->name('stu
         Route::get('/{exam}/result/{attempt}', [\App\Http\Controllers\Student\ExamController::class, 'result'])->name('result');
     });
 
+    // Имтиҳонҳои такрорӣ
+    Route::prefix('retake-exams')->name('retake-exams.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Student\RetakeExamController::class, 'index'])->name('index');
+        Route::post('/{retakeExam}/start', [\App\Http\Controllers\Student\RetakeExamController::class, 'start'])->name('start');
+        Route::get('/{retakeExam}/take/{attempt}', [\App\Http\Controllers\Student\RetakeExamController::class, 'take'])->name('take');
+        Route::post('/{retakeExam}/save-answer/{attempt}', [\App\Http\Controllers\Student\RetakeExamController::class, 'saveAnswer'])->name('save-answer');
+        Route::post('/{retakeExam}/submit/{attempt}', [\App\Http\Controllers\Student\RetakeExamController::class, 'submit'])->name('submit');
+        Route::get('/{retakeExam}/result/{attempt}', [\App\Http\Controllers\Student\RetakeExamController::class, 'result'])->name('result');
+    });
+
     // Transcript
     Route::prefix('transcript')->name('transcript.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Student\TranscriptController::class, 'index'])->name('index');

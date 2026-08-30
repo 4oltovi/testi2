@@ -256,14 +256,11 @@ class GradeCalculator
 
         // 3) ИМТИҲОН автоматӣ аз тести онлайн (омӯзгор дастӣ намегузорад!)
         if ($semesterGrade->exam_score === null && $semesterGrade->subject_assignment_id) {
-            $pct = $this->calculateExamPercentage(
+            $semesterGrade->exam_score = $this->calculateExamPercentage(
                 $semesterGrade->student_id,
                 $semesterGrade->subject_assignment_id,
                 $semesterGrade->semester_id
             );
-            if ($pct > 0) {
-                $semesterGrade->exam_score = $pct;
-            }
         }
 
         $result = $this->calculateFinalGrade($semesterGrade);
@@ -297,6 +294,10 @@ class GradeCalculator
                 'finalized_by' => auth()->id(),
             ]);
             $semesterGrade->refresh();
+        }
+
+        if (!$result['is_passing']) {
+            app(\App\Services\DebtDetector::class)->checkAndCreateDebt($semesterGrade);
         }
 
         return $semesterGrade;

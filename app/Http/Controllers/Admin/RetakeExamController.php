@@ -7,6 +7,9 @@ use App\Models\AcademicDebt;
 use App\Models\Exam;
 use App\Models\Group;
 use App\Models\RetakeExam;
+use App\Models\RetakeExamAnswer;
+use App\Models\RetakeExamAttempt;
+use App\Models\RetakeExamQuestion;
 use App\Models\RetakeExamStudent;
 use App\Models\Semester;
 use App\Models\Student;
@@ -66,8 +69,12 @@ class RetakeExamController extends Controller
     public function create(Request $request): View
     {
         $subjects = Subject::whereHas('academicDebts', function ($query) {
-            $query->whereIn('status', ['active', 'retake_scheduled']);
-        })->orderBy('name')->get();
+                $query->whereIn('status', ['active', 'retake_scheduled', 'escalated'])
+                    ->where('retake_allowed', true);
+            })
+            ->orderBy('name')
+            ->get();
+
         $currentYear = \App\Models\AcademicYear::current();
         $semesters = Semester::when($currentYear, fn($q) => $q->where('academic_year_id', $currentYear->id))
             ->orderByDesc('start_date')
@@ -76,21 +83,9 @@ class RetakeExamController extends Controller
         $subjectId = $request->get('subject_id');
         $semesterId = $request->get('semester_id');
 
-        $eligibleDebts = collect();
-
-        if ($subjectId && $semesterId) {
-            $eligibleDebts = AcademicDebt::with(['student.user', 'student.group', 'subject', 'semester'])
-                ->where('subject_id', $subjectId)
-                ->where('semester_id', $semesterId)
-                ->whereIn('status', ['active', 'retake_scheduled'])
-                ->get()
-                ->groupBy('student.group.name');
-        }
-
         return view('admin.retake-exams.create', compact(
             'subjects',
             'semesters',
-            'eligibleDebts',
             'subjectId',
             'semesterId'
         ));
@@ -102,16 +97,7 @@ class RetakeExamController extends Controller
         $validated = $request->validate([
             'subject_id' => 'required|exists:subjects,id',
             'semester_id' => 'required|exists:semesters,id',
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'format' => 'required|in:online_test,written,oral,mixed',
-            'duration_minutes' => 'required|integer|min:1|max:300',
-            'passing_score' => 'required|numeric|min:0|max:100',
-            'max_attempts' => 'required|integer|min:1|max:5',
             'exam_date' => 'required|date',
-            'notes' => 'nullable|string',
-            'student_ids' => 'required|array|min:1',
-            'student_ids.*' => 'exists:students,id',
         ]);
 
         $mainExam = Exam::where('subject_assignment_id', function ($query) use ($validated) {
@@ -123,55 +109,119 @@ class RetakeExamController extends Controller
             ->where('exam_type', 'main')
             ->first();
 
-        DB::transaction(function () use ($validated, $request, $mainExam) {
+        if (!$mainExam) {
+            return back()->with('error', 'Барои ин фан ва семестр имтиҳони асосӣ ёфт нашуд. Аввал имтиҳони асосиро созед.');
+        }
+
+        $questionCount = $mainExam->examQuestions()->count();
+        if ($questionCount <= 0) {
+            return back()->with('error', 'Барои имтиҳони асосӣ саволнома омода нашудааст. Аввал саволномаро анҷом диҳед.');
+        }
+
+        $hasEligibleDebt = AcademicDebt::where('subject_id', $validated['subject_id'])
+            ->whereIn('status', ['active', 'retake_scheduled', 'escalated'])
+            ->where('retake_allowed', true)
+            ->exists();
+
+        if (!$hasEligibleDebt) {
+            return back()->with('error', 'Барои ин фан қарздории фаъол вуҷуд надорад. Имтиҳони такрорӣ танҳо барои фанҳои қарздор эҷод карда мешавад.');
+        }
+
+        $retakeExam = DB::transaction(function () use ($validated, $mainExam, $questionCount) {
             $retakeExam = RetakeExam::create([
                 'subject_id' => $validated['subject_id'],
                 'semester_id' => $validated['semester_id'],
-                'main_exam_id' => $mainExam?->id,
-                'title' => $validated['title'],
-                'description' => $request->input('description'),
-                'format' => $validated['format'],
-                'duration_minutes' => $validated['duration_minutes'],
-                'passing_score' => $validated['passing_score'],
-                'max_attempts' => $validated['max_attempts'],
+                'main_exam_id' => $mainExam->id,
+                'title' => 'Имтиҳони такрорӣ — ' . ($mainExam->subjectAssignment->subject->name ?? 'Фан'),
+                'description' => $mainExam->description ?? 'Имтиҳони такрорӣ',
+                'format' => $mainExam->format,
+                'duration_minutes' => $mainExam->duration_minutes,
+                'passing_score' => $mainExam->passing_score,
+                'max_attempts' => $mainExam->max_attempts,
                 'exam_date' => $validated['exam_date'],
-                'notes' => $validated['notes'],
+                'notes' => null,
                 'created_by' => auth()->id(),
                 'status' => 'scheduled',
             ]);
 
-            foreach ($validated['student_ids'] as $studentId) {
-                $debt = AcademicDebt::where('student_id', $studentId)
-                    ->where('subject_id', $validated['subject_id'])
-                    ->where('semester_id', $validated['semester_id'])
-                    ->whereIn('status', ['active', 'retake_scheduled'])
-                    ->first();
+            $examQuestions = $mainExam->examQuestions()->orderBy('sort_order')->get();
+            foreach ($examQuestions as $eq) {
+                RetakeExamQuestion::create([
+                    'retake_exam_id' => $retakeExam->id,
+                    'question_id' => $eq->question_id,
+                    'sort_order' => $eq->sort_order,
+                    'points' => $eq->points,
+                ]);
+            }
 
-                if (!$debt) {
-                    continue;
-                }
+            $eligibleDebts = AcademicDebt::where('subject_id', $validated['subject_id'])
+                ->where('semester_id', $validated['semester_id'])
+                ->whereIn('status', ['active', 'retake_scheduled', 'escalated'])
+                ->where('retake_allowed', true)
+                ->get();
 
-                $existing = RetakeExamStudent::where('retake_exam_id', $retakeExam->id)
-                    ->where('student_id', $studentId)
-                    ->where('academic_debt_id', $debt->id)
-                    ->exists();
-
-                if ($existing) {
-                    continue;
-                }
-
+            foreach ($eligibleDebts as $debt) {
                 RetakeExamStudent::create([
                     'retake_exam_id' => $retakeExam->id,
-                    'student_id' => $studentId,
+                    'student_id' => $debt->student_id,
                     'academic_debt_id' => $debt->id,
                     'attempt_number' => ($debt->retake_attempts_used ?? 0) + 1,
                     'status' => 'pending',
                 ]);
             }
+
+            return $retakeExam;
         });
 
         return redirect()->route('admin.retake-exams.show', $retakeExam)
-            ->with('success', 'Имтиҳони такрорӣ бомуваффақият сохта шуд.');
+            ->with('success', "Имтиҳони такрорӣ бомуваффақият сохта шуд. {$questionCount} савол аз имтиҳони асосӣ копи карда шуд.");
+    }
+
+    public function checkMainExam(Request $request): JsonResponse
+    {
+        $request->validate([
+            'subject_id' => 'required|exists:subjects,id',
+            'semester_id' => 'required|exists:semesters,id',
+        ]);
+
+        $mainExam = Exam::where('subject_assignment_id', function ($query) use ($request) {
+                $query->select('id')->from('subject_assignments')
+                    ->where('subject_id', $request->subject_id)
+                    ->where('semester_id', $request->semester_id)
+                    ->limit(1);
+            })
+            ->where('exam_type', 'main')
+            ->first();
+
+        if (!$mainExam) {
+            return response()->json([
+                'exists' => false,
+                'message' => 'Барои ин фан ва семестр имтиҳони асосӣ ёфт нашуд. Аввал имтиҳони асосиро созед.',
+            ]);
+        }
+
+        $questionCount = $mainExam->examQuestions()->count();
+        $eligibleDebts = AcademicDebt::where('subject_id', $request->subject_id)
+            ->where('semester_id', $request->semester_id)
+            ->whereIn('status', ['active', 'retake_scheduled', 'escalated'])
+            ->where('retake_allowed', true)
+            ->count();
+
+        if ($eligibleDebts <= 0) {
+            return response()->json([
+                'exists' => false,
+                'message' => 'Барои ин фан ва семестр қарздории фаъол вуҷуд надорад. Имтиҳони такрорӣ танҳо барои фанҳои қарздор эҷод карда мешавад.',
+            ]);
+        }
+
+        return response()->json([
+            'exists' => true,
+            'format' => $mainExam->format,
+            'duration_minutes' => $mainExam->duration_minutes,
+            'passing_score' => $mainExam->passing_score,
+            'questions_count' => $questionCount,
+            'eligible_debtors' => $eligibleDebts,
+        ]);
     }
 
     // ===================== НАМОИШИ ИМТИҲОНИ ТАКРОРӢ =====================
@@ -182,71 +232,19 @@ class RetakeExamController extends Controller
             'semester',
             'teacher',
             'creator',
+            'mainExam',
+            'mainExam.examQuestions.question',
             'retakeExamStudents.student.user',
+            'retakeExamStudents.academicDebt.semesterGrade',
             'retakeExamStudents.academicDebt',
-            'retakeExamStudents.examiner'
         ]);
 
-        return view('admin.retake-exams.show', compact('retakeExam'));
-    }
+        $attempts = RetakeExamAttempt::where('retake_exam_id', $retakeExam->id)
+            ->with('student.user')
+            ->get()
+            ->groupBy('student_id');
 
-    // ===================== ВОРИДИ НАТИҶА =====================
-    public function enterScore(Request $request, RetakeExamStudent $retakeExamStudent): RedirectResponse
-    {
-        $request->validate([
-            'score' => 'required|numeric|min:0|max:100',
-            'note' => 'nullable|string',
-        ]);
-
-        $retakeExam = $retakeExamStudent->retakeExam;
-        $score = (float) $request->input('score');
-        $gradeEnum = \App\Enums\GradeScale::fromPercentage($score);
-        $isPassing = $gradeEnum->isPassing();
-
-        DB::transaction(function () use ($retakeExamStudent, $score, $gradeEnum, $isPassing, $request) {
-            $retakeExamStudent->update([
-                'score' => $score,
-                'letter_grade' => $gradeEnum->value,
-                'status' => $isPassing ? 'passed' : 'failed',
-                'examiner_id' => auth()->id(),
-                'examined_at' => now(),
-                'note' => $request->input('note'),
-            ]);
-
-            $debt = $retakeExamStudent->academicDebt;
-
-            if ($isPassing) {
-                $debt->resolve(
-                    $score,
-                    $gradeEnum->value,
-                    auth()->id(),
-                    'Ҳал шуд аз рӯи имтиҳони такрорӣ'
-                );
-
-                $semesterGrade = $debt->semesterGrade;
-                if ($semesterGrade) {
-                    $semesterGrade->update([
-                        'retake_score' => $score,
-                        'retake_date' => now(),
-                    ]);
-                    $this->gradeCalculator->processAndSaveFinalGrade($semesterGrade);
-                }
-            } else {
-                $debt->update([
-                    'retake_attempts_used' => DB::raw('retake_attempts_used + 1'),
-                ]);
-
-                $remainingAttempts = ($debt->retake_attempts_used ?? 0) + 1;
-
-                if ($remainingAttempts >= $debt->max_retake_attempts) {
-                    $debt->update([
-                        'status' => 'escalated',
-                    ]);
-                }
-            }
-        });
-
-        return back()->with('success', 'Натиҷа сабт шуд: ' . $gradeEnum->value . ' (' . $score . '%)');
+        return view('admin.retake-exams.show', compact('retakeExam', 'attempts'));
     }
 
     // ===================== ВЕДОМОСТИ ТАКРОРӢ =====================
@@ -264,6 +262,12 @@ class RetakeExamController extends Controller
             ->values()
             ->map(function ($r, $i) {
                 $sg = $r->academicDebt->semesterGrade;
+                $attempt = \App\Models\RetakeExamAttempt::where('retake_exam_id', $r->retake_exam_id)
+                    ->where('student_id', $r->student_id)
+                    ->where('retake_exam_student_id', $r->id)
+                    ->orderByDesc('attempt_number')
+                    ->first();
+
                 return [
                     'n' => $i + 1,
                     'student_id' => $r->student->student_id_number ?? $r->student->id,
@@ -271,8 +275,8 @@ class RetakeExamController extends Controller
                     'group_name' => $r->student->group?->name ?? '-',
                     'original_score' => $sg?->total_score ?? '-',
                     'original_grade' => $sg?->letter_grade ?? '-',
-                    'retake_score' => $r->score !== null ? number_format($r->score, 2) : '-',
-                    'retake_grade' => $r->letter_grade ?? '-',
+                    'retake_score' => $attempt?->percentage !== null ? number_format($attempt->percentage, 2) : '-',
+                    'retake_grade' => $attempt?->letter_grade ?? '-',
                     'status' => $r->status,
                     'attempt' => $r->attempt_number,
                 ];
@@ -302,6 +306,12 @@ class RetakeExamController extends Controller
             ->values()
             ->map(function ($r, $i) {
                 $sg = $r->academicDebt->semesterGrade;
+                $attempt = \App\Models\RetakeExamAttempt::where('retake_exam_id', $r->retake_exam_id)
+                    ->where('student_id', $r->student_id)
+                    ->where('retake_exam_student_id', $r->id)
+                    ->orderByDesc('attempt_number')
+                    ->first();
+
                 return [
                     'n' => $i + 1,
                     'student_id' => $r->student->student_id_number ?? $r->student->id,
@@ -309,8 +319,8 @@ class RetakeExamController extends Controller
                     'group_name' => $r->student->group?->name ?? '-',
                     'original_score' => $sg?->total_score ?? '-',
                     'original_grade' => $sg?->letter_grade ?? '-',
-                    'retake_score' => $r->score !== null ? number_format($r->score, 2) : '-',
-                    'retake_grade' => $r->letter_grade ?? '-',
+                    'retake_score' => $attempt?->percentage !== null ? number_format($attempt->percentage, 2) : '-',
+                    'retake_grade' => $attempt?->letter_grade ?? '-',
                     'status' => $r->status,
                     'attempt' => $r->attempt_number,
                 ];
@@ -330,5 +340,13 @@ class RetakeExamController extends Controller
         $name = 'retake_vedomost_' . $retakeExam->id . '.pdf';
 
         return $pdf->download($name);
+    }
+
+    public function destroy(RetakeExam $retakeExam): RedirectResponse
+    {
+        $retakeExam->delete();
+
+        return redirect()->route('admin.retake-exams.index')
+            ->with('success', 'Имтиҳони такрорӣ нест карда шуд.');
     }
 }
