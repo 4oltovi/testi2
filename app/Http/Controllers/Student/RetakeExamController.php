@@ -6,9 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\RetakeExam;
 use App\Models\RetakeExamAnswer;
 use App\Models\RetakeExamAttempt;
-use App\Models\RetakeExamQuestion;
 use App\Models\RetakeExamStudent;
 use App\Models\Student;
+use App\Models\ExamQuestion;
 use App\Services\ExamGradingService;
 use App\Services\GradeCalculator;
 use Illuminate\Http\RedirectResponse;
@@ -141,7 +141,9 @@ class RetakeExamController extends Controller
             return redirect()->route('student.retake-exams.result', [$retakeExam, $attempt]);
         }
 
-        $examQuestions = RetakeExamQuestion::where('retake_exam_id', $retakeExam->id)
+        $mainExam = $retakeExam->mainExam;
+
+        $examQuestions = $mainExam->examQuestions()
             ->with('question.answerOptions')
             ->orderBy('sort_order')
             ->get();
@@ -150,12 +152,30 @@ class RetakeExamController extends Controller
             return back()->with('error', 'Ин имтиҳон ҳанӯз савол надорад.');
         }
 
+        if ($mainExam->shuffle_questions) {
+            $examQuestions = $examQuestions->shuffle();
+        }
+
         $existingAnswers = RetakeExamAnswer::where('retake_exam_attempt_id', $attempt->id)
-            ->pluck('selected_options', 'retake_exam_question_id');
+            ->get(['exam_question_id', 'selected_options', 'text_answer'])
+            ->mapWithKeys(fn($a) => [
+                $a->exam_question_id => $a->selected_options ? json_decode($a->selected_options, true) : ($a->text_answer ?: null),
+            ]);
 
         $remainingSeconds = $retakeExam->duration_minutes * 60;
 
-        return view('student.retake-exams.take', compact('retakeExam', 'attempt', 'examQuestions', 'existingAnswers', 'remainingSeconds'));
+        return view('student.exams.take', [
+            'exam' => $mainExam,
+            'attempt' => $attempt,
+            'examQuestions' => $examQuestions,
+            'existingAnswers' => $existingAnswers,
+            'remainingSeconds' => $remainingSeconds,
+            'isRetakeMode' => true,
+            'retakeExam' => $retakeExam,
+            'retakeSaveUrl' => route('student.retake-exams.save-answer', [$retakeExam, $attempt]),
+            'retakeSubmitUrl' => route('student.retake-exams.submit', [$retakeExam, $attempt]),
+            'retakeResultUrl' => route('student.retake-exams.result', [$retakeExam, $attempt]),
+        ]);
     }
 
     public function saveAnswer(Request $request, RetakeExam $retakeExam, RetakeExamAttempt $attempt): \Illuminate\Http\JsonResponse
@@ -171,22 +191,52 @@ class RetakeExamController extends Controller
         }
 
         $request->validate([
-            'retake_exam_question_id' => 'required|exists:retake_exam_questions,id',
-            'selected_options' => 'nullable|array',
-            'text_answer' => 'nullable|string',
+            'exam_question_id' => 'required|exists:exam_questions,id',
+            'answers' => 'nullable|array',
         ]);
 
-        $examQuestion = RetakeExamQuestion::findOrFail($request->retake_exam_question_id);
+        $examQuestion = ExamQuestion::findOrFail($request->exam_question_id);
+        $answers = $request->input('answers', []);
+        
+        $selectedOptions = null;
+        $textAnswer = null;
+        
+        if (isset($answers[$examQuestion->id])) {
+            $value = $answers[$examQuestion->id];
+            $questionType = $examQuestion->question->type ?? '';
+            
+            if (in_array($questionType, ['single_choice', 'true_false'])) {
+                $selectedOptions = is_array($value) ? json_encode(array_values($value)) : json_encode([$value]);
+            } elseif ($questionType === 'multiple_choice') {
+                if (is_array($value)) {
+                    $selectedOptions = json_encode(array_values($value));
+                } else {
+                    $decoded = json_decode($value, true);
+                    $selectedOptions = is_array($decoded) ? json_encode($decoded) : json_encode([$value]);
+                }
+            } else {
+                if (is_array($value)) {
+                    $textAnswer = json_encode(array_values($value));
+                } else {
+                    $decoded = json_decode($value, true);
+                    if (is_array($decoded)) {
+                        $textAnswer = json_encode(array_values($decoded));
+                    } else {
+                        $textAnswer = $value;
+                    }
+                }
+            }
+        }
 
         RetakeExamAnswer::updateOrCreate(
             [
                 'retake_exam_attempt_id' => $attempt->id,
-                'retake_exam_question_id' => $examQuestion->id,
+                'exam_question_id' => $examQuestion->id,
             ],
             [
                 'question_id' => $examQuestion->question_id,
-                'selected_options' => $request->selected_options ? json_encode($request->selected_options) : null,
-                'text_answer' => $request->text_answer,
+                'selected_options' => $selectedOptions,
+                'text_answer' => $textAnswer,
                 'answered_at' => now(),
             ]
         );
@@ -218,7 +268,7 @@ class RetakeExamController extends Controller
             abort(403);
         }
 
-        $attempt->load(['answers.question.answerOptions', 'answers.retakeExamQuestion']);
+        $attempt->load(['answers.examQuestion.question.answerOptions', 'answers.question']);
 
         $showDetails = true;
 
@@ -229,7 +279,7 @@ class RetakeExamController extends Controller
     {
         DB::transaction(function () use ($attempt, $retakeExam, $status) {
             $answers = RetakeExamAnswer::where('retake_exam_attempt_id', $attempt->id)->get();
-            $examQuestions = RetakeExamQuestion::where('retake_exam_id', $retakeExam->id)
+            $examQuestions = $retakeExam->mainExam->examQuestions()
                 ->with('question.answerOptions')
                 ->get()
                 ->keyBy('id');
@@ -242,7 +292,7 @@ class RetakeExamController extends Controller
                 $questionWeight = $this->questionWeight($question);
                 $maxPossible += $questionWeight;
 
-                $answer = $answers->where('retake_exam_question_id', $eq->id)->first();
+                $answer = $answers->where('exam_question_id', $eq->id)->first();
                 if (!$answer) continue;
 
                 $result = $this->gradingService->gradeRetakeExamAttempt($attempt, $eq, $answer, $questionWeight);
@@ -287,8 +337,9 @@ class RetakeExamController extends Controller
                             $debt->update([
                                 'retake_attempts_used' => DB::raw('retake_attempts_used + 1'),
                             ]);
+                            $debt->refresh();
 
-                            $remainingAttempts = ($debt->retake_attempts_used ?? 0) + 1;
+                            $remainingAttempts = ($debt->retake_attempts_used ?? 0);
 
                             if ($remainingAttempts >= $debt->max_retake_attempts) {
                                 $retakeExamStudent->update(['status' => 'failed']);

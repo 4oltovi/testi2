@@ -18,10 +18,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use App\Services\DebtDetector;
+use App\Services\ExamGradingService;
 use App\Services\GradeCalculator;
 
 class ExamController extends Controller
 {
+    private ExamGradingService $gradingService;
+
+    public function __construct(ExamGradingService $gradingService)
+    {
+        $this->gradingService = $gradingService;
+    }
+
     /**
      * Рӯйхати тестҳои дастрас
      */
@@ -147,8 +155,10 @@ class ExamController extends Controller
 
         // Ҷавобҳои мавҷудаи донишҷӯ
         $existingAnswers = ExamAnswer::where('exam_attempt_id', $attempt->id)
-            ->pluck('selected_options', 'exam_question_id')
-            ->map(fn($v) => json_decode($v, true));
+            ->get(['exam_question_id', 'selected_options', 'text_answer'])
+            ->mapWithKeys(fn($a) => [
+                $a->exam_question_id => $a->selected_options ? json_decode($a->selected_options, true) : ($a->text_answer ?: null),
+            ]);
 
         // Вақти боқимонда (дар сонияҳо)
         $startedAt = $attempt->started_at;
@@ -284,54 +294,22 @@ class ExamController extends Controller
             $maxPossible = 0;
 
             foreach ($examQuestions as $eq) {
-                    $question = $eq->question;
-                    $questionWeight = $this->questionWeight($question);
-                    $maxPossible += $questionWeight;
+                $question = $eq->question;
+                $questionWeight = $this->questionWeight($question);
+                $maxPossible += $questionWeight;
 
-                    $answer = $answers->where('exam_question_id', $eq->id)->first();
-                    if (!$answer) continue;
+                $answer = $answers->where('exam_question_id', $eq->id)->first();
+                if (!$answer) continue;
 
-                    $isCorrect = false;
-                    $pointsEarned = 0;
-
-                    if (in_array($question->type, ['single_choice', 'true_false'])) {
-                        $correctOptions = $question->answerOptions->where('is_correct', true)->pluck('id')->toArray();
-                        $selected = json_decode($answer->selected_options ?? '[]', true) ?: [];
-                        $isCorrect = !empty($selected) && $selected == $correctOptions;
-                        $pointsEarned = $isCorrect ? $questionWeight : 0;
-                    } elseif ($question->type === 'multiple_choice') {
-                        $correctOptions = $question->answerOptions->where('is_correct', true)->pluck('id')->sort()->values()->toArray();
-                        $selected = collect(json_decode($answer->selected_options ?? '[]', true) ?: [])->sort()->values()->toArray();
-                        $isCorrect = $selected === $correctOptions;
-                        $pointsEarned = $isCorrect ? $questionWeight : 0;
-                    } elseif ($question->type === 'matching') {
-                        $selectedPairs = [];
-                        foreach (explode('||', (string) ($answer->text_answer ?? '')) as $pair) {
-                            if (trim($pair) === '') continue;
-                            [$qId, $choice] = array_pad(explode(':', $pair, 2), 2, '');
-                            $selectedPairs[(string) $qId] = trim((string) $choice);
-                        }
-
-                        $correctCount = 0;
-                        foreach ($question->answerOptions->where('is_correct', true) as $correctOption) {
-                            $expected = trim(explode('|||', $correctOption->option_text, 2)[1] ?? '');
-                            $selectedValue = $selectedPairs[(string) $correctOption->id] ?? null;
-                            if ($selectedValue !== null && trim((string) $selectedValue) === $expected) {
-                                $correctCount++;
-                            }
-                        }
-
-                        $isCorrect = $correctCount > 0 && $correctCount === $question->answerOptions->where('is_correct', true)->count();
-                        $pointsEarned = $correctCount * 2.5;
-                }
+                $result = $this->gradingService->gradeExamAttempt($attempt, $eq, $answer, $questionWeight);
 
                 $answer->update([
-                    'is_correct' => $isCorrect,
-                    'points_earned' => $pointsEarned,
-                    'is_graded' => $question->type !== 'open_text',
+                    'is_correct' => $result['is_correct'],
+                    'points_earned' => $result['points_earned'],
+                    'is_graded' => $result['is_graded'],
                 ]);
 
-                $totalScore += $pointsEarned;
+                $totalScore += $result['points_earned'];
             }
 
             $percentage = $maxPossible > 0 ? round(($totalScore / $maxPossible) * 100, 2) : 0;

@@ -46,15 +46,17 @@
                                 </ul>
                             </div>
                                 <div class="card-footer bg-white border-0">
-                                    @if($exam->status === 'scheduled')
-                                    <button class="btn btn-primary btn-sm w-100" disabled>
-                                        <i class="bi bi-clock me-1"></i> Интизорӣ
-                                    </button>
-                                    @elseif($exam->status === 'completed')
-                                    <a href="{{ route('admin.retake-exams.vedomost', $exam) }}" class="btn btn-outline-success btn-sm w-100">
-                                        <i class="bi bi-file-earmark-excel me-1"></i> Ведомост
+                                    @php
+                                        $examAttempts = $attempts[$exam->id] ?? collect();
+                                        $completedAttempts = $examAttempts->whereIn('status', ['submitted', 'auto_submitted', 'graded']);
+                                        $activeAttempt = $examAttempts->where('status', 'in_progress')->first();
+                                        $canStart = $examAttempts->count() < $exam->max_attempts && ($exam->status === 'scheduled' || $exam->status === 'active');
+                                    @endphp
+                                    @if($activeAttempt)
+                                    <a href="{{ route('student.retake-exams.take', [$exam, $activeAttempt]) }}" class="btn btn-warning btn-sm w-100">
+                                        <i class="bi bi-play-fill me-1"></i> Давом додан
                                     </a>
-                                    @else
+                                    @elseif($canStart)
                                     <form method="POST" action="{{ route('student.retake-exams.start', $exam) }}" class="d-inline">
                                         @csrf
                                         <button type="submit" class="btn btn-primary btn-sm w-100"
@@ -62,6 +64,10 @@
                                             <i class="bi bi-play-circle me-1"></i> Оғоз кардан
                                         </button>
                                     </form>
+                                    @else
+                                    <button class="btn btn-outline-secondary btn-sm w-100" disabled>
+                                        Кӯшишҳо тамом
+                                    </button>
                                     @endif
                                 </div>
                         </div>

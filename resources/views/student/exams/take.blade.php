@@ -417,7 +417,11 @@
             @endforeach
         </div>
 
+        @if(isset($isRetakeMode) && $isRetakeMode)
+        <form id="examForm" method="POST" action="{{ $retakeSubmitUrl ?? '#' }}">
+        @else
         <form id="examForm" method="POST" action="{{ route('student.exams.submit', [$exam, $attempt]) }}">
+        @endif
             @csrf
             @foreach($examQuestions as $idx => $eq)
             <div class="card question-card" id="question-{{ $idx }}" style="display: {{ $idx === 0 ? 'block' : 'none' }}">
@@ -435,7 +439,7 @@
                 @endphp
 
                 @if($type === 'open_text')
-                <textarea class="open-textarea" name="answers[{{ $eq->id }}][text]" data-eq="{{ $eq->id }}" data-type="open_text" placeholder="Ҷавоби худро нависед...">{{ is_array($existing) ? ($existing['text'] ?? '') : '' }}</textarea>
+                <textarea class="open-textarea" name="answers[{{ $eq->id }}][text]" data-eq="{{ $eq->id }}" data-type="open_text" placeholder="Ҷавоби худро нависед...">{{ is_array($existing) ? ($existing['text'] ?? '') : ($existing ?? '') }}</textarea>
                 @elseif($type === 'matching')
                 {{-- МУВОФИҚОВАРӢ: 4 зерсавол + dropdown бо 5 ҷавоб --}}
                 @php
@@ -503,19 +507,45 @@
     <script>
         const totalQuestions = {{ $examQuestions->count() }};
         const allowBack = @json($exam->allow_back_navigation ?? true);
-        const saveUrl = "{{ route('student.exams.save-answer', [$exam, $attempt]) }}";
+        const isRetakeMode = @json($isRetakeMode ?? false);
+        const saveUrl = isRetakeMode ? "{{ $retakeSaveUrl ?? '#' }}" : "{{ route('student.exams.save-answer', [$exam, $attempt]) }}";
+        const submitUrl = isRetakeMode ? "{{ $retakeSubmitUrl ?? '#' }}" : "{{ route('student.exams.submit', [$exam, $attempt]) }}";
+        const resultUrl = isRetakeMode ? "{{ $retakeResultUrl ?? '#' }}" : "{{ route('student.exams.result', [$exam, $attempt]) }}";
         const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 
         let currentIndex = 0;
         let answeredSet = new Set();
 
         // Initialize answered set from existing answers
-        const existingAnswersJson = @json($existingAnswers->filter(fn($v) => !empty($v))->keys()->values());
+        const existingAnswersData = @json($existingAnswers->filter(fn($v) => !empty($v)));
+        const existingAnswersJson = Object.keys(existingAnswersData);
         const eqIdsOrder = @json($examQuestions->pluck('id')->values());
         existingAnswersJson.forEach(function(eqId) {
-            const idx = eqIdsOrder.indexOf(eqId);
+            const idx = eqIdsOrder.indexOf(parseInt(eqId));
             if (idx >= 0) answeredSet.add(idx);
         });
+
+        // Restore matching selects from existing answers
+        function restoreMatchingAnswers() {
+            Object.entries(existingAnswersData).forEach(function([eqId, value]) {
+                if (typeof value === 'string') {
+                    const container = document.querySelector('.matching-container[data-eq="' + eqId + '"]');
+                    if (!container) return;
+                    const pairs = value.split('||');
+                    pairs.forEach(function(pair) {
+                        if (!pair.trim()) return;
+                        const parts = pair.split(':', 2);
+                        const subId = parts[0];
+                        const answer = parts[1];
+                        if (subId && answer) {
+                            const select = container.querySelector('.matching-select[data-sub="' + subId + '"]');
+                            if (select) select.value = answer;
+                        }
+                    });
+                }
+            });
+        }
+        restoreMatchingAnswers();
 
         // Dark mode
         const body = document.body;
@@ -593,7 +623,7 @@
             const type = card.dataset.type;
             const parent = card.parentElement;
 
-            if (type === 'single_choice' || type === 'true_false' || type === 'matching') {
+            if (type === 'single_choice' || type === 'true_false') {
                 parent.querySelectorAll('.option-card[data-eq="' + eqId + '"]').forEach(function(c) {
                     c.classList.remove('selected');
                 });

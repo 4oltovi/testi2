@@ -9,7 +9,6 @@ use App\Models\Group;
 use App\Models\RetakeExam;
 use App\Models\RetakeExamAnswer;
 use App\Models\RetakeExamAttempt;
-use App\Models\RetakeExamQuestion;
 use App\Models\RetakeExamStudent;
 use App\Models\Semester;
 use App\Models\Student;
@@ -19,6 +18,7 @@ use App\Services\DebtDetector;
 use App\Services\GradeCalculator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -69,8 +69,7 @@ class RetakeExamController extends Controller
     public function create(Request $request): View
     {
         $subjects = Subject::whereHas('academicDebts', function ($query) {
-                $query->whereIn('status', ['active', 'retake_scheduled', 'escalated'])
-                    ->where('retake_allowed', true);
+                $query->whereIn('status', ['active', 'retake_scheduled', 'escalated']);
             })
             ->orderBy('name')
             ->get();
@@ -120,7 +119,6 @@ class RetakeExamController extends Controller
 
         $hasEligibleDebt = AcademicDebt::where('subject_id', $validated['subject_id'])
             ->whereIn('status', ['active', 'retake_scheduled', 'escalated'])
-            ->where('retake_allowed', true)
             ->exists();
 
         if (!$hasEligibleDebt) {
@@ -144,20 +142,9 @@ class RetakeExamController extends Controller
                 'status' => 'scheduled',
             ]);
 
-            $examQuestions = $mainExam->examQuestions()->orderBy('sort_order')->get();
-            foreach ($examQuestions as $eq) {
-                RetakeExamQuestion::create([
-                    'retake_exam_id' => $retakeExam->id,
-                    'question_id' => $eq->question_id,
-                    'sort_order' => $eq->sort_order,
-                    'points' => $eq->points,
-                ]);
-            }
-
             $eligibleDebts = AcademicDebt::where('subject_id', $validated['subject_id'])
                 ->where('semester_id', $validated['semester_id'])
                 ->whereIn('status', ['active', 'retake_scheduled', 'escalated'])
-                ->where('retake_allowed', true)
                 ->get();
 
             foreach ($eligibleDebts as $debt) {
@@ -204,7 +191,6 @@ class RetakeExamController extends Controller
         $eligibleDebts = AcademicDebt::where('subject_id', $request->subject_id)
             ->where('semester_id', $request->semester_id)
             ->whereIn('status', ['active', 'retake_scheduled', 'escalated'])
-            ->where('retake_allowed', true)
             ->count();
 
         if ($eligibleDebts <= 0) {
@@ -239,12 +225,14 @@ class RetakeExamController extends Controller
             'retakeExamStudents.academicDebt',
         ]);
 
+        $questions = $retakeExam->mainExam?->examQuestions()->with('question.answerOptions')->orderBy('sort_order')->get() ?? collect();
+
         $attempts = RetakeExamAttempt::where('retake_exam_id', $retakeExam->id)
             ->with('student.user')
             ->get()
             ->groupBy('student_id');
 
-        return view('admin.retake-exams.show', compact('retakeExam', 'attempts'));
+        return view('admin.retake-exams.show', compact('retakeExam', 'attempts', 'questions'));
     }
 
     // ===================== ВЕДОМОСТИ ТАКРОРӢ =====================

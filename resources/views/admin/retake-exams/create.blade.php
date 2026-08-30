@@ -113,12 +113,23 @@ document.addEventListener('DOMContentLoaded', function() {
                         submitBtn.disabled = true;
                         alert(data.message || 'Барои ин фан ва семестр имтиҳони асосӣ ёфт нашуд.');
                     }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    mainExamInfo.classList.add('d-none');
+                    debtorInfo.classList.add('d-none');
+                    submitBtn.disabled = true;
+                    alert('Хатогӣ дар санҷиши маълумот. Лутфан, дубора кӯшиш кунед.');
                 });
         } else {
             mainExamInfo.classList.add('d-none');
             debtorInfo.classList.add('d-none');
             submitBtn.disabled = true;
         }
+    }
+    
+    if (subjectSelect.value && semesterSelect.value) {
+        checkSelection();
     }
     
     subjectSelect.addEventListener('change', checkSelection);

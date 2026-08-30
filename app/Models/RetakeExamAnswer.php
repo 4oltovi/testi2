@@ -10,6 +10,7 @@ class RetakeExamAnswer extends Model
     protected $fillable = [
         'retake_exam_attempt_id',
         'retake_exam_question_id',
+        'exam_question_id',
         'question_id',
         'selected_options',
         'text_answer',
@@ -41,6 +42,11 @@ class RetakeExamAnswer extends Model
     public function retakeExamQuestion(): BelongsTo
     {
         return $this->belongsTo(RetakeExamQuestion::class);
+    }
+
+    public function examQuestion(): BelongsTo
+    {
+        return $this->belongsTo(ExamQuestion::class);
     }
 
     public function question(): BelongsTo

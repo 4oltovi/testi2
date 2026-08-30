@@ -51,7 +51,7 @@
                     <h6 class="mb-3">Саволҳо</h6>
                     @foreach($attempt->answers as $answer)
                     @php
-                    $eq = $answer->retakeExamQuestion;
+                    $eq = $answer->examQuestion;
                     $question = $eq?->question;
                     @endphp
                     <div class="card mb-2">

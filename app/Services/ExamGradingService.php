@@ -8,7 +8,6 @@ use App\Models\ExamAttempt;
 use App\Models\ExamQuestion;
 use App\Models\RetakeExamAnswer;
 use App\Models\RetakeExamAttempt;
-use App\Models\RetakeExamQuestion;
 use Illuminate\Support\Collection;
 
 class ExamGradingService
@@ -30,24 +29,9 @@ class ExamGradingService
             $isCorrect = $selected === $correctOptions;
             $pointsEarned = $isCorrect ? $questionWeight : 0;
         } elseif ($question->type === 'matching') {
-            $selectedPairs = [];
-            foreach (explode('||', (string) ($answer->text_answer ?? '')) as $pair) {
-                if (trim($pair) === '') continue;
-                [$qId, $choice] = array_pad(explode(':', $pair, 2), 2, '');
-                $selectedPairs[(string) $qId] = trim((string) $choice);
-            }
-
-            $correctCount = 0;
-            foreach ($question->answerOptions->where('is_correct', true) as $correctOption) {
-                $expected = trim(explode('|||', $correctOption->option_text, 2)[1] ?? '');
-                $selectedValue = $selectedPairs[(string) $correctOption->id] ?? null;
-                if ($selectedValue !== null && trim((string) $selectedValue) === $expected) {
-                    $correctCount++;
-                }
-            }
-
-            $isCorrect = $correctCount > 0 && $correctCount === $question->answerOptions->where('is_correct', true)->count();
-            $pointsEarned = $correctCount * 2.5;
+            $result = $this->gradeMatchingQuestion($question, $answer->text_answer ?? '');
+            $isCorrect = $result['is_correct'];
+            $pointsEarned = $result['points_earned'];
         }
 
         return [
@@ -57,7 +41,7 @@ class ExamGradingService
         ];
     }
 
-    public function gradeRetakeExamAttempt(RetakeExamAttempt $attempt, RetakeExamQuestion $examQuestion, RetakeExamAnswer $answer, float $questionWeight): array
+    public function gradeRetakeExamAttempt(RetakeExamAttempt $attempt, ExamQuestion $examQuestion, RetakeExamAnswer $answer, float $questionWeight): array
     {
         $question = $examQuestion->question;
         $isCorrect = false;
@@ -74,30 +58,54 @@ class ExamGradingService
             $isCorrect = $selected === $correctOptions;
             $pointsEarned = $isCorrect ? $questionWeight : 0;
         } elseif ($question->type === 'matching') {
-            $selectedPairs = [];
-            foreach (explode('||', (string) ($answer->text_answer ?? '')) as $pair) {
-                if (trim($pair) === '') continue;
-                [$qId, $choice] = array_pad(explode(':', $pair, 2), 2, '');
-                $selectedPairs[(string) $qId] = trim((string) $choice);
-            }
-
-            $correctCount = 0;
-            foreach ($question->answerOptions->where('is_correct', true) as $correctOption) {
-                $expected = trim(explode('|||', $correctOption->option_text, 2)[1] ?? '');
-                $selectedValue = $selectedPairs[(string) $correctOption->id] ?? null;
-                if ($selectedValue !== null && trim((string) $selectedValue) === $expected) {
-                    $correctCount++;
-                }
-            }
-
-            $isCorrect = $correctCount > 0 && $correctCount === $question->answerOptions->where('is_correct', true)->count();
-            $pointsEarned = $correctCount * 2.5;
+            $result = $this->gradeMatchingQuestion($question, $answer->text_answer ?? '');
+            $isCorrect = $result['is_correct'];
+            $pointsEarned = $result['points_earned'];
         }
 
         return [
             'is_correct' => $isCorrect,
             'points_earned' => $pointsEarned,
             'is_graded' => $question->type !== 'open_text',
+        ];
+    }
+
+    private function gradeMatchingQuestion($question, string $textAnswer): array
+    {
+        $selectedPairs = [];
+        $correctOptions = $question->answerOptions->where('is_correct', true)->values();
+
+        if (str_contains($textAnswer, '||')) {
+            foreach (explode('||', (string) $textAnswer) as $pair) {
+                if (trim($pair) === '') continue;
+                [$qId, $choice] = array_pad(explode(':', $pair, 2), 2, '');
+                $selectedPairs[(string) $qId] = trim((string) $choice);
+            }
+        } else {
+            $decoded = json_decode($textAnswer, true);
+            if (is_array($decoded)) {
+                foreach ($correctOptions as $idx => $correctOption) {
+                    $selectedPairs[(string) $correctOption->id] = trim((string) ($decoded[$idx] ?? ''));
+                }
+            }
+        }
+
+        $correctCount = 0;
+        foreach ($correctOptions as $correctOption) {
+            $expected = trim(explode('|||', $correctOption->option_text, 2)[1] ?? '');
+            $selectedValue = $selectedPairs[(string) $correctOption->id] ?? null;
+            if ($selectedValue !== null && trim((string) $selectedValue) === $expected) {
+                $correctCount++;
+            }
+        }
+
+        $totalCorrect = $correctOptions->count();
+        $isCorrect = $correctCount > 0 && $correctCount === $totalCorrect;
+        $pointsEarned = $correctCount * 2.5;
+
+        return [
+            'is_correct' => $isCorrect,
+            'points_earned' => $pointsEarned,
         ];
     }
 
