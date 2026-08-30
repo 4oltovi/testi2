@@ -192,39 +192,22 @@ class RetakeExamController extends Controller
 
         $request->validate([
             'exam_question_id' => 'required|exists:exam_questions,id',
-            'answers' => 'nullable|array',
+            'selected_options' => 'nullable|array',
+            'text_answer' => 'nullable|string',
         ]);
 
         $examQuestion = ExamQuestion::findOrFail($request->exam_question_id);
-        $answers = $request->input('answers', []);
+        $questionType = $examQuestion->question->type ?? '';
         
         $selectedOptions = null;
         $textAnswer = null;
         
-        if (isset($answers[$examQuestion->id])) {
-            $value = $answers[$examQuestion->id];
-            $questionType = $examQuestion->question->type ?? '';
-            
-            if (in_array($questionType, ['single_choice', 'true_false'])) {
-                $selectedOptions = is_array($value) ? json_encode(array_values($value)) : json_encode([$value]);
-            } elseif ($questionType === 'multiple_choice') {
-                if (is_array($value)) {
-                    $selectedOptions = json_encode(array_values($value));
-                } else {
-                    $decoded = json_decode($value, true);
-                    $selectedOptions = is_array($decoded) ? json_encode($decoded) : json_encode([$value]);
-                }
-            } else {
-                if (is_array($value)) {
-                    $textAnswer = json_encode(array_values($value));
-                } else {
-                    $decoded = json_decode($value, true);
-                    if (is_array($decoded)) {
-                        $textAnswer = json_encode(array_values($decoded));
-                    } else {
-                        $textAnswer = $value;
-                    }
-                }
+        if (in_array($questionType, ['single_choice', 'true_false', 'multiple_choice'])) {
+            $selectedOptions = $request->selected_options ? json_encode(array_values($request->selected_options)) : null;
+        } else {
+            $textAnswer = $request->text_answer;
+            if (is_array($textAnswer)) {
+                $textAnswer = json_encode(array_values($textAnswer));
             }
         }
 
@@ -309,6 +292,17 @@ class RetakeExamController extends Controller
             $percentage = $this->gradingService->calculatePercentage($totalScore, $maxPossible);
             $gradeInfo = $this->gradingService->determineGrade($percentage);
 
+            \Log::info('RetakeExam processSubmission', [
+                'student_id' => $attempt->student_id,
+                'retake_exam_id' => $retakeExam->id,
+                'exam_attempt_id' => $attempt->id,
+                'total_score' => $totalScore,
+                'max_possible' => $maxPossible,
+                'percentage' => $percentage,
+                'letter_grade' => $gradeInfo['letter_grade'],
+                'is_passing' => $gradeInfo['is_passing'],
+            ]);
+
             $attempt->update([
                 'status' => $status,
                 'submitted_at' => $status === 'submitted' ? now() : null,
@@ -320,42 +314,60 @@ class RetakeExamController extends Controller
                 'grade_point' => $gradeInfo['grade_point'],
             ]);
 
-                $retakeExamStudent = $attempt->retakeExamStudent;
-                if ($retakeExamStudent) {
-                    $retakeExamStudent->update([
-                        'score' => $percentage,
-                        'letter_grade' => $gradeInfo['letter_grade'],
-                        'examined_at' => now(),
-                    ]);
+            $retakeExamStudent = $attempt->retakeExamStudent;
+            if (!$retakeExamStudent) {
+                $retakeExamStudent = RetakeExamStudent::where('retake_exam_id', $retakeExam->id)
+                    ->where('student_id', $attempt->student_id)
+                    ->first();
+            }
 
-                    $debt = $retakeExamStudent->academicDebt;
-                    if ($debt) {
-                        if ($gradeInfo['is_passing']) {
-                            $retakeExamStudent->update(['status' => 'passed']);
-                            $debt->resolve($percentage, $gradeInfo['letter_grade'], auth()->id());
-                        } else {
-                            $debt->update([
-                                'retake_attempts_used' => DB::raw('retake_attempts_used + 1'),
-                            ]);
-                            $debt->refresh();
+            if ($retakeExamStudent) {
+                $retakeExamStudent->update([
+                    'score' => $percentage,
+                    'letter_grade' => $gradeInfo['letter_grade'],
+                    'examined_at' => $attempt->submitted_at ?? now(),
+                ]);
 
-                            $remainingAttempts = ($debt->retake_attempts_used ?? 0);
+                \Log::info('RetakeExamStudent updated', [
+                    'retake_exam_student_id' => $retakeExamStudent->id,
+                    'saved_score' => $percentage,
+                    'saved_letter_grade' => $gradeInfo['letter_grade'],
+                ]);
 
-                            if ($remainingAttempts >= $debt->max_retake_attempts) {
-                                $retakeExamStudent->update(['status' => 'failed']);
-                                $debt->update([
-                                    'status' => 'escalated',
-                                ]);
-                            } else {
-                                $retakeExamStudent->update(['status' => 'pending']);
-                            }
-                        }
+                $debt = $retakeExamStudent->academicDebt;
+                if ($debt) {
+                    if ($gradeInfo['is_passing']) {
+                        $retakeExamStudent->update(['status' => 'passed']);
+                        $debt->resolve($percentage, $gradeInfo['letter_grade'], auth()->id());
                     } else {
-                        $retakeExamStudent->update([
-                            'status' => $gradeInfo['is_passing'] ? 'passed' : 'failed',
+                        $debt->update([
+                            'retake_attempts_used' => DB::raw('retake_attempts_used + 1'),
                         ]);
+                        $debt->refresh();
+
+                        $remainingAttempts = ($debt->retake_attempts_used ?? 0);
+
+                        if ($remainingAttempts >= $debt->max_retake_attempts) {
+                            $retakeExamStudent->update(['status' => 'failed']);
+                            $debt->update([
+                                'status' => 'escalated',
+                            ]);
+                        } else {
+                            $retakeExamStudent->update(['status' => 'pending']);
+                        }
                     }
+                } else {
+                    $retakeExamStudent->update([
+                        'status' => $gradeInfo['is_passing'] ? 'passed' : 'failed',
+                    ]);
                 }
+            } else {
+                \Log::warning('RetakeExamStudent not found', [
+                    'retake_exam_id' => $retakeExam->id,
+                    'student_id' => $attempt->student_id,
+                    'exam_attempt_id' => $attempt->id,
+                ]);
+            }
         });
     }
 
