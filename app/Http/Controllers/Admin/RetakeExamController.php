@@ -164,7 +164,7 @@ class RetakeExamController extends Controller
             ->with('success', "Имтиҳони такрорӣ бомуваффақият сохта шуд. {$questionCount} савол аз имтиҳони асосӣ копи карда шуд.");
     }
 
-    public function checkMainExam(Request $request): JsonResponse
+    public function checkMainExam(Request $request): \Illuminate\Http\JsonResponse
     {
         $request->validate([
             'subject_id' => 'required|exists:subjects,id',
@@ -317,7 +317,7 @@ class RetakeExamController extends Controller
         $groupedRows = $rows->groupBy('group_name');
 
         $data = [
-            'exam' => $retakeExam,
+            'retakeExam' => $retakeExam,
             'groupedRows' => $groupedRows,
             'rows' => $rows,
         ];

@@ -513,6 +513,8 @@
         const resultUrl = isRetakeMode ? "{{ $retakeResultUrl ?? '#' }}" : "{{ route('student.exams.result', [$exam, $attempt]) }}";
         const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 
+        console.log('Retake mode:', isRetakeMode, 'saveUrl:', saveUrl, 'submitUrl:', submitUrl);
+
         let currentIndex = 0;
         let answeredSet = new Set();
 
@@ -618,6 +620,7 @@
 
         // Select option
         function selectOption(card) {
+            console.log('selectOption called', card.dataset.eq, card.dataset.type);
             const eqId = card.dataset.eq;
             const optionId = card.dataset.option;
             const type = card.dataset.type;
@@ -639,6 +642,7 @@
 
         // Save answer via AJAX
         function saveAnswer(eqId) {
+            console.log('saveAnswer called', eqId, 'saveUrl=', saveUrl);
             const questionCard = document.querySelector('.question-card[style*="block"]');
             let data = {
                 exam_question_id: parseInt(eqId)
@@ -666,8 +670,16 @@
                 },
                 body: JSON.stringify(data)
             }).then(function(res) {
-                if (res.ok) showToast('✓ Ҷавоб сабт шуд');
-            }).catch(function() {
+                if (res.ok) {
+                    showToast('✓ Ҷавоб сабт шуд');
+                } else {
+                    res.text().then(function(txt) {
+                        console.error('Save answer failed:', res.status, txt);
+                        showToast('Хатогӣ! ' + res.status);
+                    });
+                }
+            }).catch(function(err) {
+                console.error('Save answer error:', err);
                 showToast('Хатогӣ!');
             });
         }
@@ -689,6 +701,7 @@
         // Matching dropdown save
         document.querySelectorAll('.matching-select').forEach(function(sel) {
             sel.addEventListener('change', function() {
+                console.log('matching change', this.dataset.eq, this.value);
                 const eqId = this.dataset.eq;
                 // Ҳамаи dropdown-ҳои ин савол
                 const container = this.closest('.matching-container');
@@ -715,9 +728,17 @@
                             text_answer: selectedOptions.join('||')
                         })
                     }).then(function(res) {
-                        if (res.ok) showToast('✓ Мувофиқат сабт шуд');
+                        if (res.ok) {
+                            showToast('✓ Мувофиқат сабт шуд');
+                        } else {
+                            res.text().then(function(txt) {
+                                console.error('Matching save failed:', res.status, txt);
+                                showToast('Хатогӣ! ' + res.status);
+                            });
+                        }
                     })
-                    .catch(function() {
+                    .catch(function(err) {
+                        console.error('Matching save error:', err);
                         showToast('Хатогӣ!');
                     });
             });

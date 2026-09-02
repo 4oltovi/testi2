@@ -65,6 +65,19 @@ enum GradeScale: string
     }
 
     /**
+     * Баҳои анъанавии 5-баллӣ
+     */
+    public function traditionalFivePoint(): int
+    {
+        return match ($this) {
+            self::A, self::A_MINUS => 5,
+            self::B_PLUS, self::B, self::B_MINUS => 4,
+            self::C_PLUS, self::C, self::C_MINUS, self::D_PLUS, self::D => 3,
+            self::FX, self::F => 2,
+        };
+    }
+
+    /**
      * Гирифтани ифодаи анъанавии баҳо
      */
     public function traditionalGrade(): string

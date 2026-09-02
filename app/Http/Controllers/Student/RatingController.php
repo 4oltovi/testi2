@@ -279,7 +279,11 @@ class RatingController extends Controller
 
         $semesterGrade->save();
 
-        app(\App\Services\GradeCalculator::class)->processAndSaveFinalGrade($semesterGrade);
+        app(\App\Services\GradeCalculator::class)->recalculateAndPersist(
+            $semesterGrade->student_id,
+            $semesterGrade->subject_assignment_id,
+            $semesterGrade->semester_id
+        );
 
         if (!$semesterGrade->isPassed()) {
             app(\App\Services\DebtDetector::class)->checkAndCreateDebt($semesterGrade);

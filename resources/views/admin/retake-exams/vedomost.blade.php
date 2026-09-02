@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
-@section('title', 'Ведомости такрорӣ — ' . $exam->title)
+@section('title', 'Ведомости такрорӣ — ' . $retakeExam->title)
 @section('page-header', 'Ведомости такрорӣ')
-@section('page-description', $exam->subject->name ?? 'Фан' . ' | ' . $exam->exam_date?->format('d.m.Y') ?? '')
+@section('page-description', $retakeExam->subject->name ?? 'Фан' . ' | ' . $retakeExam->exam_date?->format('d.m.Y') ?? '')
 
 @section('content')
 <div class="row g-4">
@@ -11,16 +11,16 @@
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
                 <h6 class="mb-0">Ведомости такрорӣ</h6>
                 <div>
-                    <a href="{{ route('admin.retake-exams.print-vedomost', $exam) }}" class="btn btn-sm btn-primary" target="_blank">
+                    <a href="{{ route('admin.retake-exams.print-vedomost', $retakeExam) }}" class="btn btn-sm btn-primary" target="_blank">
                         <i class="bi bi-printer me-1"></i> Чоп кардан
                     </a>
                 </div>
             </div>
             <div class="card-body">
                 <div class="mb-3">
-                    <strong>Фан:</strong> {{ $exam->subject->name ?? '-' }} |
-                    <strong>Семестр:</strong> {{ $exam->semester->name ?? '-' }} |
-                    <strong>Сана:</strong> {{ $exam->exam_date?->format('d.m.Y') ?? '-' }} |
+                    <strong>Фан:</strong> {{ $retakeExam->subject->name ?? '-' }} |
+                    <strong>Семестр:</strong> {{ $retakeExam->semester->name ?? '-' }} |
+                    <strong>Сана:</strong> {{ $retakeExam->exam_date?->format('d.m.Y') ?? '-' }} |
                     <strong>Умумӣ:</strong> {{ $rows->count() }} нафар
                 </div>
 

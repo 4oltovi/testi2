@@ -42,19 +42,33 @@ class GradeController extends Controller
                 $rating2 = $gradeCalc->calculateRating2($student->id, $assignment->id, $assignment->semester_id);
                 $exam = $gradeCalc->calculateExamPercentage($student->id, $assignment->id, $assignment->semester_id);
 
+                $retakeScore = null;
+                $retakeExam = \App\Models\RetakeExam::where('subject_id', $assignment->subject_id)
+                    ->where('semester_id', $assignment->semester_id)
+                    ->first();
+
+                if ($retakeExam) {
+                    $retakeStudent = \App\Models\RetakeExamStudent::where('retake_exam_id', $retakeExam->id)
+                        ->where('student_id', $student->id)
+                        ->first();
+
+                    if ($retakeStudent && $retakeStudent->score !== null) {
+                        $retakeScore = (float) $retakeStudent->score;
+                    }
+                }
+
+                $effectiveExamScore = $retakeScore ?? $exam;
+
                 $totalScore = null;
                 $letterGrade = null;
                 $gradePoint = null;
                 $status = null;
 
-                if ($exam > 0 || ($rating1 > 0 || $rating2 > 0)) {
-                    $divisor = (float) \App\Models\Setting::get('rating_part_divisor', 4);
-                    $examWeight = (float) \App\Models\Setting::get('exam_weight', 0.5);
-
+                if ($effectiveExamScore > 0 || ($rating1 > 0 || $rating2 > 0)) {
                     $r1 = (float) $rating1;
                     $r2 = (float) $rating2;
 
-                    $totalScore = round(($r1 + $r2) / $divisor + ($exam * $examWeight), 2);
+                    $totalScore = round(($r1 + $r2) / 4 + $effectiveExamScore, 2);
 
                     $gradeEnum = \App\Enums\GradeScale::fromPercentage($totalScore);
                     $letterGrade = $gradeEnum->value;
@@ -106,19 +120,33 @@ class GradeController extends Controller
             $rating2 = $gradeCalc->calculateRating2($student->id, $assignment->id, $semester->id);
             $exam = $gradeCalc->calculateExamPercentage($student->id, $assignment->id, $semester->id);
 
+            $retakeScore = null;
+            $retakeExam = \App\Models\RetakeExam::where('subject_id', $assignment->subject_id)
+                ->where('semester_id', $semester->id)
+                ->first();
+
+            if ($retakeExam) {
+                $retakeStudent = \App\Models\RetakeExamStudent::where('retake_exam_id', $retakeExam->id)
+                    ->where('student_id', $student->id)
+                    ->first();
+
+                if ($retakeStudent && $retakeStudent->score !== null) {
+                    $retakeScore = (float) $retakeStudent->score;
+                }
+            }
+
+            $effectiveExamScore = $retakeScore ?? $exam;
+
             $totalScore = null;
             $letterGrade = null;
             $gradePoint = null;
             $status = null;
 
-            if ($exam > 0 || ($rating1 > 0 || $rating2 > 0)) {
-                $divisor = (float) \App\Models\Setting::get('rating_part_divisor', 4);
-                $examWeight = (float) \App\Models\Setting::get('exam_weight', 0.5);
-
+            if ($effectiveExamScore > 0 || ($rating1 > 0 || $rating2 > 0)) {
                 $r1 = (float) $rating1;
                 $r2 = (float) $rating2;
 
-                $totalScore = round(($r1 + $r2) / $divisor + ($exam * $examWeight), 2);
+                $totalScore = round(($r1 + $r2) / 4 + $effectiveExamScore, 2);
 
                 $gradeEnum = \App\Enums\GradeScale::fromPercentage($totalScore);
                 $letterGrade = $gradeEnum->value;

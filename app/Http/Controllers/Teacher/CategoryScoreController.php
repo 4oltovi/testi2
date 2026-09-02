@@ -148,7 +148,7 @@ class CategoryScoreController extends Controller
                     ->first();
 
                 if ($semesterGrade && !$semesterGrade->is_finalized) {
-                    $gradeCalc->processAndSaveFinalGrade($semesterGrade);
+                    $gradeCalc->recalculateAndPersist($student->id, $subjectAssignment->id, $semester->id);
 
                     if (!$semesterGrade->isPassed()) {
                         app(\App\Services\DebtDetector::class)->checkAndCreateDebt($semesterGrade);

@@ -174,4 +174,110 @@ class DebtDetector
             ->orderByDesc('debt_date')
             ->get();
     }
+
+    /**
+     * Синхронизатсияи қарздориҳо барои фан/семестр
+     *
+     * Ҳамаи донишҷӯёни гурӯҳро тафтиш мекунад:
+     * - Агар донишҷӯ имтиҳонро насупорид ё наомад → exam_score = 0
+     * - Агар final_score < 50 → қарздор эҷод/алоқаманд мекунад
+     * - Агар final_score >= 50 → қарздорӣ ҳал/нест мекунад
+     */
+    public function syncDebtsForSubject(int $subjectId, int $semesterId, ?int $excludeStudentId = null): void
+    {
+        $subjectAssignments = \App\Models\SubjectAssignment::where('subject_id', $subjectId)
+            ->where('semester_id', $semesterId)
+            ->where('is_active', true)
+            ->get();
+
+        if ($subjectAssignments->isEmpty()) {
+            return;
+        }
+
+        $groupIds = $subjectAssignments->pluck('group_id')->unique()->filter();
+        if ($groupIds->isEmpty()) {
+            return;
+        }
+
+        $students = Student::whereIn('group_id', $groupIds)
+            ->when($excludeStudentId, fn($q) => $q->where('id', '!=', $excludeStudentId))
+            ->get();
+
+        $gradeCalculator = app(\App\Services\GradeCalculator::class);
+
+        foreach ($students as $student) {
+            $subjectAssignment = $subjectAssignments->firstWhere('group_id', $student->group_id);
+            if (!$subjectAssignment) {
+                continue;
+            }
+
+            $rating1 = $gradeCalculator->calculateRating1($student->id, $subjectAssignment->id, $semesterId);
+            $rating2 = $gradeCalculator->calculateRating2($student->id, $subjectAssignment->id, $semesterId);
+            $exam = $gradeCalculator->calculateExamPercentage($student->id, $subjectAssignment->id, $semesterId);
+
+            $retakeScore = null;
+            $retakeExam = \App\Models\RetakeExam::where('subject_id', $subjectId)
+                ->where('semester_id', $semesterId)
+                ->first();
+
+            if ($retakeExam) {
+                $retakeStudent = \App\Models\RetakeExamStudent::where('retake_exam_id', $retakeExam->id)
+                    ->where('student_id', $student->id)
+                    ->first();
+
+                if ($retakeStudent && $retakeStudent->score !== null) {
+                    $retakeScore = (float) $retakeStudent->score;
+                }
+            }
+
+            $effectiveExamScore = $retakeScore ?? $exam;
+            $finalScore = round((($rating1 + $rating2) / 4) + ($effectiveExamScore * 0.5), 2);
+
+            $existingDebt = AcademicDebt::where('student_id', $student->id)
+                ->where('subject_id', $subjectId)
+                ->where('semester_id', $semesterId)
+                ->whereIn('status', ['active', 'retake_scheduled', 'escalated'])
+                ->first();
+
+            if ($finalScore < 50) {
+                $grade = GradeScale::fromPercentage($finalScore);
+
+                $semesterGrade = SemesterGrade::where('student_id', $student->id)
+                    ->where('subject_assignment_id', $subjectAssignment->id)
+                    ->where('semester_id', $semesterId)
+                    ->first();
+
+                if ($existingDebt) {
+                    $existingDebt->update([
+                        'original_score' => $finalScore,
+                        'original_grade' => $grade->value,
+                        'retake_allowed' => $grade->canRetake(),
+                        'max_retake_attempts' => $grade->canRetake() ? 2 : 0,
+                        'semester_grade_id' => $semesterGrade?->id,
+                    ]);
+                } else {
+                    AcademicDebt::create([
+                        'student_id' => $student->id,
+                        'semester_grade_id' => $semesterGrade?->id,
+                        'subject_id' => $subjectId,
+                        'semester_id' => $semesterId,
+                        'reason' => 'exam_failed',
+                        'debt_date' => now(),
+                        'original_score' => $finalScore,
+                        'original_grade' => $grade->value,
+                        'retake_allowed' => $grade->canRetake(),
+                        'max_retake_attempts' => $grade->canRetake() ? 2 : 0,
+                        'status' => DebtStatus::ACTIVE,
+                        'created_by' => \Illuminate\Support\Facades\Auth::id() ?? 1,
+                    ]);
+
+                    $student->update(['has_debts' => true]);
+                }
+            } else {
+                if ($existingDebt) {
+                    $existingDebt->resolve($finalScore, GradeScale::fromPercentage($finalScore)->value, \Illuminate\Support\Facades\Auth::id() ?? 1);
+                }
+            }
+        }
+    }
 }

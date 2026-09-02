@@ -7,8 +7,10 @@ use App\Models\RetakeExam;
 use App\Models\RetakeExamAnswer;
 use App\Models\RetakeExamAttempt;
 use App\Models\RetakeExamStudent;
+use App\Models\SemesterGrade;
 use App\Models\Student;
 use App\Models\ExamQuestion;
+use App\Services\DebtDetector;
 use App\Services\ExamGradingService;
 use App\Services\GradeCalculator;
 use Illuminate\Http\RedirectResponse;
@@ -19,10 +21,12 @@ use Illuminate\View\View;
 class RetakeExamController extends Controller
 {
     private ExamGradingService $gradingService;
+    private DebtDetector $debtDetector;
 
-    public function __construct(ExamGradingService $gradingService)
+    public function __construct(ExamGradingService $gradingService, DebtDetector $debtDetector)
     {
         $this->gradingService = $gradingService;
+        $this->debtDetector = $debtDetector;
     }
 
     public function index(Request $request): View
@@ -162,7 +166,26 @@ class RetakeExamController extends Controller
                 $a->exam_question_id => $a->selected_options ? json_decode($a->selected_options, true) : ($a->text_answer ?: null),
             ]);
 
-        $remainingSeconds = $retakeExam->duration_minutes * 60;
+        // Вақти боқимондаро аз оғози attempt ҳисоб кунед
+        $startedAt = $attempt->started_at ?? now();
+        $totalSeconds = $retakeExam->duration_minutes * 60;
+        $elapsedSeconds = (int) abs(now()->timestamp - $startedAt->timestamp);
+        $remainingSeconds = (int) max(0, $totalSeconds - $elapsedSeconds);
+
+        $retakeSaveUrl = route('student.retake-exams.save-answer', [$retakeExam, $attempt]);
+        $retakeSubmitUrl = route('student.retake-exams.submit', [$retakeExam, $attempt]);
+        $retakeResultUrl = route('student.retake-exams.result', [$retakeExam, $attempt]);
+
+        \Log::info('RetakeExam take view data', [
+            'retake_exam_id' => $retakeExam->id,
+            'attempt_id' => $attempt->id,
+            'retakeSaveUrl' => $retakeSaveUrl,
+            'retakeSubmitUrl' => $retakeSubmitUrl,
+            'retakeResultUrl' => $retakeResultUrl,
+            'isRetakeMode' => true,
+            'main_exam_id' => $mainExam->id,
+            'questions_count' => $examQuestions->count(),
+        ]);
 
         return view('student.exams.take', [
             'exam' => $mainExam,
@@ -172,9 +195,9 @@ class RetakeExamController extends Controller
             'remainingSeconds' => $remainingSeconds,
             'isRetakeMode' => true,
             'retakeExam' => $retakeExam,
-            'retakeSaveUrl' => route('student.retake-exams.save-answer', [$retakeExam, $attempt]),
-            'retakeSubmitUrl' => route('student.retake-exams.submit', [$retakeExam, $attempt]),
-            'retakeResultUrl' => route('student.retake-exams.result', [$retakeExam, $attempt]),
+            'retakeSaveUrl' => $retakeSaveUrl,
+            'retakeSubmitUrl' => $retakeSubmitUrl,
+            'retakeResultUrl' => $retakeResultUrl,
         ]);
     }
 
@@ -198,6 +221,16 @@ class RetakeExamController extends Controller
 
         $examQuestion = ExamQuestion::findOrFail($request->exam_question_id);
         $questionType = $examQuestion->question->type ?? '';
+        
+        \Log::info('RetakeExam saveAnswer called', [
+            'retake_exam_id' => $retakeExam->id,
+            'attempt_id' => $attempt->id,
+            'exam_question_id' => $examQuestion->id,
+            'question_type' => $questionType,
+            'selected_options_raw' => $request->selected_options,
+            'text_answer_raw' => $request->text_answer,
+            'all_request' => $request->all(),
+        ]);
         
         $selectedOptions = null;
         $textAnswer = null;
@@ -266,6 +299,20 @@ class RetakeExamController extends Controller
                 ->with('question.answerOptions')
                 ->get()
                 ->keyBy('id');
+
+            \Log::info('RetakeExam processSubmission debug', [
+                'retake_exam_id' => $retakeExam->id,
+                'main_exam_id' => $retakeExam->main_exam_id,
+                'student_id' => $attempt->student_id,
+                'attempt_id' => $attempt->id,
+                'answers_count' => $answers->count(),
+                'exam_questions_count' => $examQuestions->count(),
+                'answers' => $answers->map(fn($a) => [
+                    'exam_question_id' => $a->exam_question_id,
+                    'selected_options' => $a->selected_options,
+                    'text_answer' => $a->text_answer,
+                ])->toArray(),
+            ]);
 
             $totalScore = 0;
             $maxPossible = 0;
@@ -361,6 +408,31 @@ class RetakeExamController extends Controller
                         'status' => $gradeInfo['is_passing'] ? 'passed' : 'failed',
                     ]);
                 }
+
+                $semesterGrade = SemesterGrade::where('student_id', $attempt->student_id)
+                    ->where('subject_assignment_id', $retakeExam->mainExam->subject_assignment_id)
+                    ->where('semester_id', $retakeExam->semester_id)
+                    ->first();
+
+                if ($semesterGrade) {
+                    $semesterGrade->update([
+                        'retake_score' => $percentage,
+                        'retake_date' => now(),
+                    ]);
+
+                    $gradeCalc = app(\App\Services\GradeCalculator::class);
+                    $gradeCalc->recalculateAndPersist(
+                        $attempt->student_id,
+                        $retakeExam->mainExam->subject_assignment_id,
+                        $retakeExam->semester_id
+                    );
+                }
+
+                $this->debtDetector->syncDebtsForSubject(
+                    $retakeExam->subject_id,
+                    $retakeExam->semester_id,
+                    $attempt->student_id
+                );
             } else {
                 \Log::warning('RetakeExamStudent not found', [
                     'retake_exam_id' => $retakeExam->id,

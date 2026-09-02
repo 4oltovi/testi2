@@ -7,11 +7,13 @@ use App\Models\CategoryScore;
 use App\Models\CurrentGrade;
 use App\Models\Exam;
 use App\Models\ExamAttempt;
+use App\Models\RetakeExam;
+use App\Models\RetakeExamStudent;
 use App\Models\Semester;
 use App\Models\SemesterGrade;
 use App\Models\Setting;
-use App\Models\SubjectAssignment;
 use App\Models\Student;
+use App\Models\SubjectAssignment;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -187,13 +189,15 @@ class GradeCalculator
      */
     public function calculateFinalGrade(SemesterGrade $semesterGrade): array
     {
-        $examScore = $semesterGrade->retake_score
-            ?? $semesterGrade->exam_score;
+        $examScore = max(
+            (float) ($semesterGrade->exam_score ?? 0),
+            (float) ($semesterGrade->retake_score ?? 0)
+        );
 
         $rating1 = (float) ($semesterGrade->rating1_score ?? 0);
         $rating2 = (float) ($semesterGrade->rating2_score ?? 0);
 
-        if (is_null($examScore)) {
+        if ($examScore <= 0 && $rating1 <= 0 && $rating2 <= 0) {
             return [
                 'total_score' => null,
                 'letter_grade' => null,
@@ -206,11 +210,7 @@ class GradeCalculator
             ];
         }
 
-        // Аз танзимот (қобили тағйир):
-        $divisor = (float) \App\Models\Setting::get('rating_part_divisor', 4);    // (R1+R2) ÷ 4
-        $examWeight = (float) \App\Models\Setting::get('exam_weight', 0.5);       // Имтиҳон × 0,5
-
-        $totalScore = round(($rating1 + $rating2) / $divisor + ($examScore * $examWeight), 2);
+        $totalScore = round(($rating1 + $rating2) / 4 + $examScore, 2);
 
         $grade = GradeScale::fromPercentage($totalScore);
 
@@ -261,6 +261,23 @@ class GradeCalculator
                 $semesterGrade->subject_assignment_id,
                 $semesterGrade->semester_id
             );
+        }
+
+        // 4) Натиҷаи такрорсупорӣ
+        if ($semesterGrade->subject_assignment_id) {
+            $retakeExam = RetakeExam::where('subject_id', $semesterGrade->subjectAssignment->subject_id)
+                ->where('semester_id', $semesterGrade->semester_id)
+                ->first();
+
+            if ($retakeExam) {
+                $retakeExamStudent = RetakeExamStudent::where('retake_exam_id', $retakeExam->id)
+                    ->where('student_id', $semesterGrade->student_id)
+                    ->first();
+
+                if ($retakeExamStudent && $retakeExamStudent->score !== null) {
+                    $semesterGrade->retake_score = (float) $retakeExamStudent->score;
+                }
+            }
         }
 
         $result = $this->calculateFinalGrade($semesterGrade);
@@ -359,16 +376,80 @@ class GradeCalculator
         ];
     }
     /**
+     * ПУРРА: ҳисоб ва сабти баҳоҳои семестр дар semester_grades
+     */
+    public function recalculateAndPersist(int $studentId, int $subjectAssignmentId, int $semesterId): void
+    {
+        $rating1 = $this->calculateRating1($studentId, $subjectAssignmentId, $semesterId);
+        $rating2 = $this->calculateRating2($studentId, $subjectAssignmentId, $semesterId);
+        $exam = $this->calculateExamPercentage($studentId, $subjectAssignmentId, $semesterId, 'main');
+
+        $retakeScore = null;
+        $retakeExam = RetakeExam::where('subject_id', SubjectAssignment::find($subjectAssignmentId)?->subject_id)
+            ->where('semester_id', $semesterId)
+            ->first();
+
+        if ($retakeExam) {
+            $retakeStudent = RetakeExamStudent::where('retake_exam_id', $retakeExam->id)
+                ->where('student_id', $studentId)
+                ->first();
+
+            if ($retakeStudent && $retakeStudent->score !== null) {
+                $retakeScore = (float) $retakeStudent->score;
+            }
+        }
+
+        $effectiveExamScore = $retakeScore ?? $exam;
+
+        $totalScore = null;
+        $letterGrade = null;
+        $gradePoint = null;
+        $status = null;
+
+        if ($effectiveExamScore > 0 || ($rating1 > 0 || $rating2 > 0)) {
+            $totalScore = round((($rating1 + $rating2) / 4) + $effectiveExamScore, 2);
+
+            $gradeEnum = GradeScale::fromPercentage($totalScore);
+            $letterGrade = $gradeEnum->value;
+            $gradePoint = $gradeEnum->gradePoint();
+            $status = $gradeEnum->isPassing() ? 'passed' : ($gradeEnum->canRetake() ? 'retake' : 'failed');
+        }
+
+        SemesterGrade::updateOrCreate(
+            [
+                'student_id' => $studentId,
+                'subject_assignment_id' => $subjectAssignmentId,
+                'semester_id' => $semesterId,
+            ],
+            [
+                'rating1_score' => $rating1,
+                'rating2_score' => $rating2,
+                'exam_score' => $exam,
+                'retake_score' => $retakeScore,
+                'total_score' => $totalScore,
+                'letter_grade' => $letterGrade,
+                'grade_point' => $gradePoint,
+                'status' => $status,
+            ]
+        );
+    }
+
+    /**
      * НАВ: Имтиҳон аз ТЕСТИ ОНЛАЙН (автоматӣ, на дастӣ)
      * main → retake → retake2 (агар такрор супорида бошад, ҳамон ҳисоб мешавад)
      */
-    public function calculateExamPercentage(int $studentId, int $subjectAssignmentId, int $semesterId): float
+    public function calculateExamPercentage(int $studentId, int $subjectAssignmentId, int $semesterId, string $examType = 'main'): float
     {
-        $exam = Exam::where('subject_assignment_id', $subjectAssignmentId)
-            ->where('semester_id', $semesterId)
-            ->whereIn('exam_type', ['main', 'retake', 'retake_commission'])
-            ->latest('starts_at')
-            ->first();
+        $query = Exam::where('subject_assignment_id', $subjectAssignmentId)
+            ->where('semester_id', $semesterId);
+
+        if ($examType === 'main') {
+            $query->where('exam_type', 'main');
+        } else {
+            $query->whereIn('exam_type', ['main', 'retake', 'retake_commission']);
+        }
+
+        $exam = $query->latest('starts_at')->first();
 
         if (!$exam) {
             return 0;

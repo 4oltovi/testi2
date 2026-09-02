@@ -18,14 +18,14 @@
 <body>
     <div class="header">
         <h2>ВЕДОМОСТИ ТАКРОРӢ</h2>
-        <p>{{ $exam->subject->name ?? 'Фан' }} | {{ $exam->exam_date?->format('d.m.Y') ?? '' }}</p>
+        <p>{{ $retakeExam->subject->name ?? 'Фан' }} | {{ $retakeExam->exam_date?->format('d.m.Y') ?? '' }}</p>
     </div>
 
     <table class="info">
         <tr>
-            <td><strong>Фан:</strong> {{ $exam->subject->name ?? '-' }}</td>
-            <td><strong>Семестр:</strong> {{ $exam->semester->name ?? '-' }}</td>
-            <td><strong>Имтиҳон:</strong> {{ $exam->title }}</td>
+            <td><strong>Фан:</strong> {{ $retakeExam->subject->name ?? '-' }}</td>
+            <td><strong>Семестр:</strong> {{ $retakeExam->semester->name ?? '-' }}</td>
+            <td><strong>Имтиҳон:</strong> {{ $retakeExam->title }}</td>
         </tr>
     </table>
 

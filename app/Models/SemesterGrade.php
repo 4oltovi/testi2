@@ -137,19 +137,17 @@ class SemesterGrade extends Model
      */
     public function calculateTotalScore(): ?float
     {
-        $examScore = $this->retake_score ?? $this->exam_score;
-
+        $examScore = max((float) ($this->exam_score ?? 0), (float) ($this->retake_score ?? 0));
         $ratingScore = $this->rating1_score;
         $journalScore = $this->rating2_score;
 
-        if (is_null($ratingScore) || is_null($journalScore) || is_null($examScore)) {
+        if (is_null($ratingScore) || is_null($journalScore)) {
             return null;
         }
 
-        $combinedScore = (($ratingScore + $journalScore) / 2);
-        $total = $combinedScore + ($examScore * 0.50);
+        $total = round((($ratingScore + $journalScore) / 4) + $examScore, 2);
 
-        return round($total, 2);
+        return $total;
     }
 
     /**
@@ -157,17 +155,16 @@ class SemesterGrade extends Model
      */
     public function calculateAndSetFinalGrade(): void
     {
-        $examScore = $this->retake_score ?? $this->exam_score;
+        $examScore = max((float) ($this->exam_score ?? 0), (float) ($this->retake_score ?? 0));
 
-        if (is_null($examScore)) {
+        if ($examScore <= 0) {
             return;
         }
 
         $rating1 = (float) ($this->rating1_score ?? 0);
         $rating2 = (float) ($this->rating2_score ?? 0);
 
-        // ФОРМУЛАИ НАВ: (R1 + R2) ÷ 4 + Имтиҳон × 0,5
-        $totalScore = round(($rating1 + $rating2) / 4 + ($examScore * 0.5), 2);
+        $totalScore = round(($rating1 + $rating2) / 4 + $examScore, 2);
 
         $grade = GradeScale::fromPercentage($totalScore);
 

@@ -19,14 +19,29 @@ class ExamGradingService
         $pointsEarned = 0;
 
         if (in_array($question->type, ['single_choice', 'true_false'])) {
-            $correctOptions = $question->answerOptions->where('is_correct', true)->pluck('id')->toArray();
-            $selected = json_decode($answer->selected_options ?? '[]', true) ?: [];
+            // ID-ҳоро ба integer табдил медиҳем
+            $correctOptions = array_map('intval', $question->answerOptions->where('is_correct', true)->pluck('id')->toArray());
+            $selected = array_map('intval', json_decode($answer->selected_options ?? '[]', true) ?: []);
+
             $isCorrect = !empty($selected) && $selected == $correctOptions;
             $pointsEarned = $isCorrect ? $questionWeight : 0;
         } elseif ($question->type === 'multiple_choice') {
-            $correctOptions = $question->answerOptions->where('is_correct', true)->pluck('id')->sort()->values()->toArray();
-            $selected = collect(json_decode($answer->selected_options ?? '[]', true) ?: [])->sort()->values()->toArray();
-            $isCorrect = $selected === $correctOptions;
+            // Ҳамаи ID-ҳоро ба integer табдил дода, сорт мекунем
+            $correctOptions = $question->answerOptions
+                ->where('is_correct', true)
+                ->pluck('id')
+                ->map(fn($id) => (int) $id)
+                ->sort()
+                ->values()
+                ->toArray();
+
+            $selected = collect(json_decode($answer->selected_options ?? '[]', true) ?: [])
+                ->map(fn($id) => (int) $id)
+                ->sort()
+                ->values()
+                ->toArray();
+
+            $isCorrect = (!empty($selected) && $selected === $correctOptions);
             $pointsEarned = $isCorrect ? $questionWeight : 0;
         } elseif ($question->type === 'matching') {
             $result = $this->gradeMatchingQuestion($question, $answer->text_answer ?? '');
@@ -48,14 +63,29 @@ class ExamGradingService
         $pointsEarned = 0;
 
         if (in_array($question->type, ['single_choice', 'true_false'])) {
-            $correctOptions = $question->answerOptions->where('is_correct', true)->pluck('id')->toArray();
-            $selected = json_decode($answer->selected_options ?? '[]', true) ?: [];
+            // ID-ҳоро ба integer табдил медиҳем
+            $correctOptions = array_map('intval', $question->answerOptions->where('is_correct', true)->pluck('id')->toArray());
+            $selected = array_map('intval', json_decode($answer->selected_options ?? '[]', true) ?: []);
+
             $isCorrect = !empty($selected) && $selected == $correctOptions;
             $pointsEarned = $isCorrect ? $questionWeight : 0;
         } elseif ($question->type === 'multiple_choice') {
-            $correctOptions = $question->answerOptions->where('is_correct', true)->pluck('id')->sort()->values()->toArray();
-            $selected = collect(json_decode($answer->selected_options ?? '[]', true) ?: [])->sort()->values()->toArray();
-            $isCorrect = $selected === $correctOptions;
+            // Ҳамаи ID-ҳоро ба integer табдил дода, сорт мекунем
+            $correctOptions = $question->answerOptions
+                ->where('is_correct', true)
+                ->pluck('id')
+                ->map(fn($id) => (int) $id)
+                ->sort()
+                ->values()
+                ->toArray();
+
+            $selected = collect(json_decode($answer->selected_options ?? '[]', true) ?: [])
+                ->map(fn($id) => (int) $id)
+                ->sort()
+                ->values()
+                ->toArray();
+
+            $isCorrect = (!empty($selected) && $selected === $correctOptions);
             $pointsEarned = $isCorrect ? $questionWeight : 0;
         } elseif ($question->type === 'matching') {
             $result = $this->gradeMatchingQuestion($question, $answer->text_answer ?? '');
@@ -69,6 +99,7 @@ class ExamGradingService
             'is_graded' => $question->type !== 'open_text',
         ];
     }
+
 
     private function gradeMatchingQuestion($question, string $textAnswer): array
     {

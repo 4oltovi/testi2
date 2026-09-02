@@ -110,9 +110,9 @@
                     <th style="width:30%">Ному насаб</th>
                     <th>Р1</th>
                     <th>Р2</th>
-                    <th>Иҷ</th>
+                    <th>Ич</th>
                     <th>Бҷф</th>
-                    <th>Эҳ</th>
+                    <th>Эх</th>
                     <th>ЭА</th>
                     <th>ЭАА</th>
                     <th>Бал</th>
@@ -126,12 +126,12 @@
                     <td>{{ $r['fio'] }}</td>
                     <td class="c">{{ $r['r1'] }}</td>
                     <td class="c">{{ $r['r2'] }}</td>
-                    <td class="c">{{ $r['examComp'] }}</td>
-                    <td class="c">{{ $r['total'] }}</td>
-                    <td class="c">{{ $r['letter'] }}</td>
-                    <td class="c">{{ $r['point'] }}</td>
-                    <td class="c">{{ $r['cred'] }}</td>
-                    <td class="c">{{ $r['ball'] }}</td>
+                    <td class="c">{{ $r['ij'] }}</td>
+                    <td class="c">{{ $r['bjf'] }}</td>
+                    <td class="c">{{ $r['eh'] }}</td>
+                    <td class="c">{{ $r['ea'] }}</td>
+                    <td class="c">{{ $r['eaa'] }}</td>
+                    <td class="c">{{ $r['bal'] }}</td>
                 </tr>
                 @endforeach
             </tbody>

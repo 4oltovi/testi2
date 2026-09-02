@@ -6,8 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\CurrentGrade;
 use App\Models\GradeChangeLog;
+use App\Models\RetakeExam;
+use App\Models\RetakeExamStudent;
 use App\Models\Semester;
 use App\Models\SemesterGrade;
+use App\Models\Student;
+use App\Models\Subject;
 use App\Models\SubjectAssignment;
 use App\Services\DebtDetector;
 use App\Services\GradeCalculator;
@@ -123,6 +127,10 @@ class JournalController extends Controller
             }
         });
 
+        foreach ($request->input('attendance', []) as $studentId => $status) {
+            $this->gradeCalculator->recalculateAndPersist($studentId, $subjectAssignment->id, $subjectAssignment->semester_id);
+        }
+
         return back()->with('success', "Давомот барои санаи {$date} сабт шуд.");
     }
 
@@ -190,6 +198,11 @@ class JournalController extends Controller
             }
         });
 
+        foreach ($request->input('grades', []) as $studentId => $score) {
+            if ($score === null || $score === '') continue;
+            $this->gradeCalculator->recalculateAndPersist($studentId, $subjectAssignment->id, $semester->id);
+        }
+
         return back()->with('success', 'Баҳоҳо сабт шуданд.');
     }
 
@@ -215,11 +228,32 @@ class JournalController extends Controller
             ->get()
             ->keyBy('student_id');
 
+        $retakeExamIds = RetakeExam::where('subject_id', $subject->id)
+            ->where('semester_id', $semester->id)
+            ->pluck('id');
+
+        $retakeExamStudents = RetakeExamStudent::whereIn('retake_exam_id', $retakeExamIds)
+            ->get()
+            ->keyBy('student_id');
+
         $calculatedGrades = [];
         foreach ($students as $student) {
             $rating1 = $this->gradeCalculator->calculateRating1($student->id, $subjectAssignment->id, $semester->id);
             $rating2 = $this->gradeCalculator->calculateRating2($student->id, $subjectAssignment->id, $semester->id);
-            $exam = $this->gradeCalculator->calculateExamPercentage($student->id, $subjectAssignment->id, $semester->id);
+            $exam = $this->gradeCalculator->calculateExamPercentage($student->id, $subjectAssignment->id, $semester->id, 'main');
+
+            $retakeScore = null;
+            $retakeGrade = null;
+            $retakeGradePoint = null;
+
+            $retakeExamStudent = $retakeExamStudents[$student->id] ?? null;
+            if ($retakeExamStudent && $retakeExamStudent->score !== null) {
+                $retakeScore = (float) $retakeExamStudent->score;
+                $retakeGrade = $retakeExamStudent->letter_grade;
+                $retakeGradePoint = $retakeExamStudent->grade_point;
+            }
+
+            $effectiveExamScore = $retakeScore ?? $exam;
 
             $totalScore = null;
             $letterGrade = null;
@@ -227,16 +261,13 @@ class JournalController extends Controller
             $status = null;
 
             $hasRating = $rating1 > 0 || $rating2 > 0;
-            $hasExam = $exam > 0;
+            $hasExam = $effectiveExamScore > 0;
 
             if ($hasRating || $hasExam) {
-                $divisor = (float) \App\Models\Setting::get('rating_part_divisor', 4);
-                $examWeight = (float) \App\Models\Setting::get('exam_weight', 0.5);
-
                 $r1 = (float) $rating1;
                 $r2 = (float) $rating2;
 
-                $totalScore = round(($r1 + $r2) / $divisor + ($exam * $examWeight), 2);
+                $totalScore = round(($r1 + $r2) / 4 + $effectiveExamScore, 2);
 
                 $gradeEnum = \App\Enums\GradeScale::fromPercentage($totalScore);
                 $letterGrade = $gradeEnum->value;
@@ -248,11 +279,16 @@ class JournalController extends Controller
                 'rating1' => $rating1,
                 'rating2' => $rating2,
                 'exam' => $exam,
+                'retake_score' => $retakeScore,
+                'retake_letter_grade' => $retakeGrade,
+                'retake_grade_point' => $retakeGradePoint,
                 'total_score' => $totalScore,
                 'letter_grade' => $letterGrade,
                 'grade_point' => $gradePoint,
                 'status' => $status,
             ];
+
+            $this->gradeCalculator->recalculateAndPersist($student->id, $subjectAssignment->id, $semester->id);
         }
 
         return view('teacher.journal.semester-grades', compact(
@@ -309,7 +345,7 @@ class JournalController extends Controller
 
                     if (!empty($updates)) {
                         $semesterGrade->update($updates);
-                        $this->gradeCalculator->processAndSaveFinalGrade($semesterGrade);
+                        $this->gradeCalculator->recalculateAndPersist($studentId, $subjectAssignment->id, $semester->id);
 
                         if (!$semesterGrade->isPassed()) {
                             $this->debtDetector->checkAndCreateDebt($semesterGrade);
@@ -374,7 +410,7 @@ class JournalController extends Controller
                     'exam_teacher_id' => auth()->id(),
                 ]);
 
-                $this->gradeCalculator->processAndSaveFinalGrade($semesterGrade);
+                $this->gradeCalculator->recalculateAndPersist($studentId, $subjectAssignment->id, $semester->id);
 
                 if (!$semesterGrade->isPassed()) {
                     $this->debtDetector->checkAndCreateDebt($semesterGrade);

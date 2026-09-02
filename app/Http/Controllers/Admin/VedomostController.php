@@ -15,6 +15,8 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use ZipArchive;
+use App\Models\RetakeExam;
+use App\Models\RetakeExamStudent;
 use App\Models\Setting;
 
 class VedomostController extends Controller
@@ -113,15 +115,39 @@ class VedomostController extends Controller
             ->sortBy(fn($s) => mb_strtolower($this->studentName($s)))
             ->values();
 
-        $rows = $students->map(function ($s, $i) use ($grades) {
-            $g    = $grades->get($s->id);
-            $exam = (float) ($g?->exam_score ?? 0);
-            $r1   = (float) ($g?->rating1_score ?? 0);
-            $r2   = (float) ($g?->rating2_score ?? 0);
+        $retakeExam = RetakeExam::where('subject_id', $vedomost->subject_id)
+            ->where('semester_id', $vedomost->semester_id)
+            ->first();
 
-            $total = $g?->total_score ?? round((($r1 + $r2) / 2) * 0.5 + ($exam * 0.5), 2);
-            $point = (float) ($g?->grade_point ?? 0);
-            $cred  = (int) ($g?->credits_earned ?? 0);
+        $retakeStudents = collect();
+        if ($retakeExam) {
+            $retakeStudents = RetakeExamStudent::where('retake_exam_id', $retakeExam->id)
+                ->get()
+                ->keyBy('student_id');
+        }
+
+        $rows = $students->map(function ($s, $i) use ($grades, $retakeStudents) {
+            $studentId = $s->id;
+            $g = $grades->get($studentId);
+
+            $r1 = (float) ($g?->rating1_score ?? 0);
+            $r2 = (float) ($g?->rating2_score ?? 0);
+            $exam = (float) ($g?->exam_score ?? 0);
+
+            $retakeScore = null;
+            $retakeStudent = $retakeStudents->get($studentId);
+            if ($retakeStudent && $retakeStudent->score !== null) {
+                $retakeScore = (float) $retakeStudent->score;
+            }
+
+            $ij = $retakeScore !== null ? max($exam, $retakeScore) : $exam;
+            $bjf = round((($r1 + $r2) / 4) + $ij, 2);
+
+            $gradeEnum = \App\Enums\GradeScale::fromPercentage($bjf);
+            $eh = $gradeEnum->value;
+            $ea = $gradeEnum->gradePoint();
+            $eaa = $gradeEnum->traditionalFivePoint();
+            $bal = round($eaa * $ea, 2);
 
             return [
                 'n'        => $i + 1,
@@ -129,12 +155,12 @@ class VedomostController extends Controller
                 'fio'      => $this->studentName($s),
                 'r1'       => number_format($r1, 2),
                 'r2'       => number_format($r2, 2),
-                'examComp' => number_format($exam * 0.5, 2),
-                'total'    => $total,
-                'letter'   => $g?->letter_grade ?? '-',
-                'point'    => number_format($point, 2),
-                'cred'     => $cred,
-                'ball'     => number_format($point * $cred, 2),
+                'ij'       => number_format($ij, 2),
+                'bjf'      => number_format($bjf, 2),
+                'eh'       => $eh,
+                'ea'       => number_format($ea, 2),
+                'eaa'      => $eaa,
+                'bal'      => number_format($bal, 2),
             ];
         });
         // Санаи имтиҳон аз журнал (semester_grades.exam_date)
@@ -148,7 +174,6 @@ class VedomostController extends Controller
             'deputyDirector'  => Setting::get('deputy_director_name', 'Гулов М.'),
             'centerHead'      => Setting::get('testing_center_head_name', 'Хоҷаев М.М.'),
         ];
-        return ['v' => $vedomost, 'rows' => $rows];
     }
 
     // ===================== PDF-И ЯК ВЕДОМОСТ =====================

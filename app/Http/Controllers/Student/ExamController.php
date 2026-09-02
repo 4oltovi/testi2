@@ -355,11 +355,20 @@ class ExamController extends Controller
         $semesterGrade->exam_score = $percentage;
         $semesterGrade->save();
 
-        app(GradeCalculator::class)->processAndSaveFinalGrade($semesterGrade);
+        app(GradeCalculator::class)->recalculateAndPersist(
+            $attempt->student_id,
+            $subjectAssignment->id,
+            $exam->semester_id
+        );
 
         if (!$semesterGrade->isPassed()) {
             app(\App\Services\DebtDetector::class)->checkAndCreateDebt($semesterGrade);
         }
+
+        app(\App\Services\DebtDetector::class)->syncDebtsForSubject(
+            $subjectAssignment->subject_id,
+            $exam->semester_id
+        );
     }
 
     private function questionWeight($question): float

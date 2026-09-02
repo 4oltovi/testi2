@@ -120,7 +120,11 @@ class DebtController extends Controller
             ]);
             // Аз нав ҳисоб
             $gradeCalc = app(\App\Services\GradeCalculator::class);
-            $gradeCalc->processAndSaveFinalGrade($debt->semesterGrade);
+            $gradeCalc->recalculateAndPersist(
+                $debt->semesterGrade->student_id,
+                $debt->semesterGrade->subject_assignment_id,
+                $debt->semesterGrade->semester_id
+            );
 
             if (!$debt->semesterGrade->isPassed()) {
                 $this->debtDetector->checkAndCreateDebt($debt->semesterGrade);

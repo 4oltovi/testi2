@@ -54,10 +54,11 @@
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-sm table-bordered journal-table mb-0">
+                <table class="table table-sm table-bordered journal-table mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th class="student-name">#</th>
+                        <th style="width: 50px;">#</th>
+                        <th style="width: 110px;">ID</th>
                         <th class="student-name">Донишҷӯ</th>
                         <th title="Рейтинги 1 (ҳафтаи 1-8)">R1</th>
                         <th title="Рейтинги 2 (ҳафтаи 9-16)">R2</th>
@@ -73,10 +74,11 @@
                     @foreach($students as $index => $student)
                     @php
                     $grade = $semesterGrades[$student->id] ?? null;
-                    $calc = $calculatedGrades[$student->id] ?? ['rating1' => 0, 'rating2' => 0, 'exam' => 0, 'total_score' => null, 'letter_grade' => null, 'grade_point' => null, 'status' => null];
+                    $calc = $calculatedGrades[$student->id] ?? ['rating1' => 0, 'rating2' => 0, 'exam' => 0, 'retake_score' => null, 'retake_letter_grade' => null, 'retake_grade_point' => null, 'total_score' => null, 'letter_grade' => null, 'grade_point' => null, 'status' => null];
                     @endphp
                     <tr class="{{ $grade && $grade->is_finalized ? 'table-light' : '' }}">
                         <td>{{ $index + 1 }}</td>
+                        <td>{{ $student->student_id_number ?? '—' }}</td>
                         <td class="student-name text-start">
                             <a href="{{ route('admin.students.show', $student) }}">
                                 {{ $student->user?->short_name }}
@@ -93,7 +95,13 @@
                             </span>
                         </td>
                         <td>{{ $calc['exam'] !== null ? number_format($calc['exam'], 0) : '—' }}</td>
-                        <td>{{ $grade?->retake_score !== null ? number_format($grade->retake_score, 0) : '—' }}</td>
+                        <td>
+                            @if($calc['retake_score'] !== null)
+                            <strong>{{ number_format($calc['retake_score'], 0) }}</strong>
+                            @else
+                            —
+                            @endif
+                        </td>
                         <td>
                             @if($calc['total_score'] !== null)
                             <strong>{{ number_format($calc['total_score'], 1) }}</strong>
