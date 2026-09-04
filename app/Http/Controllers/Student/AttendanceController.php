@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
-use App\Models\Attendance;
+use App\Models\Group;
 use App\Models\Semester;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class AttendanceController extends Controller
@@ -20,17 +21,18 @@ class AttendanceController extends Controller
         $summary = null;
 
         if ($student && $semester) {
-            $records = Attendance::where('student_id', $student->id)
-                ->whereHas('subjectAssignment', fn($q) => $q->where('semester_id', $semester->id))
-                ->with(['subjectAssignment.subject', 'subjectAssignment.teacher.user'])
-                ->orderByDesc('attendance_date')
+            $records = DB::table('daily_attendance')
+                ->where('student_id', $student->id)
+                ->join('groups', 'daily_attendance.group_id', '=', 'groups.id')
+                ->select('daily_attendance.*', 'groups.name as group_name')
+                ->orderByDesc('daily_attendance.attendance_date')
                 ->paginate(50);
 
-            $summary = Attendance::where('student_id', $student->id)
-                ->whereHas('subjectAssignment', fn($q) => $q->where('semester_id', $semester->id))
+            $summary = DB::table('daily_attendance')
+                ->where('student_id', $student->id)
                 ->selectRaw('
                     COUNT(*) as total,
-                    SUM(CASE WHEN status IN ("present", "late", "excused", "sick") THEN 1 ELSE 0 END) as present,
+                    SUM(CASE WHEN status = "present" THEN 1 ELSE 0 END) as present,
                     SUM(CASE WHEN status = "absent" THEN 1 ELSE 0 END) as absent
                 ')
                 ->first();

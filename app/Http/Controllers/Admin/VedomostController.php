@@ -5,8 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
 use App\Models\Group;
+use App\Models\RetakeExam;
+use App\Models\RetakeExamAttempt;
+use App\Models\RetakeExamStudent;
+use App\Models\RetakeVedomost;
 use App\Models\Semester;
 use App\Models\SemesterGrade;
+use App\Models\Setting;
 use App\Models\Student;
 use App\Models\SubjectAssignment;
 use App\Models\User;
@@ -14,10 +19,8 @@ use App\Models\Vedomost;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 use ZipArchive;
-use App\Models\RetakeExam;
-use App\Models\RetakeExamStudent;
-use App\Models\Setting;
 
 class VedomostController extends Controller
 {
@@ -140,8 +143,8 @@ class VedomostController extends Controller
                 $retakeScore = (float) $retakeStudent->score;
             }
 
-            $ij = $retakeScore !== null ? max($exam, $retakeScore) : $exam;
-            $bjf = round((($r1 + $r2) / 4) + $ij, 2);
+            $ij = $retakeScore !== null ? $retakeScore : $exam;
+            $bjf = round((($r1 + $r2) / 4) + ($ij * 0.5), 2);
 
             $gradeEnum = \App\Enums\GradeScale::fromPercentage($bjf);
             $eh = $gradeEnum->value;
@@ -233,5 +236,118 @@ class VedomostController extends Controller
         $zip->close();
 
         return response()->download($zipPath)->deleteFileAfterSend(true);
+    }
+
+    // ===================== САҲИФАИ ВЕДОМОСТИ ТАКРОРӢ =====================
+    public function retakeIndex(Request $request)
+    {
+        $retakeVedomosts = RetakeVedomost::with(['retakeExam.subject', 'retakeExam.semester', 'group'])
+            ->orderByDesc('exam_date')
+            ->get();
+
+        return view('admin.vedomosts.retake-index', compact('retakeVedomosts'));
+    }
+
+    protected function buildRetakeVedomostData(RetakeVedomost $retakeVedomost): array
+    {
+        $retakeVedomost->load(['retakeExam.subject', 'retakeExam.semester', 'group']);
+
+        $retakeExam = $retakeVedomost->retakeExam;
+
+        $retakeStudents = RetakeExamStudent::where('retake_exam_id', $retakeExam->id)
+            ->whereHas('student', fn($q) => $q->where('group_id', $retakeVedomost->group_id))
+            ->with('student.user')
+            ->get()
+            ->keyBy('student_id');
+
+        $studentIds = $retakeStudents->keys()->toArray();
+
+        $grades = SemesterGrade::whereIn('student_id', $studentIds)
+            ->where('semester_id', $retakeExam->semester_id)
+            ->get()
+            ->keyBy('student_id');
+
+        $attempts = RetakeExamAttempt::where('retake_exam_id', $retakeExam->id)
+            ->whereIn('student_id', $studentIds)
+            ->orderByDesc('attempt_number')
+            ->get()
+            ->groupBy('student_id')
+            ->map(fn($items) => $items->first());
+
+        $students = Student::with('user', 'group')
+            ->whereIn('id', $studentIds)
+            ->where('status', 'active')
+            ->get()
+            ->sortBy(fn($s) => mb_strtolower($this->studentName($s)))
+            ->values();
+
+        $group = $retakeVedomost->group;
+
+        $rows = $students->map(function ($s, $i) use ($grades, $attempts) {
+            $studentId = $s->id;
+            $g = $grades->get($studentId);
+
+            $r1 = (float) ($g?->rating1_score ?? 0);
+            $r2 = (float) ($g?->rating2_score ?? 0);
+            $attempt = $attempts->get($studentId);
+            $takr = $attempt && $attempt->percentage !== null ? (float) $attempt->percentage : 0;
+
+            $bjf = round((($r1 + $r2) / 4) + ($takr * 0.5), 2);
+
+            $gradeEnum = \App\Enums\GradeScale::fromPercentage($bjf);
+            $eh = $gradeEnum->value;
+            $ea = $gradeEnum->gradePoint();
+            $eaa = $gradeEnum->traditionalFivePoint();
+            $bal = round($eaa * $ea, 2);
+
+            return [
+                'n'        => $i + 1,
+                'code'     => $s->student_id_number ?? $s->id,
+                'fio'      => $this->studentName($s),
+                'group_name' => $s->group?->name ?? '-',
+                'r1'       => number_format($r1, 2),
+                'r2'       => number_format($r2, 2),
+                'takr'     => number_format($takr, 2),
+                'bjf'      => number_format($bjf, 2),
+                'eh'       => $eh,
+                'ea'       => number_format($ea, 2),
+                'eaa'      => $eaa,
+                'bal'      => number_format($bal, 2),
+            ];
+        });
+
+        $groupedRows = $rows->groupBy('group_name');
+
+        return [
+            'retakeExam' => $retakeExam,
+            'retakeVedomost' => $retakeVedomost,
+            'rows' => $rows,
+            'groupedRows' => $groupedRows,
+            'students' => $students,
+            'group' => $group,
+            'institutionName' => Setting::get('institution_name', 'Муассисаи ғайридавлатии коллеҷи тиббии "Даво" Маркази тестӣ'),
+            'deputyDirector' => Setting::get('deputy_director_name', 'Гулов М.'),
+            'centerHead' => Setting::get('testing_center_head_name', 'Хоҷаев М.М.'),
+        ];
+    }
+
+    public function retakeGroupVedomost(RetakeVedomost $retakeVedomost)
+    {
+        $data = $this->buildRetakeVedomostData($retakeVedomost);
+        $pdf = Pdf::loadView('admin.vedomosts.retake-pdf', $data);
+        $pdf->setPaper('a4');
+
+        return $pdf->stream('retake_vedomost_' . $retakeVedomost->id . '.pdf');
+    }
+
+    public function retakeGroupVedomostPdf(RetakeVedomost $retakeVedomost)
+    {
+        $data = $this->buildRetakeVedomostData($retakeVedomost);
+        $pdf = Pdf::loadView('admin.vedomosts.retake-pdf', $data);
+        $pdf->setPaper('a4');
+
+        $name = 'retake_vedomost_' . ($retakeVedomost->retakeExam->subject->name ?? 'fan') . '_' . ($retakeVedomost->group->name ?? 'group') . '.pdf';
+
+        return $pdf->download($name);
     }
 }

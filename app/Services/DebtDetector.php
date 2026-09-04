@@ -132,11 +132,17 @@ class DebtDetector
     {
         $minPercentage = config('donishor.grading.min_attendance_percentage', 75);
 
-        $attendance = $semesterGrade->subjectAssignment?->attendances()
+        $groupId = $semesterGrade->subjectAssignment?->group_id;
+        if (!$groupId) {
+            return false;
+        }
+
+        $attendance = DB::table('daily_attendance')
             ->where('student_id', $semesterGrade->student_id)
+            ->where('group_id', $groupId)
             ->selectRaw('
                 COUNT(*) as total,
-                SUM(CASE WHEN status IN ("present", "late", "excused", "sick") THEN 1 ELSE 0 END) as present
+                SUM(CASE WHEN status = "present" THEN 1 ELSE 0 END) as present
             ')
             ->first();
 
@@ -230,7 +236,7 @@ class DebtDetector
                 }
             }
 
-            $effectiveExamScore = $retakeScore ?? $exam;
+            $effectiveExamScore = $retakeScore !== null ? $retakeScore : $exam;
             $finalScore = round((($rating1 + $rating2) / 4) + ($effectiveExamScore * 0.5), 2);
 
             $existingDebt = AcademicDebt::where('student_id', $student->id)
@@ -279,5 +285,120 @@ class DebtDetector
                 }
             }
         }
+    }
+
+    /**
+     * Автоматик: донишҷӯёни ба имтиҳон наомада ё насупоридаро F гузошта, ба қарздорон илова кардан
+     */
+    public function autoFailAbsentStudents(int $subjectId, int $semesterId, ?int $excludeStudentId = null): void
+    {
+        $subjectAssignments = \App\Models\SubjectAssignment::where('subject_id', $subjectId)
+            ->where('semester_id', $semesterId)
+            ->where('is_active', true)
+            ->get();
+
+        if ($subjectAssignments->isEmpty()) {
+            return;
+        }
+
+        $groupIds = $subjectAssignments->pluck('group_id')->unique()->filter();
+        if ($groupIds->isEmpty()) {
+            return;
+        }
+
+        $students = Student::whereIn('group_id', $groupIds)
+            ->when($excludeStudentId, fn($q) => $q->where('id', '!=', $excludeStudentId))
+            ->get();
+
+        foreach ($students as $student) {
+            $subjectAssignment = $subjectAssignments->firstWhere('group_id', $student->group_id);
+            if (!$subjectAssignment) {
+                continue;
+            }
+
+            $exam = \App\Models\Exam::where('subject_assignment_id', $subjectAssignment->id)
+                ->where('semester_id', $semesterId)
+                ->where('exam_type', 'main')
+                ->latest('starts_at')
+                ->first();
+
+            if (!$exam) {
+                continue;
+            }
+
+            $attempt = \App\Models\ExamAttempt::where('exam_id', $exam->id)
+                ->where('student_id', $student->id)
+                ->whereIn('status', ['submitted', 'auto_submitted', 'graded'])
+                ->orderByDesc('submitted_at')
+                ->first();
+
+            if ($attempt) {
+                continue;
+            }
+
+            $rating1 = app(\App\Services\GradeCalculator::class)->calculateRating1($student->id, $subjectAssignment->id, $semesterId);
+            $rating2 = app(\App\Services\GradeCalculator::class)->calculateRating2($student->id, $subjectAssignment->id, $semesterId);
+            $finalScore = round((($rating1 + $rating2) / 4), 2);
+
+            $existingDebt = AcademicDebt::where('student_id', $student->id)
+                ->where('subject_id', $subjectId)
+                ->where('semester_id', $semesterId)
+                ->whereIn('status', ['active', 'retake_scheduled', 'escalated'])
+                ->first();
+
+            if ($finalScore < 50 || $existingDebt) {
+                $grade = GradeScale::fromPercentage($finalScore);
+
+                $semesterGrade = SemesterGrade::where('student_id', $student->id)
+                    ->where('subject_assignment_id', $subjectAssignment->id)
+                    ->where('semester_id', $semesterId)
+                    ->first();
+
+                if ($existingDebt) {
+                    $existingDebt->update([
+                        'original_score' => $finalScore,
+                        'original_grade' => $grade->value,
+                        'retake_allowed' => $grade->canRetake(),
+                        'max_retake_attempts' => $grade->canRetake() ? 2 : 0,
+                        'semester_grade_id' => $semesterGrade?->id,
+                    ]);
+                } else {
+                    AcademicDebt::create([
+                        'student_id' => $student->id,
+                        'semester_grade_id' => $semesterGrade?->id,
+                        'subject_id' => $subjectId,
+                        'semester_id' => $semesterId,
+                        'reason' => 'exam_absent',
+                        'debt_date' => now(),
+                        'original_score' => $finalScore,
+                        'original_grade' => $grade->value,
+                        'retake_allowed' => $grade->canRetake(),
+                        'max_retake_attempts' => $grade->canRetake() ? 2 : 0,
+                        'status' => DebtStatus::ACTIVE,
+                        'created_by' => \Illuminate\Support\Facades\Auth::id() ?? 1,
+                    ]);
+
+                    $student->update(['has_debts' => true]);
+                }
+            }
+        }
+    }
+
+    /**
+     * Ҳал кардани қарздорӣ баъди гузаштани такрорсупорӣ
+     */
+    public function resolveDebtAfterRetake(int $studentId, int $subjectId, int $semesterId, float $newScore, string $newGrade): void
+    {
+        $existingDebt = AcademicDebt::where('student_id', $studentId)
+            ->where('subject_id', $subjectId)
+            ->where('semester_id', $semesterId)
+            ->whereIn('status', ['active', 'retake_scheduled', 'escalated'])
+            ->first();
+
+        if (!$existingDebt) {
+            return;
+        }
+
+        $existingDebt->resolve($newScore, $newGrade, \Illuminate\Support\Facades\Auth::id() ?? 1);
     }
 }

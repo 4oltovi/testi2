@@ -428,6 +428,16 @@ class RetakeExamController extends Controller
                     );
                 }
 
+                if ($gradeInfo['is_passing']) {
+                    $this->debtDetector->resolveDebtAfterRetake(
+                        $attempt->student_id,
+                        $retakeExam->subject_id,
+                        $retakeExam->semester_id,
+                        $percentage,
+                        $gradeInfo['letter_grade']
+                    );
+                }
+
                 $this->debtDetector->syncDebtsForSubject(
                     $retakeExam->subject_id,
                     $retakeExam->semester_id,

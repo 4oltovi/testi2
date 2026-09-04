@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class Student extends Model
 {
@@ -184,15 +185,14 @@ class Student extends Model
      */
     public function getAttendancePercentage(int $semesterId = null): float
     {
-        $query = $this->attendances();
-        if ($semesterId) {
-            $query->whereHas('subjectAssignment', fn($q) => $q->where('semester_id', $semesterId));
-        }
+        $query = DB::table('daily_attendance')
+            ->where('student_id', $this->id)
+            ->join('groups', 'daily_attendance.group_id', '=', 'groups.id');
 
         $total = $query->count();
         if ($total === 0) return 100.0;
 
-        $present = (clone $query)->whereIn('status', ['present', 'late', 'excused', 'sick'])->count();
+        $present = (clone $query)->where('daily_attendance.status', 'present')->count();
         return round(($present / $total) * 100, 1);
     }
 }

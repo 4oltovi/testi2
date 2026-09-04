@@ -399,7 +399,7 @@ class GradeCalculator
             }
         }
 
-        $effectiveExamScore = $retakeScore ?? $exam;
+        $effectiveExamScore = $retakeScore !== null ? $retakeScore : $exam;
 
         $totalScore = null;
         $letterGrade = null;
@@ -407,7 +407,7 @@ class GradeCalculator
         $status = null;
 
         if ($effectiveExamScore > 0 || ($rating1 > 0 || $rating2 > 0)) {
-            $totalScore = round((($rating1 + $rating2) / 4) + $effectiveExamScore, 2);
+            $totalScore = round((($rating1 + $rating2) / 4) + ($effectiveExamScore * 0.5), 2);
 
             $gradeEnum = GradeScale::fromPercentage($totalScore);
             $letterGrade = $gradeEnum->value;
@@ -432,6 +432,24 @@ class GradeCalculator
                 'status' => $status,
             ]
         );
+
+        $subjectId = SubjectAssignment::find($subjectAssignmentId)?->subject_id;
+        if ($subjectId) {
+            $debtDetector = app(\App\Services\DebtDetector::class);
+
+            if ($totalScore < 50 && $letterGrade !== null) {
+                $semesterGrade = SemesterGrade::where('student_id', $studentId)
+                    ->where('subject_assignment_id', $subjectAssignmentId)
+                    ->where('semester_id', $semesterId)
+                    ->first();
+
+                if ($semesterGrade) {
+                    $debtDetector->checkAndCreateDebt($semesterGrade);
+                }
+            } else {
+                $debtDetector->resolveDebtAfterRetake($studentId, $subjectId, $semesterId, $totalScore, $letterGrade);
+            }
+        }
     }
 
     /**

@@ -246,6 +246,12 @@ class ExamController extends Controller
             return back()->with('error', 'Хатогӣ.');
         }
 
+        if ($exam->ends_at && now()->greaterThan($exam->ends_at)) {
+            $this->processSubmission($attempt, $exam, 'auto_submitted');
+            return redirect()->route('student.exams.result', [$exam, $attempt])
+                ->with('warning', 'Вақти имтиҳон ба охир расид. Натиҷа бо истифода аз ҷавобҳои сабтшуда ҳисоб карда шуд.');
+        }
+
         $this->processSubmission($attempt, $exam, 'submitted');
 
         return redirect()->route('student.exams.result', [$exam, $attempt])
@@ -368,6 +374,12 @@ class ExamController extends Controller
         app(\App\Services\DebtDetector::class)->syncDebtsForSubject(
             $subjectAssignment->subject_id,
             $exam->semester_id
+        );
+
+        app(\App\Services\DebtDetector::class)->autoFailAbsentStudents(
+            $subjectAssignment->subject_id,
+            $exam->semester_id,
+            $attempt->student_id
         );
     }
 

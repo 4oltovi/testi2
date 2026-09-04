@@ -57,7 +57,7 @@ class GradeController extends Controller
                     }
                 }
 
-                $effectiveExamScore = $retakeScore ?? $exam;
+                $effectiveExamScore = $retakeScore !== null ? $retakeScore : $exam;
 
                 $totalScore = null;
                 $letterGrade = null;
@@ -68,7 +68,7 @@ class GradeController extends Controller
                     $r1 = (float) $rating1;
                     $r2 = (float) $rating2;
 
-                    $totalScore = round(($r1 + $r2) / 4 + $effectiveExamScore, 2);
+                    $totalScore = round(($r1 + $r2) / 4 + ($effectiveExamScore * 0.5), 2);
 
                     $gradeEnum = \App\Enums\GradeScale::fromPercentage($totalScore);
                     $letterGrade = $gradeEnum->value;
@@ -135,7 +135,7 @@ class GradeController extends Controller
                 }
             }
 
-            $effectiveExamScore = $retakeScore ?? $exam;
+            $effectiveExamScore = $retakeScore !== null ? $retakeScore : $exam;
 
             $totalScore = null;
             $letterGrade = null;
@@ -146,7 +146,7 @@ class GradeController extends Controller
                 $r1 = (float) $rating1;
                 $r2 = (float) $rating2;
 
-                $totalScore = round(($r1 + $r2) / 4 + $effectiveExamScore, 2);
+                $totalScore = round(($r1 + $r2) / 4 + ($effectiveExamScore * 0.5), 2);
 
                 $gradeEnum = \App\Enums\GradeScale::fromPercentage($totalScore);
                 $letterGrade = $gradeEnum->value;

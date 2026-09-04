@@ -10,6 +10,7 @@ use App\Models\RetakeExam;
 use App\Models\RetakeExamAnswer;
 use App\Models\RetakeExamAttempt;
 use App\Models\RetakeExamStudent;
+use App\Models\RetakeVedomost;
 use App\Models\Semester;
 use App\Models\Student;
 use App\Models\Subject;
@@ -154,6 +155,29 @@ class RetakeExamController extends Controller
                     'academic_debt_id' => $debt->id,
                     'attempt_number' => ($debt->retake_attempts_used ?? 0) + 1,
                     'status' => 'pending',
+                ]);
+            }
+
+            $studentsByGroup = RetakeExamStudent::where('retake_exam_id', $retakeExam->id)
+                ->with('student.group')
+                ->get()
+                ->groupBy(fn($r) => $r->student->group_id);
+
+            foreach ($studentsByGroup as $groupId => $items) {
+                $group = $items->first()->student->group;
+                if (!$group) {
+                    continue;
+                }
+
+                RetakeVedomost::create([
+                    'retake_exam_id' => $retakeExam->id,
+                    'group_id' => $group->id,
+                    'subject_id' => $retakeExam->subject_id,
+                    'semester_id' => $retakeExam->semester_id,
+                    'teacher_id' => $retakeExam->teacher_id,
+                    'academic_year_id' => $group->academic_year_id,
+                    'exam_date' => $retakeExam->exam_date,
+                    'status' => 'draft',
                 ]);
             }
 

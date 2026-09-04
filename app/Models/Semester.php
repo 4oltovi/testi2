@@ -56,4 +56,15 @@ class Semester extends Model
     {
         return $this->status === 'retake_period';
     }
+
+    public function getCurrentPeriod(string $default = 'rating1'): string
+    {
+        if (!$this->start_date) {
+            return $default;
+        }
+
+        $weekNumber = max(1, (int) ceil(now()->diffInDays($this->start_date) / 7) + 1);
+
+        return $weekNumber <= 8 ? 'rating1' : 'rating2';
+    }
 }

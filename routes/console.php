@@ -18,3 +18,6 @@ Schedule::command('session:gc')->daily();
 
 // Коркарди донишҷӯёни бенишондаш (ҳар дақиқа)
 Schedule::command('app:process-exam-no-shows')->everyMinute();
+
+// Баҳодиҳии автоматии имтиҳонҳои гузашта (ҳар дақиқа)
+Schedule::command('app:auto-grade-expired-exams')->everyMinute();

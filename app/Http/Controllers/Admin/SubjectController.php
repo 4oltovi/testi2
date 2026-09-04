@@ -44,7 +44,7 @@ class SubjectController extends Controller
     }
 
     /**
-     * НАВ: Кредитҳо, соатҳо ва навъи санҷиш — ихтиёрӣ (қимати пешфарз автоматӣ)
+     * НАВ: Ихтиёрӣ (қимати пешфарз автоматӣ)
      */
     public function store(Request $request): RedirectResponse
     {
@@ -53,12 +53,6 @@ class SubjectController extends Controller
             'name' => 'required|string|max:255',
             'short_name' => 'nullable|string|max:30',
             'code' => 'required|string|max:20|unique:subjects,code',
-            'credits' => 'nullable|integer|min:1|max:30',
-            'total_hours' => 'nullable|integer|min:0|max:500',
-            'lecture_hours' => 'nullable|integer|min:0',
-            'practice_hours' => 'nullable|integer|min:0',
-            'lab_hours' => 'nullable|integer|min:0',
-            'independent_hours' => 'nullable|integer|min:0',
             'exam_type' => 'nullable|in:exam,credit,diff_credit',
             'is_active' => 'boolean',
             'description' => 'nullable|string|max:1000',
@@ -70,8 +64,6 @@ class SubjectController extends Controller
         ]);
 
         $validated['is_active'] = $request->boolean('is_active', true);
-        $validated['credits'] = (int) ($validated['credits'] ?? 3);
-        $validated['total_hours'] = (int) ($validated['total_hours'] ?? $validated['credits'] * 30);
         $validated['exam_type'] = $validated['exam_type'] ?? 'exam';
 
         $subject = Subject::create($validated);
@@ -106,20 +98,12 @@ class SubjectController extends Controller
             'name' => 'required|string|max:255',
             'short_name' => 'nullable|string|max:30',
             'code' => "required|string|max:20|unique:subjects,code,{$subject->id}",
-            'credits' => 'nullable|integer|min:1|max:30',
-            'total_hours' => 'nullable|integer|min:0|max:500',
-            'lecture_hours' => 'nullable|integer|min:0',
-            'practice_hours' => 'nullable|integer|min:0',
-            'lab_hours' => 'nullable|integer|min:0',
-            'independent_hours' => 'nullable|integer|min:0',
             'exam_type' => 'nullable|in:exam,credit,diff_credit',
             'is_active' => 'boolean',
             'description' => 'nullable|string|max:1000',
         ]);
 
         $validated['is_active'] = $request->boolean('is_active', true);
-        $validated['credits'] = (int) ($validated['credits'] ?? $subject->credits ?? 3);
-        $validated['total_hours'] = (int) ($validated['total_hours'] ?? $subject->total_hours ?? $validated['credits'] * 30);
         $validated['exam_type'] = $validated['exam_type'] ?? 'exam';
 
         $subject->update($validated);

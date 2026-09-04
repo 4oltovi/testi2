@@ -68,6 +68,11 @@ class RetakeExam extends Model
         return $this->hasMany(RetakeExamStudent::class);
     }
 
+    public function retakeVedomosts(): HasMany
+    {
+        return $this->hasMany(RetakeVedomost::class);
+    }
+
     public function getStudentsCountAttribute(): int
     {
         return $this->retakeExamStudents()->count();

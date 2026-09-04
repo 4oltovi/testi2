@@ -13,7 +13,7 @@
                 <div class="card border-0 shadow-sm">
                     <div class="card-body text-center">
                         <h3 class="text-primary">{{ $summary->total ?? 0 }}</h3>
-                        <small class="text-muted">Ҳамагӣ дарс</small>
+                        <small class="text-muted">Ҳамагӣ рӯз</small>
                     </div>
                 </div>
             </div>
@@ -48,29 +48,24 @@
                         <thead class="table-light">
                             <tr>
                                 <th>Сана</th>
-                                <th>Фан</th>
-                                <th>Омӯзгор</th>
+                                <th>Гурӯҳ</th>
                                 <th>Ҳолат</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($records as $record)
                             <tr>
-                                <td>{{ $record->attendance_date?->format('Y-m-d') ?? '-' }}</td>
-                                <td>{{ $record->subjectAssignment?->subject?->name ?? '-' }}</td>
-                                <td>{{ $record->subjectAssignment?->teacher?->user?->full_name ?? '-' }}</td>
+                                <td>{{ \Carbon\Carbon::parse($record->attendance_date)->format('Y-m-d') }}</td>
+                                <td>{{ $record->group_name ?? '-' }}</td>
                                 <td>
                                     @php
                                         $statusLabel = match($record->status) {
                                             'present' => 'Ҳозир',
                                             'absent' => 'Ғоиб',
-                                            'late' => 'Дироз',
-                                            'excused' => 'Баҳонавӣ',
-                                            'sick' => 'Бемор',
                                             default => $record->status,
                                         };
                                         $statusClass = match($record->status) {
-                                            'present', 'late', 'excused', 'sick' => 'text-success',
+                                            'present' => 'text-success',
                                             'absent' => 'text-danger',
                                             default => 'text-muted',
                                         };
@@ -80,7 +75,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="4" class="text-center text-muted py-4">
+                                <td colspan="3" class="text-center text-muted py-4">
                                     Ҳанӯз маълумот дастрас нест.
                                 </td>
                             </tr>

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Specialty extends Model
@@ -39,15 +40,22 @@ class Specialty extends Model
         return $this->hasMany(Group::class);
     }
 
-    public function students(): HasMany
+    public function students(): HasManyThrough
     {
-        return $this->hasMany(Student::class);
+        return $this->hasManyThrough(
+            Student::class,
+            Group::class,
+            'specialty_id',
+            'group_id',
+            'id',
+            'id'
+        );
     }
 
     /**
      * Фанҳои ихтисос тавассути гурӯҳҳо ва таъинотҳо
      */
-    public function subjectAssignments(): HasMany
+    public function subjectAssignments(): HasManyThrough
     {
         return $this->hasManyThrough(
             SubjectAssignment::class,

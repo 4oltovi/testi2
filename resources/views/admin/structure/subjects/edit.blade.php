@@ -48,12 +48,6 @@
                             @error('department_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                         <div class="col-md-3">
-                            <label for="credits" class="form-label">Кредитҳо <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control @error('credits') is-invalid @enderror"
-                                   id="credits" name="credits" value="{{ old('credits', $subject->credits) }}" required min="1" max="30">
-                            @error('credits') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
-                        <div class="col-md-3">
                             <label for="exam_type" class="form-label">Навъи санҷиш <span class="text-danger">*</span></label>
                             <select class="form-select @error('exam_type') is-invalid @enderror" id="exam_type" name="exam_type" required>
                                 <option value="exam" {{ old('exam_type', $subject->exam_type) == 'exam' ? 'selected' : '' }}>Имтиҳон</option>
@@ -61,15 +55,6 @@
                                 <option value="diff_credit" {{ old('exam_type', $subject->exam_type) == 'diff_credit' ? 'selected' : '' }}>Синҷиши бо баҳо</option>
                             </select>
                             @error('exam_type') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
-                    </div>
-
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-3">
-                            <label for="total_hours" class="form-label">Соатҳои умумӣ <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control @error('total_hours') is-invalid @enderror"
-                                   id="total_hours" name="total_hours" value="{{ old('total_hours', $subject->total_hours) }}" required min="10">
-                            @error('total_hours') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                     </div>
 

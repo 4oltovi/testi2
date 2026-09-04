@@ -146,10 +146,10 @@
                 <a class="nav-link text-white {{ request()->is('admin/vedomosts*') || request()->is('admin/retake-exams*') ? 'active bg-primary rounded' : '' }}" href="/admin/vedomosts">
                     <i class="bi bi-file-earmark-spreadsheet me-2"></i> Ведомостҳо
                 </a>
-                @if(request()->is('admin/vedomosts*') || request()->is('admin/retake-exams*'))
+                @if(request()->is('admin/vedomosts*') || request()->is('admin/retake-exams*') || request()->is('admin/retake-exams/vedomost*'))
                 <ul class="list-unstyled ps-3 mt-1">
                     <li><a class="nav-link text-white small" href="/admin/vedomosts">Ведомостҳои асосӣ</a></li>
-                    <li><a class="nav-link text-white small" href="{{ route('admin.retake-exams.index') }}">Ведомостҳои такрорӣ</a></li>
+                    <li><a class="nav-link text-white small {{ request()->is('admin/retake-exams/vedomost*') ? 'active bg-primary rounded' : '' }}" href="{{ route('admin.retake-exams.vedomost.index') }}">Ведомостҳои такрорӣ</a></li>
                 </ul>
                 @endif
             </li>
@@ -218,8 +218,13 @@
             @elseif(auth()->user()?->hasRole('operator'))
             {{-- ===== SIDEBAR ОПЕРАТОР ===== --}}
             <li class="nav-item">
-                <a class="nav-link text-white {{ request()->is('operator/attendance*') ? 'active bg-primary rounded' : '' }}" href="/operator/attendance">
+                <a class="nav-link text-white {{ !request()->is('operator/attendance/statistics') && request()->is('operator/attendance*') ? 'active bg-primary rounded' : '' }}" href="/operator/attendance">
                     <i class="bi bi-check2-square me-2"></i> Давомот
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {{ request()->is('operator/attendance/statistics') ? 'active bg-primary rounded' : '' }}" href="{{ route('operator.attendance.statistics') }}">
+                    <i class="bi bi-bar-chart-line me-2"></i> Омора
                 </a>
             </li>
 

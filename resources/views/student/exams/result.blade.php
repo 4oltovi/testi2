@@ -53,27 +53,10 @@
                             <small class="text-muted">Баллҳо</small>
                         </div>
                     </div>
-                    <div class="col-6 col-md-3">
-                        <div class="border rounded p-3">
-                            <h3 class="mb-0">{{ $attempt->letter_grade ?? '—' }}</h3>
-                            <small class="text-muted">Баҳо</small>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <div class="border rounded p-3">
-                            <h3 class="mb-0">{{ number_format($attempt->grade_point ?? 0, 1) }}</h3>
-                            <small class="text-muted">GPA</small>
-                        </div>
-                    </div>
                 </div>
 
                 <div class="mt-3 small text-muted">
-                    <div class="fw-semibold text-dark mb-1">Формулаи натиҷаи имтиҳон:</div>
-                    <div>((Рейтинг + Журнал) / 2) + (Имтиҳони асосӣ × 0,5)</div>
-                </div>
-
-                <div class="mt-3">
-                    <small class="text-muted">
+                    <small>
                         Ҳадди гузариш: {{ $exam->passing_score }}% |
                         Ҳолат: <strong>{{ $statusLabel }}</strong> |
                         Вақт: {{ ($attempt->submitted_at ?? $attempt->auto_submitted_at)?->format('d.m.Y H:i') }}
@@ -89,15 +72,15 @@
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-sm mb-0 align-middle">
+                    <table class="table table-bordered">
                         <thead class="table-light">
                             <tr>
-                                <th>#</th>
-                                <th>Савол</th>
-                                <th>Ҷавоби шумо</th>
-                                <th>Ҷавоби дуруст</th>
-                                <th>Натиҷа</th>
-                                <th>Балл</th>
+                                <th style="width: 5%">#</th>
+                                <th style="width: 35%">Савол</th>
+                                <th style="width: 25%">Ҷавоби шумо</th>
+                                <th style="width: 25%">Ҷавоби дуруст</th>
+                                <th style="width: 5%">Натиҷа</th>
+                                <th style="width: 5%">Балл</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -138,7 +121,7 @@
                             @endphp
                             <tr>
                                 <td>{{ $index + 1 }}</td>
-                                <td>{{ \Illuminate\Support\Str::limit($question?->question_text, 60) }}</td>
+                                <td>{{ $question?->question_text }}</td>
                                 <td>{{ !empty($selectedOptions) ? implode('; ', $selectedOptions) : '—' }}</td>
                                 <td>{{ $correctText }}</td>
                                 <td>
@@ -150,7 +133,13 @@
                                     <span class="badge bg-secondary">—</span>
                                     @endif
                                 </td>
-                                <td>{{ number_format($answer->points_earned, 0) }}/{{ number_format($answer->examQuestion?->points ?? 1, 0) }}</td>
+                                <td>
+                                    @if($answer->is_correct === true)
+                                        {{ number_format($answer->examQuestion?->points ?? 2.5, 1) }}
+                                    @else
+                                        0.0
+                                    @endif
+                                </td>
                             </tr>
                             @endforeach
                         </tbody>

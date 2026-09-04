@@ -32,14 +32,6 @@
                             <td>{{ $subject->department?->faculty?->name ?? '—' }}</td>
                         </tr>
                         <tr>
-                            <th class="text-muted">Кредит</th>
-                            <td>{{ $subject->credits }}</td>
-                        </tr>
-                        <tr>
-                            <th class="text-muted">Соатҳои умумӣ</th>
-                            <td>{{ $subject->total_hours }}</td>
-                        </tr>
-                        <tr>
                             <th class="text-muted">Навъи санҷиш</th>
                             <td>
                                 @switch($subject->exam_type)
@@ -81,7 +73,6 @@
                         <tr>
                             <th>Ихтисос</th>
                             <th>Семестр</th>
-                            <th>Кредитҳо</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -89,7 +80,6 @@
                         <tr>
                             <td>{{ $assignment->specialty->name }}</td>
                             <td>{{ $assignment->semester->name }}</td>
-                            <td>{{ $subject->credits }}</td>
                         </tr>
                         @endforeach
                     </tbody>

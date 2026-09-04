@@ -55,8 +55,6 @@
                             <th>Фан</th>
                             <th>Рамз</th>
                             <th>Кафедра</th>
-                            <th>Кредит</th>
-                            <th>Соатҳо</th>
                             <th>Навъи санҷиш</th>
                             <th>Ҳолат</th>
                             <th class="text-end">Амалҳо</th>
@@ -75,8 +73,6 @@
                                 </td>
                                 <td><code>{{ $subject->code }}</code></td>
                                 <td><small>{{ $subject->department?->short_name ?? $subject->department?->name }}</small></td>
-                                <td><span class="badge bg-primary">{{ $subject->credits }}</span></td>
-                                <td>{{ $subject->total_hours }} соат</td>
                                 <td>
                                     @php
                                         $examLabel = match($subject->exam_type) {
@@ -111,7 +107,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-center text-muted py-4">
+                                <td colspan="6" class="text-center text-muted py-4">
                                     <i class="bi bi-book fs-1 d-block mb-2"></i>
                                     Фане ёфт нашуд.
                                 </td>

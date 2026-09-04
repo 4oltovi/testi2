@@ -119,7 +119,7 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
         Route::post('/{exam}/questions', [\App\Http\Controllers\Admin\ExamController::class, 'addQuestions'])->name('exam-questions.add');
         Route::delete('/{exam}/questions/{examQuestion}', [\App\Http\Controllers\Admin\ExamController::class, 'removeQuestion'])->name('exam-questions.remove');
         Route::get('/{exam}/results', [\App\Http\Controllers\Admin\ExamController::class, 'results'])->name('results');
-        Route::post('/{exam}/publish', [\App\Http\Controllers\Admin\ExamController::class, 'publish'])->name('publish');
+        Route::match(['post', 'patch'], '/{exam}/publish', [\App\Http\Controllers\Admin\ExamController::class, 'publish'])->name('publish');
     });
 
     // Импорти саволҳо аз Excel (BERUNI гурӯҳи exams)
@@ -226,6 +226,11 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/create', [\App\Http\Controllers\Admin\RetakeExamController::class, 'create'])->name('create');
         Route::get('/check-main-exam', [\App\Http\Controllers\Admin\RetakeExamController::class, 'checkMainExam'])->name('check-main-exam');
         Route::post('/', [\App\Http\Controllers\Admin\RetakeExamController::class, 'store'])->name('store');
+
+        Route::get('/vedomost', [\App\Http\Controllers\Admin\VedomostController::class, 'retakeIndex'])->name('vedomost.index');
+        Route::get('/vedomost/{retakeVedomost}', [\App\Http\Controllers\Admin\VedomostController::class, 'retakeGroupVedomost'])->name('vedomost.show');
+        Route::get('/vedomost/{retakeVedomost}/pdf', [\App\Http\Controllers\Admin\VedomostController::class, 'retakeGroupVedomostPdf'])->name('vedomost.pdf');
+
         Route::get('/{retakeExam}', [\App\Http\Controllers\Admin\RetakeExamController::class, 'show'])->name('show');
         Route::delete('/{retakeExam}', [\App\Http\Controllers\Admin\RetakeExamController::class, 'destroy'])->name('destroy');
         Route::get('/{retakeExam}/vedomost', [\App\Http\Controllers\Admin\RetakeExamController::class, 'vedomost'])->name('vedomost');

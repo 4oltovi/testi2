@@ -46,32 +46,53 @@
                     </div>
                 </div>
 
-                @if($showDetails)
-                <div class="mt-4">
-                    <h6 class="mb-3">Саволҳо</h6>
-                    @foreach($attempt->answers as $answer)
-                    @php
-                    $eq = $answer->examQuestion;
-                    $question = $eq?->question;
-                    @endphp
-                    <div class="card mb-2">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <p class="mb-1">{{ $question->question_text ?? 'Савол #' . $question->id }}</p>
-                                    <small class="text-muted">
-                                        Ҷавоб: {{ $answer->selected_options ?? $answer->text_answer ?? '-' }}
-                                    </small>
-                                </div>
-                                <span class="badge bg-{{ $answer->is_correct ? 'success' : 'danger' }}">
-                                    {{ $answer->is_correct ? 'Дуруст' : 'Нодуруст' }}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    @endforeach
-                </div>
-                @endif
+                 @if($showDetails)
+                 <div class="mt-4">
+                     <h6 class="mb-3">Саволҳо</h6>
+                     @foreach($attempt->answers as $answer)
+                     @php
+                     $eq = $answer->examQuestion;
+                     $question = $eq?->question;
+                     
+                     $selectedOptions = [];
+                     $selectedRaw = $answer->selected_options ? json_decode($answer->selected_options, true) : [];
+                     if (is_array($selectedRaw)) {
+                         foreach ($selectedRaw as $optionId) {
+                             $selectedOptions[] = $question?->answerOptions?->firstWhere('id', (int) $optionId)?->option_text ?? '—';
+                         }
+                     }
+                     
+                     if (($question?->type ?? null) === 'matching' && !empty($answer->text_answer)) {
+                         $selectedOptions = collect(explode('||', $answer->text_answer))
+                             ->filter(fn($pair) => trim($pair) !== '')
+                             ->map(function ($pair) {
+                                 $parts = explode(':', $pair, 2);
+                                 return trim($parts[1] ?? '');
+                             })->all();
+                     }
+                     
+                     if (($question?->type ?? null) === 'open_text') {
+                         $selectedOptions = [trim((string) ($answer->text_answer ?? '')) ?: '—'];
+                     }
+                     @endphp
+                     <div class="card mb-2">
+                         <div class="card-body">
+                             <div class="d-flex justify-content-between align-items-start">
+                                 <div>
+                                     <p class="mb-1">{{ $question->question_text ?? 'Савол #' . $question->id }}</p>
+                                     <small class="text-muted">
+                                         Ҷавоб: {{ !empty($selectedOptions) ? implode('; ', $selectedOptions) : '-' }}
+                                     </small>
+                                 </div>
+                                 <span class="badge bg-{{ $answer->is_correct ? 'success' : 'danger' }}">
+                                     {{ $answer->is_correct ? 'Дуруст' : 'Нодуруст' }}
+                                 </span>
+                             </div>
+                         </div>
+                     </div>
+                     @endforeach
+                 </div>
+                 @endif
 
                 <div class="mt-3">
                     <a href="{{ route('student.retake-exams.index') }}" class="btn btn-outline-primary">

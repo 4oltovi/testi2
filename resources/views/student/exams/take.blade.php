@@ -564,12 +564,23 @@
         });
 
         // Timer
+        const serverEndTime = @json($exam->ends_at?->toISOString() ?? null);
+        const serverNow = @json(now()->toISOString());
         let remainingSeconds = {{ $remainingSeconds > 0 ? $remainingSeconds : ($exam->duration_minutes * 60) }};
+
+        if (serverEndTime) {
+            const endTimestamp = new Date(serverEndTime).getTime();
+            const nowTimestamp = new Date(serverNow).getTime();
+            const secondsToEnd = Math.max(0, Math.floor((endTimestamp - nowTimestamp) / 1000));
+            remainingSeconds = Math.min(remainingSeconds, secondsToEnd);
+        }
+
         const timerEl = document.getElementById('timer');
 
         function updateTimer() {
             if (remainingSeconds <= 0) {
                 timerEl.textContent = '00:00';
+                timerEl.classList.add('danger');
                 document.getElementById('examForm').submit();
                 return;
             }
