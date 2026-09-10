@@ -266,22 +266,32 @@
                 </form>
             </div>
 
-            {{-- Фаъол кардани сол --}}
+            {{-- Фаъол кардани сол ва семестр --}}
             <div class="col-md-4">
                 <form method="POST" action="{{ url('admin/settings/activate-year') }}">
                     @csrf
                     <label class="form-label">Соли ҷорӣ</label>
                     <div class="input-group">
-                        <select name="academic_year_id" class="form-select">
+                        <select name="academic_year_id" id="activateAcademicYear" class="form-select">
                             @foreach($academicYears as $y)
                             <option value="{{ $y->id }}" {{ $y->is_current ? 'selected' : '' }}>
                                 {{ $y->name }} @if($y->is_current) (ҷорӣ) @endif
                             </option>
                             @endforeach
                         </select>
+                    </div>
+                    <div class="input-group mt-2">
+                        <select name="semester_id" id="activateSemester" class="form-select">
+                            <option value="">Семестрро худкор интихоб кун</option>
+                            @foreach($semesters as $semester)
+                            <option value="{{ $semester->id }}" data-year="{{ $semester->academic_year_id }}" {{ $semester->is_current ? 'selected' : '' }}>
+                                {{ $semester->academicYear?->name }} — {{ $semester->name }}
+                            </option>
+                            @endforeach
+                        </select>
                         <button class="btn btn-primary" type="submit">⭐ Фаъол</button>
                     </div>
-                    <small class="text-muted">Соли интихобшуда "ҷорӣ" мешавад</small>
+                    <small class="text-muted">Сол ва семестри интихобшуда ҷорӣ мешаванд.</small>
                 </form>
             </div>
 
@@ -302,3 +312,23 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const year = document.getElementById('activateAcademicYear');
+    const semester = document.getElementById('activateSemester');
+    if (!year || !semester) return;
+
+    function filterSemesters() {
+        [...semester.options].forEach(function (option) {
+            option.hidden = option.value !== '' && option.dataset.year !== year.value;
+        });
+        if (semester.selectedOptions[0]?.hidden) semester.value = '';
+    }
+
+    year.addEventListener('change', filterSemesters);
+    filterSemesters();
+});
+</script>
+@endpush

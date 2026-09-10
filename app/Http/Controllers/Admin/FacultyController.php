@@ -14,7 +14,11 @@ class FacultyController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Faculty::with(['institution', 'dean', 'departments'])
+        $query = Faculty::with([
+            'institution:id,name', 
+            'dean:id,first_name,last_name', 
+            'departments:id,name,faculty_id'
+        ])
             ->withCount(['departments']);
 
         if ($search = $request->get('search')) {
@@ -67,7 +71,11 @@ class FacultyController extends Controller
 
     public function show(Faculty $faculty): View
     {
-        $faculty->load(['institution', 'dean', 'departments.head', 'departments.specialties']);
+        $faculty->load([
+            'institution:id,name', 
+            'dean:id,first_name,last_name', 
+            'departments' => fn($q) => $q->with(['head:id,first_name,last_name', 'specialties:id,name,department_id'])
+        ]);
         return view('admin.structure.faculties.show', compact('faculty'));
     }
 

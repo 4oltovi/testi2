@@ -68,18 +68,24 @@ class TranscriptController extends Controller
         ]);
 
         $gradesBySemester = $student->semesterGrades->groupBy('semester_id');
+        $transcriptGpa = $this->gpaCalculator->calculateFromGrades($student->semesterGrades);
+        $semesterGpas = $gradesBySemester->mapWithKeys(
+            fn($grades, $semesterId) => [$semesterId => $this->gpaCalculator->calculateFromGrades($grades)]
+        );
         $totalCreditsEarned = $student->semesterGrades->where('status', 'passed')->sum('credits_earned');
         $totalCreditsRequired = $student->specialty?->total_credits ?? 0;
-        $honors = $this->gpaCalculator->determineHonors($student->cumulative_gpa);
+        $honors = $this->gpaCalculator->determineHonors($transcriptGpa);
         $honorsLabel = GpaCalculator::honorsLabel($honors);
 
         return view('admin.transcript.show', compact(
             'student',
             'gradesBySemester',
+            'semesterGpas',
             'totalCreditsEarned',
             'totalCreditsRequired',
             'honors',
-            'honorsLabel'
+            'honorsLabel',
+            'transcriptGpa'
         ));
     }
 
@@ -91,7 +97,8 @@ class TranscriptController extends Controller
         try {
             $transcript = $this->transcriptGenerator->generate($student, 'official');
 
-            return back()->with('success', "Transcript сохта шуд: {$transcript->transcript_number}");
+            return redirect()->route('admin.transcript.show', $student)
+                ->with('success', "Transcript сохта шуд: {$transcript->transcript_number}");
         } catch (\Exception $e) {
             return back()->with('error', "Хатогӣ: {$e->getMessage()}");
         }
@@ -182,9 +189,9 @@ class TranscriptController extends Controller
                 $earned = 0;
 
                 foreach ($group as $g) {
-                    $credits += (int) ($g->subjectAssignment()?->credits ?? 0);
+                    $credits += (int) ($g->subjectAssignment?->credits ?? 0);
                     $earned  += (int) ($g->credits_earned ?? 0);
-                    $ball    += (float) $g->grade_point * (int) $g->credits_earned;
+                    $ball    += (float) $g->grade_point * (int) ($g->subjectAssignment?->credits ?? 0);
                 }
 
                 return [
@@ -198,7 +205,7 @@ class TranscriptController extends Controller
             ->sortBy('sem')->values();
 
         $totalEarned = $grades->sum(fn($g) => (int) $g->credits_earned);
-        $totalMandatory = $grades->sum(fn($g) => ($g->subjectAssignment() && !$g->subjectAssignment()->is_elective) ? (int) $g->credits_earned : 0);
+        $totalMandatory = $grades->sum(fn($g) => ($g->subjectAssignment && !$g->subjectAssignment->is_elective) ? (int) ($g->subjectAssignment?->credits ?? 0) : 0);
 
         $studyForm = match ($student->study_form ?? 'full_time') {
             'full_time' => 'рӯзона',

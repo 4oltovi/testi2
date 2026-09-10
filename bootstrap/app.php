@@ -25,6 +25,11 @@ return Application::configure(basePath: dirname(__DIR__))
         'force.password'   => \App\Http\Middleware\ForcePasswordChange::class,
         'single.session'   => \App\Http\Middleware\SingleSession::class,
         'restrict.offline' => \App\Http\Middleware\RestrictOfflineAccess::class,
+        'dean.readonly'    => \App\Http\Middleware\DeanReadOnly::class,
+    ]);
+
+    $middleware->web(append: [
+        \App\Http\Middleware\ForcePasswordChange::class,
     ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

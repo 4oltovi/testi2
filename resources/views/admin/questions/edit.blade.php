@@ -129,12 +129,13 @@
                             <p class="text-muted small">Зерсаволҳо ва ҷавобҳои дурустро нависед.</p>
 
                             <div id="matchContainer">
+                                @php
+                                    $pairs = $options->filter(fn($opt) => str_contains($opt->option_text ?? '', '|||'))->values();
+                                @endphp
                                 @for($i = 0; $i < 4; $i++)
                                     @php
-                                    $pair=$options->first(function($opt) use ($i) {
-                                    return str_contains($opt->option_text ?? '', '|||');
-                                    });
-                                    $parts = $pair ? explode('|||', $pair->option_text) : ['', ''];
+                                        $pair = $pairs->get($i);
+                                        $parts = $pair ? explode('|||', $pair->option_text) : ['', ''];
                                     @endphp
                                     <div class="row g-2 mb-2 align-items-center">
                                         <div class="col-auto"><strong>{{ $i+1 }}.</strong></div>
@@ -146,7 +147,7 @@
                                             <input type="text" name="sub_questions[{{ $i }}][match]" value="{{ old('sub_questions.' . $i . '.match', $parts[1] ?? '') }}" class="form-control form-control-sm" placeholder="Ҷавоб {{ $i+1 }}">
                                         </div>
                                     </div>
-                                    @endfor
+                                @endfor
                             </div>
 
                             <div class="mt-3">

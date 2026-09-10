@@ -92,7 +92,7 @@
                                         </span>
                                     @endforeach
                                 </td>
-                                <td>{{ $q['correct_index'] + 1 }}</td>
+                                <td>{{ $q['correct_index'] !== null ? $q['correct_index'] + 1 : '—' }}</td>
                                 <td>{{ $q['difficulty_level'] ?? 1 }}</td>
                                 <td>
                                     @if(!empty($q['errors']))
@@ -114,10 +114,10 @@
 
         {{-- Амалҳо --}}
         <div class="mt-3 d-flex justify-content-between">
-            <a href="{{ route('admin.rating-questions.excel-import') }}" class="btn btn-outline-secondary">
+            <a href="{{ route('admin.rating-questions.import-form') }}" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left me-1"></i> Бозгашт
             </a>
-            <form method="POST" action="{{ route('admin.rating-questions.excel-import-confirm') }}" class="d-inline">
+            <form method="POST" action="{{ route('admin.rating-questions.import-confirm') }}" class="d-inline">
                 @csrf
                 <input type="hidden" name="confirm" value="1">
                 <button type="submit" class="btn btn-success" {{ $invalidCount > 0 ? '' : '' }}>

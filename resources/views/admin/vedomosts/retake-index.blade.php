@@ -8,10 +8,52 @@
 <div class="row g-4">
     <div class="col-12">
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
                 <h6 class="mb-0">Ведомостҳои такрорӣ</h6>
             </div>
             <div class="card-body">
+                {{-- Filters --}}
+                <form method="GET" class="row g-2 align-items-end mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted">Соли хониш</label>
+                        <select name="academic_year_id" class="form-select">
+                            <option value="">Ҳама солҳо</option>
+                            @foreach($academicYears as $year)
+                                <option value="{{ $year->id }}" {{ $academicYearId == $year->id ? 'selected' : '' }}>
+                                    {{ $year->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted">Семестр</label>
+                        <select name="semester_id" class="form-select">
+                            <option value="">Ҳама семестрҳо</option>
+                            @foreach($semesters as $semester)
+                                <option value="{{ $semester->id }}" {{ $semesterId == $semester->id ? 'selected' : '' }}>
+                                    {{ $semester->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted">Гурӯҳ</label>
+                        <select name="group_id" class="form-select">
+                            <option value="">Ҳама гурӯҳҳо</option>
+                            @foreach($groups as $group)
+                                <option value="{{ $group->id }}" {{ $groupId == $group->id ? 'selected' : '' }}>
+                                    {{ $group->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-search me-1"></i> Филтр
+                        </button>
+                    </div>
+                </form>
+
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
@@ -36,12 +78,7 @@
                                 <td>{{ $rv->retakeExam->semester->name ?? '-' }}</td>
                                 <td>{{ $rv->exam_date?->format('d.m.Y') ?? '-' }}</td>
                                 <td>
-                                    @php
-                                        $count = \App\Models\RetakeExamStudent::where('retake_exam_id', $rv->retake_exam_id)
-                                            ->whereHas('student', fn($q) => $q->where('group_id', $rv->group_id))
-                                            ->count();
-                                    @endphp
-                                    {{ $count }} нафар
+                                    {{ $studentCounts[$rv->retake_exam_id] ?? 0 }} нафар
                                 </td>
                                 <td class="text-center">
                                     <a href="{{ route('admin.retake-exams.vedomost.show', $rv) }}" class="btn btn-sm btn-primary" target="_blank">

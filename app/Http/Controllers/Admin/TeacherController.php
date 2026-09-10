@@ -19,7 +19,11 @@ class TeacherController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Teacher::with(['user', 'department.faculty']);
+        $query = Teacher::with([
+            'user:id,first_name,last_name,middle_name,login', 
+            'department:id,name,faculty_id', 
+            'department.faculty:id,name'
+        ]);
 
         if ($search = $request->get('search')) {
             $query->whereHas('user', function ($q) use ($search) {
@@ -148,11 +152,9 @@ class TeacherController extends Controller
     {
         $teacher->load([
             'user.roles',
-            'department.faculty',
-            'subjectAssignments.subject',
-            'subjectAssignments.group',
-            'subjectAssignments.semester',
-            'activityLog',
+            'department.faculty:id,name',
+            'subjectAssignments' => fn($q) => $q->with(['subject:id,name', 'group:id,name', 'semester:id,number'])->where('is_active', true),
+            'activityLog' => fn($q) => $q->latest(),
         ]);
 
         $currentSemester = \App\Models\Semester::current();

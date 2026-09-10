@@ -253,7 +253,7 @@ class JournalController extends Controller
                 $retakeGradePoint = $retakeExamStudent->grade_point;
             }
 
-            $effectiveExamScore = $retakeScore !== null ? $retakeScore : $exam;
+            $effectiveExamScore = $retakeScore !== null ? $retakeScore : ($this->gradeCalculator->calculateExamScore($student->id, $subjectAssignment->id, $semester->id) ?? 0);
 
             $totalScore = null;
             $letterGrade = null;

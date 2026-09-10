@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Импорти донишҷӯён')
-@section('page-header', 'Импорти донишҷӯён аз Excel/CSV')
+@section('page-header', 'Импорти донишҷӯён аз Excel')
 @section('page-description', 'Ворид кардани донишҷӯён аз файли шаблонӣ')
 
 @section('content')
@@ -9,7 +9,7 @@
         <div class="col-md-8">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white">
-                    <h6 class="mb-0"><i class="bi bi-upload me-2"></i> Боркунии файл</h6>
+                    <h6 class="mb-0"><i class="bi bi-upload me-2"></i> Боркунии файли Excel</h6>
                 </div>
                 <div class="card-body">
                     @if(session('import_errors'))
@@ -23,7 +23,7 @@
                         </div>
                     @endif
 
-                    <form method="POST" action="{{ route('admin.import.students') }}" enctype="multipart/form-data">
+                    <form method="POST" action="{{ route('admin.students.import') }}" enctype="multipart/form-data">
                         @csrf
 
                         <div class="mb-3">
@@ -41,24 +41,22 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Файл (CSV ё Excel) <span class="text-danger">*</span></label>
-                            <input type="file" name="file" class="form-control" accept=".csv,.xlsx,.xls,.txt" required>
-                            <small class="text-muted">Формат: CSV ё XLSX. Ҳадди аксар: 5 MB</small>
+                            <label class="form-label">Файл (Excel) <span class="text-danger">*</span></label>
+                            <input type="file" name="file" class="form-control" accept=".xlsx,.xls" required>
+                            <small class="text-muted">Формат: XLSX. Ҳадди аксар: 5 MB</small>
                             @error('file') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
 
-                        <div class="mb-3">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" name="generate_password"
-                                       value="1" id="genPass" checked>
-                                <label class="form-check-label" for="genPass">
-                                    Паролро автоматикӣ созидан
-                                </label>
-                            </div>
-                            <small class="text-muted">Агар хомӯш бошад, парол барои ҳама: student123</small>
+                        <div class="alert alert-info mb-3">
+                            <i class="bi bi-key me-1"></i>
+                            Пароли ибтидоии ҳамаи донишҷӯёни нав: <strong>12345678</strong>.
+                            Ҳангоми воридшавии аввал донишҷӯ бояд онро иваз кунад.
                         </div>
 
                         <div class="text-end">
+                            <a href="{{ route('admin.students.index') }}" class="btn btn-outline-secondary me-2">
+                                <i class="bi bi-arrow-left me-1"></i> Бозгашт
+                            </a>
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-upload me-1"></i> Ворид кардан
                             </button>
@@ -69,7 +67,6 @@
         </div>
 
         <div class="col-md-4">
-            {{-- Дастурамал --}}
             <div class="card border-0 shadow-sm mb-3">
                 <div class="card-header bg-white">
                     <h6 class="mb-0"><i class="bi bi-file-earmark-arrow-down me-2"></i> Шаблон</h6>
@@ -78,8 +75,8 @@
                     <p class="small text-muted">
                         Аввал шаблонро зеркашӣ кунед, пур кунед ва бозгашт диҳед.
                     </p>
-                    <a href="{{ route('admin.import.template') }}" class="btn btn-outline-success btn-sm w-100">
-                        <i class="bi bi-download me-1"></i> Зеркашии шаблон (CSV)
+                    <a href="{{ route('admin.students.import-template') }}" class="btn btn-outline-success btn-sm w-100">
+                        <i class="bi bi-download me-1"></i> Зеркашии шаблон (Excel)
                     </a>
                 </div>
             </div>
@@ -98,15 +95,28 @@
                     <hr>
                     <p class="mb-1"><strong>Сутунҳо:</strong></p>
                     <ul class="ps-3 mb-0">
-                        <li><code>last_name</code> — Насаб *</li>
-                        <li><code>first_name</code> — Ном *</li>
-                        <li><code>middle_name</code> — Номи падар</li>
-                        <li><code>email</code> — Email</li>
-                        <li><code>phone</code> — Телефон</li>
-                        <li><code>birth_date</code> — Таваллуд (YYYY-MM-DD)</li>
-                        <li><code>gender</code> — male/female</li>
-                        <li><code>student_id_number</code> — Рақами донишҷӯ</li>
-                        <li><code>passport_number</code> — Паспорт</li>
+                        <li><code>Насаб *</code> — Насаб *</li>
+                        <li><code>Ном *</code> — Ном *</li>
+                        <li><code>Номи падар</code> — Номи падар</li>
+                        <li><code>Email</code> — Email</li>
+                        <li><code>ID донишҷӯӣ *</code> — ID донишҷӯӣ *</li>
+                        <li><code>Рақами зачётка</code> — Рақами зачётка</li>
+                        <li><code>Шакли таъмин *</code> — Буҷетӣ/Шартномавӣ</li>
+                        <li><code>Шакли таҳсил *</code> — Рӯзона/Ғоибона/Шабона</li>
+                        <li><code>Ихтисос *</code> — Ихтисос *</li>
+                        <li><code>Гурӯҳ *</code> — Гурӯҳ *</li>
+                        <li><code>Курс *</code> — Курс *</li>
+                        <li><code>Санаи қабул *</code> — DD.MM.YYYY</li>
+                        <li><code>Санаи таваллуд</code> — DD.MM.YYYY</li>
+                        <li><code>Ҷинс</code> — Мард/Зан</li>
+                        <li><code>Миллат</code> — Миллат</li>
+                        <li><code>Паспорт (серия)</code> — Серия</li>
+                        <li><code>Паспорт (рақам)</code> — Рақам</li>
+                        <li><code>Телефон</code> — Телефон</li>
+                        <li><code>Волидон (ном)</code> — Номи волидон</li>
+                        <li><code>Телефони волидон</code> — Телефон</li>
+                        <li><code>Суроғаи доимӣ</code> — Суроғаи доимӣ</li>
+                        <li><code>Суроғаи ҳозира</code> — Суроғаи ҳозира</li>
                     </ul>
                     <p class="mt-2 text-muted mb-0">* — ҳатмӣ</p>
                 </div>

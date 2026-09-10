@@ -30,7 +30,7 @@
 <div class="row g-3 mb-4">
     <div class="col-md-3">
         <div class="card border-0 bg-primary bg-opacity-10 text-center p-3">
-            <h2 class="text-primary mb-0">{{ number_format($student->cumulative_gpa ?? 0, 2) }}</h2>
+            <h2 class="text-primary mb-0">{{ number_format($transcriptGpa ?? 0, 2) }}</h2>
             <small>GPA Кумулятивӣ</small>
         </div>
     </div>
@@ -96,11 +96,8 @@
             <small class="text-muted">({{ $sem->academicYear->name }})</small>
             @endif
         </h6>
-        @php
-        $semGpa = optional($student->semesterGpas)->where('semester_id', $semId)->first();
-        @endphp
-        @if($semGpa)
-        <span class="badge bg-primary">GPA: {{ number_format($semGpa->gpa, 2) }}</span>
+        @if(isset($semesterGpas[$semId]))
+        <span class="badge bg-primary">GPA: {{ number_format($semesterGpas[$semId], 2) }}</span>
         @endif
     </div>
     <div class="card-body p-0">

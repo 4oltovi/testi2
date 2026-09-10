@@ -1,0 +1,92 @@
+[14:36:14] === SUPER ADMIN VERIFICATION ===
+[14:36:14]   ID: 1, login: admin, email: admin@donishor.tj
+[14:36:14]   Roles: super_admin
+[14:36:14]   Super Admin verified. Proceeding with reset...
+
+[14:36:14] === PHASE 1: Pivot/Link Tables ===
+[14:36:14]   user_role: deleted 75, remaining 0 (keeping user_id=1)
+[14:36:14]   user_permission: deleted 0, remaining 0 
+[14:36:14]   notifications: deleted (user_id != 1), remaining: 0
+[14:36:14]   student_status_history: deleted 0, remaining 0 
+[14:36:14]   student_promotions: deleted 0, remaining 0 
+[14:36:14] 
+=== PHASE 2: Deep Child Tables ===
+[14:36:14]   retake_exam_answers: deleted 122, remaining 0 
+[14:36:14]   retake_exam_questions: deleted 80, remaining 0 
+[14:36:14]   retake_exam_attempts: deleted 24, remaining 0 
+[14:36:14]   retake_exam_students: deleted 77, remaining 0 
+[14:36:14]   retake_exams: deleted 23, remaining 0 
+[14:36:14]   exam_answers: deleted 222, remaining 0 
+[14:36:14]   exam_attempts: deleted 14, remaining 0 
+[14:36:14]   exam_questions: deleted 399, remaining 0 
+[14:36:14]   exams: deleted 19, remaining 0 
+[14:36:14]   retake_vedomosts: deleted 0, remaining 0 
+[14:36:14]   rating_attempts: deleted 4, remaining 0 
+[14:36:14]   rating_session_groups: deleted 6, remaining 0 
+[14:36:14]   rating_session_subjects: deleted 2, remaining 0 
+[14:36:14]   rating_sessions: deleted 2, remaining 0 
+[14:36:14]   schedules: deleted 0, remaining 0 
+[14:36:15]   answer_options: deleted 2144, remaining 0 
+[14:36:15]   questions: deleted 536, remaining 0 
+[14:36:15]   question_banks: deleted 8, remaining 0 
+[14:36:17]   category_scores: deleted 1957, remaining 0 
+[14:36:17]   teacher_activity_log: deleted 3, remaining 0 
+[14:36:17]   grade_change_log: deleted 0, remaining 0 
+[14:36:17] 
+=== PHASE 3: Academic Records ===
+[14:36:17]   transcript_lines: deleted 0, remaining 0 
+[14:36:17]   transcripts: deleted 7, remaining 0 
+[14:36:17]   semester_gpas: deleted 0, remaining 0 
+[14:36:17]   current_grades: deleted 0, remaining 0 
+[14:36:17]   daily_attendance: deleted 28, remaining 0 
+[14:36:17]   attendances: deleted 0, remaining 0 
+[14:36:17]   academic_debt_history: deleted 0, remaining 0 
+[14:36:17]   academic_debts: deleted 99, remaining 0 
+[14:36:17]   semester_grades: deleted 75, remaining 0 
+[14:36:17]   vedomosts: deleted 10, remaining 0 
+[14:36:17] 
+=== PHASE 4: Academic Entities ===
+[14:36:17]   subject_assignments: deleted 13, remaining 0 
+[14:36:17]   students: deleted 60, remaining 0 
+[14:36:17]   teachers: deleted 3, remaining 0 
+[14:36:17]   groups: deleted 4, remaining 0 
+[14:36:17]   subjects: deleted 11, remaining 0 
+[14:36:17]   specialties: deleted 4, remaining 0 
+[14:36:17]   departments: deleted 7, remaining 0 
+[14:36:17]   faculties: deleted 5, remaining 0 
+[14:36:17]   courses: deleted 6, remaining 0 
+[14:36:17]   classrooms: deleted 5, remaining 0 
+[14:36:17]   lesson_times: deleted 6, remaining 0 
+[14:36:17]   semesters: deleted 4, remaining 0 
+[14:36:17]   academic_years: deleted 2, remaining 0 
+[14:36:17] 
+=== PHASE 5: Clean Users ===
+[14:36:17]   Deleted 74 users, remaining: 1
+[14:36:17] 
+=== VERIFICATION ===
+[14:36:17]   Total users: 1
+[14:36:17]   Admin login: admin
+[14:36:17]   Admin email: admin@donishor.tj
+[14:36:17]   Admin roles: 
+[14:36:17] 
+  Academic tables after reset:
+[14:36:17]     students: 0
+[14:36:17]     teachers: 0
+[14:36:17]     groups: 0
+[14:36:17]     specialties: 0
+[14:36:17]     faculties: 0
+[14:36:17]     subjects: 0
+[14:36:17]     subject_assignments: 0
+[14:36:17]     semesters: 0
+[14:36:17]     academic_years: 0
+[14:36:17]     semester_grades: 0
+[14:36:17]     attendances: 0
+[14:36:17]     academic_debts: 0
+[14:36:17]     vedomosts: 0
+[14:36:17]     transcripts: 0
+[14:36:17]     exams: 0
+[14:36:17]     retake_exams: 0
+[14:36:17]     current_grades: 0
+[14:36:17]     daily_attendance: 0
+[14:36:17] 
+Reset completed in 4.46s

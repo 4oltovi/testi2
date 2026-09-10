@@ -83,6 +83,12 @@ class UserController extends Controller
             'roles.required' => 'Ҳадди ақал як нақш интихоб кунед.',
         ]);
 
+        $studentRoleId = Role::where('name', 'student')->value('id');
+        if ($studentRoleId && in_array((int) $studentRoleId, array_map('intval', $validated['roles']), true)) {
+            return redirect()->route('admin.students.create')
+                ->with('error', 'Донишҷӯро аз саҳифаи «Донишҷӯён» созед, то login ва рақами донишҷӯӣ якхела бошанд.');
+        }
+
         $user = User::create([
             'login' => $validated['login'],
             'email' => $validated['email'] ?? null,
@@ -139,6 +145,13 @@ class UserController extends Controller
             'roles' => 'required|array|min:1',
             'roles.*' => 'exists:roles,id',
         ]);
+
+        $studentRoleId = Role::where('name', 'student')->value('id');
+        if ($studentRoleId && in_array((int) $studentRoleId, array_map('intval', $validated['roles']), true)
+            && !$user->student()->exists()) {
+            return redirect()->route('admin.students.create')
+                ->with('error', 'Ин корбар Student profile надорад. Донишҷӯро аз саҳифаи «Донишҷӯён» созед.');
+        }
 
         $oldValues = $user->toArray();
 

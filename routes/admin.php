@@ -38,10 +38,14 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
         Route::post('/semesters/{semester}/activate', [\App\Http\Controllers\Admin\AcademicYearController::class, 'activateSemester'])->name('semesters.activate');
     });
 
-    // Донишҷӯён
+    // Импорти донишҷӯён
     Route::prefix('students')->name('students.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\StudentController::class, 'index'])->name('index');
+        Route::get('/search', [\App\Http\Controllers\Admin\StudentController::class, 'search'])->name('search');
         Route::get('/create', [\App\Http\Controllers\Admin\StudentController::class, 'create'])->name('create');
+        Route::get('/import', [\App\Http\Controllers\Admin\StudentController::class, 'importForm'])->name('import-form');
+        Route::post('/import', [\App\Http\Controllers\Admin\StudentController::class, 'import'])->name('import');
+        Route::get('/import/template', [\App\Http\Controllers\Admin\StudentController::class, 'downloadTemplate'])->name('import-template');
         Route::post('/', [\App\Http\Controllers\Admin\StudentController::class, 'store'])->name('store');
         Route::get('/{student}', [\App\Http\Controllers\Admin\StudentController::class, 'show'])->name('show');
         Route::get('/{student}/edit', [\App\Http\Controllers\Admin\StudentController::class, 'edit'])->name('edit');
@@ -107,9 +111,7 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
         // Саволномаҳо (ПЕШИ /{exam} бошад!)
         Route::resource('question-banks', \App\Http\Controllers\Admin\QuestionBankController::class);
         Route::resource('questions', \App\Http\Controllers\Admin\QuestionController::class)->except(['show']);
-        Route::get('/questions-import', [\App\Http\Controllers\Admin\QuestionController::class, 'importForm'])->name('questions.import-form');
-        Route::post('/questions-import', [\App\Http\Controllers\Admin\QuestionController::class, 'import'])->name('questions.import');
-        Route::get('/questions-template', [\App\Http\Controllers\Admin\QuestionController::class, 'downloadTemplate'])->name('questions.download-template');
+        Route::get('/questions/export', [\App\Http\Controllers\Admin\QuestionController::class, 'export'])->name('questions.export');
 
         Route::get('/{exam}/edit', [\App\Http\Controllers\Admin\ExamController::class, 'edit'])->name('edit');
         Route::put('/{exam}', [\App\Http\Controllers\Admin\ExamController::class, 'update'])->name('update');
@@ -171,13 +173,6 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
         Route::post('activate-year', [\App\Http\Controllers\Admin\SettingsController::class, 'activateYear'])->name('activate-year');
         Route::post('promote-all', [\App\Http\Controllers\Admin\SettingsController::class, 'promoteAll'])->name('promote-all');
         });
-
-    // Импорти Excel
-    Route::prefix('import')->name('import.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\ImportController::class, 'index'])->name('index');
-        Route::get('/template', [\App\Http\Controllers\Admin\ImportController::class, 'downloadTemplate'])->name('template');
-        Route::post('/students', [\App\Http\Controllers\Admin\ImportController::class, 'importStudents'])->name('students');
-    });
 
     // Аудит
     Route::prefix('audit')->name('audit.')->group(function () {

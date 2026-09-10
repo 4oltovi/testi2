@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\QuestionsExport;
 use App\Http\Controllers\Controller;
 use App\Models\AnswerOption;
 use App\Models\Question;
@@ -11,7 +12,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Maatwebsite\Excel\Facades\Excel;
 
 class QuestionController extends Controller
 {
@@ -28,8 +29,12 @@ class QuestionController extends Controller
             ->paginate(30);
 
         $subjects = Subject::orderBy('name')->get();
+        $questionCounts = Question::whereHas('questionBank', fn ($q) => $q->where('bank_type', 'exam'))
+            ->selectRaw('subject_id, COUNT(*) as aggregate')
+            ->groupBy('subject_id')
+            ->pluck('aggregate', 'subject_id');
 
-        return view('admin.questions.index', compact('questions', 'subjects'));
+        return view('admin.questions.index', compact('questions', 'subjects', 'questionCounts'));
     }
 
     /**
@@ -78,7 +83,7 @@ class QuestionController extends Controller
             ]);
 
             if ($request->type === 'matching') {
-                // Мувофиқоварӣ: sub_questions = зерсаволҳо, options = ҷавобҳо
+                // Мувофиқоварӣ: sub_questions = зерсаволҳо, matching_extra = ҷавобҳои иловагӣ
                 if ($request->has('sub_questions')) {
                     foreach ($request->sub_questions as $index => $sq) {
                         if (empty($sq['text'])) continue;
@@ -91,8 +96,8 @@ class QuestionController extends Controller
                     }
                 }
                 // Ҷавобҳои иловагӣ (нодуруст)
-                if ($request->has('options')) {
-                    foreach ($request->options as $index => $opt) {
+                if ($request->has('matching_extra')) {
+                    foreach ($request->matching_extra as $index => $opt) {
                         if (empty($opt['text'])) continue;
                         AnswerOption::create([
                             'question_id' => $question->id,
@@ -175,8 +180,8 @@ class QuestionController extends Controller
                         ]);
                     }
                 }
-                if ($request->has('options')) {
-                    foreach ($request->options as $index => $opt) {
+                if ($request->has('matching_extra')) {
+                    foreach ($request->matching_extra as $index => $opt) {
                         if (empty($opt['text'])) continue;
                         AnswerOption::create([
                             'question_id' => $question->id,
@@ -204,11 +209,33 @@ class QuestionController extends Controller
     }
 
     /**
-     * Нест кардан
+     * Зерфармоии саволҳо
+     */
+    public function export(Request $request)
+    {
+        $subjectId = (int) $request->integer('subject_id');
+
+        if (!$subjectId) {
+            return back()->with('error', 'Фанро интихоб кунед.');
+        }
+
+        $subject = Subject::findOrFail($subjectId);
+
+        return Excel::download(new QuestionsExport($subjectId), 'questions_' . $subject->name . '.xlsx');
+    }
+
+    /**
+     * Нест кардани савол
      */
     public function destroy(Question $question): RedirectResponse
     {
-        $question->delete();
+        $subjectId = $question->subject_id;
+
+        DB::transaction(function () use ($question) {
+            $question->answerOptions()->delete();
+            $question->delete();
+        });
+
         return back()->with('success', 'Савол нест шуд.');
     }
 
@@ -275,115 +302,27 @@ class QuestionController extends Controller
     }
 
     /**
-     * Импорт form
+     * Саҳифаи импорт барои саволҳо
      */
-    public function importForm(): View
+    public function importForm(): RedirectResponse
     {
-        $subjects = Subject::orderBy('name')->get();
-        return view('admin.questions.import', compact('subjects'));
+        return redirect()->route('admin.questions.excel-import-form');
     }
 
     /**
-     * Шаблони CSV
-     */
-    public function downloadTemplate(): BinaryFileResponse
-    {
-        $csvPath = storage_path('app/templates/questions_import_template.csv');
-        if (!is_dir(dirname($csvPath))) {
-            mkdir(dirname($csvPath), 0755, true);
-        }
-
-        $headers = ['question_text', 'type', 'difficulty_level', 'option_a', 'option_b', 'option_c', 'option_d', 'option_e', 'correct_answer', 'explanation'];
-
-        $examples = [
-            ['Пойтахти Тоҷикистон кадом шаҳр аст?', 'single_choice', '1', 'Душанбе', 'Хуҷанд', 'Бохтар', 'Кӯлоб', '', 'a', 'Душанбе пойтахт аст'],
-            ['PHP забони барномасозӣ аст', 'true_false', '1', 'Дуруст', 'Нодуруст', '', '', '', 'a', ''],
-            ['Кадомашон забони барномасозӣ?', 'multiple_choice', '2', 'Python', 'HTML', 'Java', 'CSS', '', 'ac', 'Python ва Java'],
-        ];
-
-        $file = fopen($csvPath, 'w');
-        fwrite($file, "\xEF\xBB\xBF");
-        fputcsv($file, $headers);
-        foreach ($examples as $row) {
-            fputcsv($file, $row);
-        }
-        fclose($file);
-
-        return response()->download($csvPath, 'questions_import_template.csv');
-    }
-
-    /**
-     * Импорт аз CSV
+     * Импорти Excel барои саволҳо
      */
     public function import(Request $request): RedirectResponse
     {
-        $request->validate([
-            'file' => 'required|file|mimes:csv,txt|max:5120',
-            'subject_id' => 'required|exists:subjects,id',
-        ]);
+        return redirect()->route('admin.questions.excel-import-upload');
+    }
 
-        $subjectId = $request->input('subject_id');
-        $defaultPoints = (float) Setting::get('test_default_points', 1.0);
-        $bankId = $this->getOrCreateDefaultBank($subjectId);
-        $rows = $this->parseCsv($request->file('file')->getRealPath());
-
-        if (empty($rows)) {
-            return back()->with('error', 'Файл холӣ аст.');
-        }
-
-        $imported = 0;
-        $errors = [];
-
-        DB::beginTransaction();
-        try {
-            foreach ($rows as $index => $row) {
-                $rowNum = $index + 2;
-                if (empty($row['question_text'])) {
-                    $errors[] = "Сатри {$rowNum}: холӣ";
-                    continue;
-                }
-
-                $type = $row['type'] ?? 'single_choice';
-                if (!in_array($type, ['single_choice', 'multiple_choice', 'true_false', 'matching'])) {
-                    $type = 'single_choice';
-                }
-
-                $question = Question::create([
-                    'question_bank_id' => $bankId,
-                    'subject_id' => $subjectId,
-                    'type' => $type,
-                    'question_text' => trim($row['question_text']),
-                    'difficulty_level' => min(5, max(1, (int)($row['difficulty_level'] ?? 1))),
-                    'points' => $defaultPoints,
-                    'explanation' => $row['explanation'] ?? null,
-                    'is_active' => true,
-                ]);
-
-                if ($type !== 'open_text') {
-                    $correctAnswer = strtolower(trim($row['correct_answer'] ?? 'a'));
-                    $letters = ['a', 'b', 'c', 'd', 'e'];
-                    $fields = ['option_a', 'option_b', 'option_c', 'option_d', 'option_e'];
-
-                    foreach ($fields as $i => $field) {
-                        $text = trim($row[$field] ?? '');
-                        if (empty($text)) continue;
-                        AnswerOption::create([
-                            'question_id' => $question->id,
-                            'option_text' => $text,
-                            'is_correct' => str_contains($correctAnswer, $letters[$i]),
-                            'sort_order' => $i,
-                        ]);
-                    }
-                }
-                $imported++;
-            }
-            DB::commit();
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Хатогӣ: ' . $e->getMessage());
-        }
-
-        return back()->with('success', "{$imported} савол ворид шуд.")->with('import_errors', $errors);
+    /**
+     * Зерфармоии шаблони Excel
+     */
+    public function downloadTemplate()
+    {
+        return redirect()->route('admin.questions.excel-import-template');
     }
 
     /**
@@ -405,44 +344,6 @@ class QuestionController extends Controller
             'is_active' => true,
         ]);
         return $bank->id;
-    }
-
-    /**
-     * Таҳлили CSV
-     */
-    private function parseCsv(string $path): array
-    {
-        $rows = [];
-        $headers = [];
-        if (($handle = fopen($path, 'r')) !== false) {
-            $lineNum = 0;
-            while (($data = fgetcsv($handle, 5000, ',')) !== false) {
-                if ($lineNum === 0 && isset($data[0])) {
-                    $data[0] = preg_replace('/^\xEF\xBB\xBF/', '', $data[0]);
-                }
-                if ($lineNum === 0) {
-                    $headers = array_map('trim', $data);
-                    $lineNum++;
-                    continue;
-                }
-                if (count($data) < 2) {
-                    $lineNum++;
-                    continue;
-                }
-                $row = [];
-                foreach ($headers as $i => $h) {
-                    $row[$h] = isset($data[$i]) ? trim($data[$i]) : null;
-                }
-                if (empty($row['question_text'])) {
-                    $lineNum++;
-                    continue;
-                }
-                $rows[] = $row;
-                $lineNum++;
-            }
-            fclose($handle);
-        }
-        return $rows;
     }
 
     /**

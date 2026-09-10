@@ -183,6 +183,48 @@ class User extends Authenticatable
     }
 
     /**
+     * Факултети деканӣ (agar bu user dean bashad)
+     */
+    public function deanFaculty(): HasOne
+    {
+        return $this->hasOne(Faculty::class, 'dean_id', 'id');
+    }
+
+    /**
+     * Оё Декан аст?
+     */
+    public function isDean(): bool
+    {
+        return $this->hasRole(UserRole::DEAN);
+    }
+
+    /**
+     * Оё корбар доштаи муҳим (management) аст?
+     */
+    public function isManagement(): bool
+    {
+        return $this->hasAnyRole([
+            UserRole::DEAN,
+            UserRole::VICE_DEAN,
+            UserRole::DEPARTMENT_HEAD,
+            UserRole::REGISTRAR,
+            UserRole::ACCOUNTANT,
+        ]);
+    }
+
+    /**
+     * ID-и факултети декан
+     */
+    public function getDeanFacultyId(): ?int
+    {
+        return cache()->remember(
+            "dean_faculty_id:{$this->id}",
+            300,
+            fn() => $this->deanFaculty?->id
+        );
+    }
+
+    /**
      * Фаъол аст?
      */
     public function isActive(): bool

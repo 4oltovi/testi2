@@ -113,22 +113,20 @@ class InitialDataSeeder extends Seeder
             );
         }
 
-        // ====== КАФЕДРАҲО ======
+// ====== КАФЕДРАҲО ======
         $ft = Faculty::where('code', 'FT')->first();
-        $departments = [
-            ['name' => 'Кафедраи анатомия', 'short_name' => 'Анат', 'code' => 'ANAT', 'faculty_id' => $ft->id],
-            ['name' => 'Кафедраи физиология', 'short_name' => 'Физ', 'code' => 'PHYS', 'faculty_id' => $ft->id],
-            ['name' => 'Кафедраи биохимия', 'short_name' => 'Биох', 'code' => 'BIOC', 'faculty_id' => $ft->id],
-            ['name' => 'Кафедраи гистология', 'short_name' => 'Гист', 'code' => 'HIST', 'faculty_id' => $ft->id],
-            ['name' => 'Кафедраи забонҳо', 'short_name' => 'Заб', 'code' => 'LANG', 'faculty_id' => $ft->id],
-        ];
-
-        foreach ($departments as $dData) {
-            Department::updateOrCreate(
-                ['code' => $dData['code']],
-                array_merge($dData, ['is_active' => true])
-            );
-        }
+        $anatomyDept = Department::firstOrCreate(['code' => 'ANAT'], [
+            'faculty_id' => $ft->id, 'name' => 'Кафедраи анатомия',
+            'short_name' => 'Анат', 'is_active' => true,
+        ]);
+        $pedsDept = Department::firstOrCreate(['code' => 'PEDS'], [
+            'faculty_id' => $ft->id, 'name' => 'Кафедраи педиатрия',
+            'short_name' => 'Пед', 'is_active' => true,
+        ]);
+        $langDept = Department::firstOrCreate(['code' => 'LANG'], [
+            'faculty_id' => $ft->id, 'name' => 'Кафедраи забонҳо',
+            'short_name' => 'Заб', 'is_active' => true,
+        ]);
 
         // ====== ИХТИСОСҲО ======
         $anatDept = Department::where('code', 'ANAT')->first();
@@ -222,6 +220,34 @@ class InitialDataSeeder extends Seeder
 
         foreach ($lessonTimes as $lt) {
             \App\Models\LessonTime::updateOrCreate(['number' => $lt['number']], $lt);
+        }
+
+        // ====== ДЕКАНҲО БАРОЙ ҲАР ФАКУЛТЕТ ======
+        $deanRole = Role::where('name', 'dean')->first();
+        if ($deanRole) {
+            $faculties = Faculty::all();
+            $deanNames = [
+                'Факултети тиббӣ' => ['login' => 'dean_tibbiy', 'first' => 'Раҳимов', 'last' => 'Декани тиббӣ'],
+                'Факултети педиатрия' => ['login' => 'dean_pediatriya', 'first' => 'Каримов', 'last' => 'Декани педиатрия'],
+                'Факултети фармация' => ['login' => 'dean_farmatsiya', 'first' => 'Ахмедов', 'last' => 'Декани фармация'],
+                'Факултети стоматология' => ['login' => 'dean_stomatologiya', 'first' => 'Нуров', 'last' => 'Декани стоматология'],
+                'Кори хамшираги' => ['login' => 'dean_khampers', 'first' => 'Алиев', 'last' => 'Декани кори хамшираги'],
+            ];
+            foreach ($faculties as $faculty) {
+                $deanData = $deanNames[$faculty->name] ?? ['login' => 'dean_' . $faculty->code, 'first' => 'Декан', 'last' => $faculty->name];
+                $deanUser = User::updateOrCreate(
+                    ['login' => $deanData['login']],
+                    [
+                        'first_name' => $deanData['first'],
+                        'last_name' => $deanData['last'],
+                        'email' => str_replace(' ', '_', strtolower($deanData['login'])) . '@donishor.tj',
+                        'password' => Hash::make('dean123'),
+                        'status' => 'active',
+                    ]
+                );
+                $deanUser->roles()->syncWithoutDetaching([$deanRole->id]);
+                $faculty->update(['dean_id' => $deanUser->id]);
+            }
         }
     }
 }

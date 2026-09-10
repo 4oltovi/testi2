@@ -441,17 +441,13 @@
                 @if($type === 'open_text')
                 <textarea class="open-textarea" name="answers[{{ $eq->id }}][text]" data-eq="{{ $eq->id }}" data-type="open_text" placeholder="Ҷавоби худро нависед...">{{ is_array($existing) ? ($existing['text'] ?? '') : ($existing ?? '') }}</textarea>
                 @elseif($type === 'matching')
-                {{-- МУВОФИҚОВАРӢ: 4 зерсавол + dropdown бо 5 ҷавоб --}}
+                {{-- Мувофиқоварӣ: ҳамаи ҷавобҳои pair ва extra дар dropdown нишон дода мешаванд. --}}
                 @php
                 $subQuestions = $options->filter(fn($o) => $o->is_correct && str_contains($o->option_text, '|||'));
-                $allAnswers = [];
-                foreach($subQuestions as $sq) {
-                $parts = explode('|||', $sq->option_text);
-                $allAnswers[] = trim($parts[1]);
-                }
-                // Ҷавобҳои нодуруст (лағжанда)
-                $decoys = $options->filter(fn($o) => !$o->is_correct);
-                foreach($decoys as $d) { $allAnswers[] = trim($d->option_text); }
+                $allAnswers = $options->map(function ($option) {
+                    $parts = explode('|||', (string) $option->option_text, 2);
+                    return trim($parts[1] ?? $parts[0]);
+                })->filter()->values()->all();
                 shuffle($allAnswers);
                 @endphp
                 <div class="matching-container" data-eq="{{ $eq->id }}">
@@ -471,7 +467,7 @@
                     </div>
                     @endforeach
                     <p style="font-size:0.75rem;color:#6B7280;margin-top:8px">
-                        ⚠️ Як ҷавоб иловагӣ (нодуруст) мавҷуд аст
+                        Ҷавобҳо барои интихоб: {{ count($allAnswers) }}
                     </p>
                 </div>
                 @else

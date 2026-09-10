@@ -60,8 +60,12 @@
                         <th style="width: 50px;">#</th>
                         <th style="width: 110px;">ID</th>
                         <th class="student-name">Донишҷӯ</th>
-                        <th title="Рейтинги 1 (ҳафтаи 1-8)">R1</th>
-                        <th title="Рейтинги 2 (ҳафтаи 9-16)">R2</th>
+                        <th title="Рейтинги 1 (ҳафтаи 1-8)">
+                            R1
+                        </th>
+                        <th title="Рейтинги 2 (ҳафтаи 9-16)">
+                            R2 
+                        </th>
                         <th title="Имтиҳони асосӣ">Имт.</th>
                         <th title="Такрорсупорӣ">Такр.</th>
                         <th title="Баҳои ниҳоӣ (%)">Ниҳоӣ</th>
@@ -85,14 +89,30 @@
                             </a>
                         </td>
                         <td>
-                            <span title="Захирашуда: {{ $grade?->rating1_score !== null ? number_format($grade->rating1_score, 0) : '—' }}">
-                                {{ $calc['rating1'] !== null ? number_format($calc['rating1'], 0) : '—' }}
+                            @php
+                                $r1 = $calc['rating1'] ?? 0;
+                                $cr1 = $calc['computer_rating1'] ?? 0;
+                                $ej1 = max(0, $r1 - $cr1);
+                            @endphp
+                            <span title="ЭЖ: {{ number_format($ej1, 0) }}/60 | ТК: {{ number_format($cr1, 0) }}/40">
+                                {{ $calc['rating1'] !== null ? number_format($r1, 0) : '—' }}
                             </span>
+                            @if($calc['rating1'] !== null)
+                                <br><small class="text-muted">ЭЖ {{ number_format($ej1, 0) }}/60 + ТК {{ number_format($cr1, 0) }}/40</small>
+                            @endif
                         </td>
                         <td>
-                            <span title="Захирашуда: {{ $grade?->rating2_score !== null ? number_format($grade->rating2_score, 0) : '—' }}">
-                                {{ $calc['rating2'] !== null ? number_format($calc['rating2'], 0) : '—' }}
+                            @php
+                                $r2 = $calc['rating2'] ?? 0;
+                                $cr2 = $calc['computer_rating2'] ?? 0;
+                                $ej2 = max(0, $r2 - $cr2);
+                            @endphp
+                            <span title="ЭЖ: {{ number_format($ej2, 0) }}/60 | ТК: {{ number_format($cr2, 0) }}/40">
+                                {{ $calc['rating2'] !== null ? number_format($r2, 0) : '—' }}
                             </span>
+                            @if($calc['rating2'] !== null)
+                                <br><small class="text-muted">ЭЖ {{ number_format($ej2, 0) }}/60 + ТК {{ number_format($cr2, 0) }}/40</small>
+                            @endif
                         </td>
                         <td>{{ $calc['exam'] !== null ? number_format($calc['exam'], 0) : '—' }}</td>
                         <td>
@@ -156,8 +176,8 @@
             <div class="col-md-6">
                 <small class="text-muted">
                     <strong>Тавзеҳот:</strong>
-                    R1 = Рейтинги 1 (авто) |
-                    R2 = Рейтинги 2 (авто) |
+                    R1 = ЭЖ (0-60) + ТК (0-40) = Рейтинги 1 (авто) |
+                    R2 = ЭЖ (0-60) + ТК (0-40) = Рейтинги 2 (авто) |
                     Имт. = Имтиҳон (аз тести онлайн)
                 </small>
             </div>

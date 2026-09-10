@@ -44,4 +44,9 @@ class Role extends Model
     {
         return UserRole::tryFrom($this->name);
     }
+
+    public function label(): string
+    {
+        return $this->enum?->label() ?? $this->display_name ?? $this->name;
+    }
 }

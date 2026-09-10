@@ -40,7 +40,10 @@ class GradeController extends Controller
 
                 $rating1 = $gradeCalc->calculateRating1($student->id, $assignment->id, $assignment->semester_id);
                 $rating2 = $gradeCalc->calculateRating2($student->id, $assignment->id, $assignment->semester_id);
-                $exam = $gradeCalc->calculateExamPercentage($student->id, $assignment->id, $assignment->semester_id);
+                $examPercentage = $gradeCalc->calculateExamPercentage($student->id, $assignment->id, $assignment->semester_id);
+                $exam = $gradeCalc->calculateExamScore($student->id, $assignment->id, $assignment->semester_id);
+                $computerRating1 = $gradeCalc->calculateComputerRatingScore($student->id, $assignment->id, $assignment->semester_id, 'rating1');
+                $computerRating2 = $gradeCalc->calculateComputerRatingScore($student->id, $assignment->id, $assignment->semester_id, 'rating2');
 
                 $retakeScore = null;
                 $retakeExam = \App\Models\RetakeExam::where('subject_id', $assignment->subject_id)
@@ -57,7 +60,7 @@ class GradeController extends Controller
                     }
                 }
 
-                $effectiveExamScore = $retakeScore !== null ? $retakeScore : $exam;
+                $effectiveExamScore = $retakeScore !== null ? $retakeScore : ($exam ?? 0);
 
                 $totalScore = null;
                 $letterGrade = null;
@@ -83,6 +86,8 @@ class GradeController extends Controller
                     'semester_grade' => $semesterGrade,
                     'rating1' => $rating1,
                     'rating2' => $rating2,
+                    'computer_rating1' => $computerRating1,
+                    'computer_rating2' => $computerRating2,
                     'exam' => $exam,
                     'total_score' => $totalScore,
                     'letter_grade' => $letterGrade,
@@ -118,7 +123,10 @@ class GradeController extends Controller
 
             $rating1 = $gradeCalc->calculateRating1($student->id, $assignment->id, $semester->id);
             $rating2 = $gradeCalc->calculateRating2($student->id, $assignment->id, $semester->id);
-            $exam = $gradeCalc->calculateExamPercentage($student->id, $assignment->id, $semester->id);
+            $examPercentage = $gradeCalc->calculateExamPercentage($student->id, $assignment->id, $semester->id);
+            $exam = $gradeCalc->calculateExamScore($student->id, $assignment->id, $semester->id);
+            $computerRating1 = $gradeCalc->calculateComputerRatingScore($student->id, $assignment->id, $semester->id, 'rating1');
+            $computerRating2 = $gradeCalc->calculateComputerRatingScore($student->id, $assignment->id, $semester->id, 'rating2');
 
             $retakeScore = null;
             $retakeExam = \App\Models\RetakeExam::where('subject_id', $assignment->subject_id)
@@ -135,7 +143,7 @@ class GradeController extends Controller
                 }
             }
 
-            $effectiveExamScore = $retakeScore !== null ? $retakeScore : $exam;
+            $effectiveExamScore = $retakeScore !== null ? $retakeScore : ($exam ?? 0);
 
             $totalScore = null;
             $letterGrade = null;
@@ -161,6 +169,8 @@ class GradeController extends Controller
                 'semester_grade' => $semesterGrade,
                 'rating1' => $rating1,
                 'rating2' => $rating2,
+                'computer_rating1' => $computerRating1,
+                'computer_rating2' => $computerRating2,
                 'exam' => $exam,
                 'total_score' => $totalScore,
                 'letter_grade' => $letterGrade,

@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Illuminate\View\View;
 use App\Services\QuestionExcelParser;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class RatingQuestionExcelImportController extends Controller
 {
@@ -73,19 +76,19 @@ class RatingQuestionExcelImportController extends Controller
         return redirect()->route('admin.rating-questions.import-preview');
     }
 
-    public function preview(): View
+    public function preview(): View|RedirectResponse
     {
         $previewData = Session::get('rating_excel_import_preview');
 
         if (!$previewData) {
-            return redirect()->route('admin.rating-questions.import')
+            return redirect()->route('admin.rating-questions.import-form')
                 ->with('error', 'Маълумотҳои пешакӣ эътироф нашуданд. Лутфан файлро аз нав бор кунед.');
         }
 
         $subject = Subject::find($previewData['subject_id']);
         $questions = collect($previewData['questions']);
 
-        return view('admin.rating-questions.import-preview', [
+        return view('admin.rating-questions.excel-import-preview', [
             'subject' => $subject,
             'totalRows' => $previewData['total_rows'],
             'simpleCount' => $previewData['simple_count'],
@@ -171,34 +174,29 @@ class RatingQuestionExcelImportController extends Controller
 
     public function downloadTemplate()
     {
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('Саволҳои рейтинг');
-
+        $sheet->setTitle('Саволҳо');
         $instructions = [
             ['ИНСТРУКСИЯ:'],
             ['@ = савол', '$ = ҷавоби дуруст', '& = ҷавоби нодуруст'],
             [''],
+            ['@Анатомияи инсон чист?'],
+            ['$Инсон'],
+            ['&Фан'],
+            ['&Сабз'],
+            ['&Самт'],
+            [''],
             ['@Пойтахти Тоҷикистон кадом шаҳр аст?'],
-            ['$Душанбе'],
             ['&Хуҷанд'],
+            ['$Душанбе'],
             ['&Бохтар'],
             ['&Кӯлоб'],
-            [''],
-            ['@Миёнаи овоз дар баландии чӣ аст?'],
-            ['&Калин'],
-            ['$Паст'],
-            ['&Миёна'],
-            ['&Харош'],
         ];
-
-        $rowNum = 1;
-        foreach ($instructions as $row) {
-            $sheet->fromArray($row, NULL, 'A' . $rowNum);
-            $rowNum++;
+        foreach ($instructions as $rowNumber => $row) {
+            $sheet->fromArray($row, null, 'A' . ($rowNumber + 1));
         }
-
-        $sheet->getColumnDimension('A')->setAutoSize(true);
+        $sheet->getColumnDimension('A')->setWidth(70);
 
         $headerStyle = [
             'font' => ['bold' => true],
@@ -211,9 +209,9 @@ class RatingQuestionExcelImportController extends Controller
         $sheet->getStyle('A1:A3')->applyFromArray($headerStyle);
 
         $tmpPath = sys_get_temp_dir() . '/rating_questions_template_' . uniqid() . '.xlsx';
-        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer = new Xlsx($spreadsheet);
         $writer->save($tmpPath);
 
-        return response()->download($tmpPath, 'rating_questions_template.xlsx')->deleteFileAfterSend(true);
+        return response()->download($tmpPath, 'rating_questions_import_template.xlsx')->deleteFileAfterSend(true);
     }
 }

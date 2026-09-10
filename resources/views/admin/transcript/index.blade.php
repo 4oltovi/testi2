@@ -64,9 +64,12 @@
                                 @endif
                             </td>
                             <td class="text-end">
-                                <a href="{{ route('admin.transcript.show', $student) }}" class="btn btn-sm btn-outline-primary">
+                                <form action="{{ route('admin.transcript.generate', $student) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-file-earmark-text"></i> Transcript
-                                </a>
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                     @endforeach

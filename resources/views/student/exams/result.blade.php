@@ -89,7 +89,9 @@
                                 $question = $answer->question;
                                 $correctOptions = $question?->answerOptions?->where('is_correct', true) ?? collect();
                                 $selectedOptions = [];
-                                $selectedRaw = $answer->selected_options ? json_decode($answer->selected_options, true) : [];
+                                $selectedRaw = is_array($answer->selected_options)
+                                    ? $answer->selected_options
+                                    : ($answer->selected_options ? json_decode($answer->selected_options, true) : []);
                                 if (is_array($selectedRaw)) {
                                     foreach ($selectedRaw as $optionId) {
                                         $selectedOptions[] = $question?->answerOptions?->firstWhere('id', (int) $optionId)?->option_text ?? '—';
@@ -99,9 +101,9 @@
                                 if (($question?->type ?? null) === 'matching' && !empty($answer->text_answer)) {
                                     $selectedOptions = collect(explode('||', $answer->text_answer))
                                         ->filter(fn($pair) => trim($pair) !== '')
-                                        ->map(function ($pair) {
+                                        ->mapWithKeys(function ($pair) {
                                             $parts = explode(':', $pair, 2);
-                                            return trim($parts[1] ?? '');
+                                            return [trim($parts[0] ?? '') => trim($parts[1] ?? '')];
                                         })->all();
                                 }
 
@@ -118,14 +120,58 @@
                                     'open_text' => 'Ҷавоби кушод (устод тафтиш мекунад)',
                                     default => '—',
                                 };
+                                $isMatching = ($question?->type ?? null) === 'matching';
+                                $matchingCorrectCount = 0;
+                                if ($isMatching && !empty($answer->text_answer)) {
+                                    $selectedPairs = collect(explode('||', $answer->text_answer))
+                                        ->filter(fn($pair) => trim($pair) !== '')
+                                        ->mapWithKeys(function ($pair) {
+                                            $parts = explode(':', $pair, 2);
+                                            return [trim($parts[0] ?? '') => trim($parts[1] ?? '')];
+                                        });
+                                    $matchingCorrectCount = $correctOptions->filter(function ($option) use ($selectedPairs) {
+                                        $expected = trim(explode('|||', $option->option_text, 2)[1] ?? '');
+                                        return ($selectedPairs[(string) $option->id] ?? null) === $expected;
+                                    })->count();
+                                }
                             @endphp
                             <tr>
                                 <td>{{ $index + 1 }}</td>
                                 <td>{{ $question?->question_text }}</td>
-                                <td>{{ !empty($selectedOptions) ? implode('; ', $selectedOptions) : '—' }}</td>
-                                <td>{{ $correctText }}</td>
                                 <td>
-                                    @if($answer->is_correct === true)
+                                    @if(($question?->type ?? null) === 'matching')
+                                        @forelse($correctOptions as $correctOption)
+                                            @php
+                                                $correctParts = explode('|||', $correctOption->option_text, 2);
+                                                $selectedValue = $selectedOptions[(string) $correctOption->id] ?? '—';
+                                            @endphp
+                                            <div class="mb-1">
+                                                <strong>{{ trim($correctParts[0] ?? '') }}</strong>:
+                                                <span>{{ $selectedValue }}</span>
+                                            </div>
+                                        @empty
+                                            —
+                                        @endforelse
+                                    @elseif(!empty($selectedOptions))
+                                        {{ implode('; ', $selectedOptions) }}
+                                    @else
+                                        —
+                                    @endif
+                                </td>
+                                <td>
+                                    @if(($question?->type ?? null) === 'matching')
+                                        @foreach($correctOptions as $correctOption)
+                                            @php $correctParts = explode('|||', $correctOption->option_text, 2); @endphp
+                                            <div class="mb-1">{{ trim($correctParts[0] ?? '') }}: <strong>{{ trim($correctParts[1] ?? '') }}</strong></div>
+                                        @endforeach
+                                    @else
+                                        {{ $correctText }}
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($isMatching && $matchingCorrectCount > 0 && $matchingCorrectCount < $correctOptions->count())
+                                    <span class="badge bg-warning text-dark">Қисман дуруст ({{ $matchingCorrectCount }}/{{ $correctOptions->count() }})</span>
+                                    @elseif($answer->is_correct === true)
                                     <span class="badge bg-success">Дуруст</span>
                                     @elseif($answer->is_correct === false)
                                     <span class="badge bg-danger">Нодуруст</span>
@@ -134,11 +180,7 @@
                                     @endif
                                 </td>
                                 <td>
-                                    @if($answer->is_correct === true)
-                                        {{ number_format($answer->examQuestion?->points ?? 2.5, 1) }}
-                                    @else
-                                        0.0
-                                    @endif
+                                    {{ number_format((float) ($answer->points_earned ?? 0), 1) }}
                                 </td>
                             </tr>
                             @endforeach

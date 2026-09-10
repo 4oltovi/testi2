@@ -6,6 +6,7 @@ use App\Models\Semester;
 use App\Models\SemesterGrade;
 use App\Models\SemesterGpa;
 use App\Models\Student;
+use Illuminate\Support\Collection;
 
 /**
  * Хидмати ҳисоби GPA мутобиқи низоми кредитии Тоҷикистон
@@ -15,6 +16,24 @@ use App\Models\Student;
  */
 class GpaCalculator
 {
+    public function calculateFromGrades(Collection $grades): float
+    {
+        $credits = 0;
+        $weightedPoints = 0;
+
+        foreach ($grades as $grade) {
+            $subjectCredits = (int) ($grade->subjectAssignment?->credits ?? 0);
+            if ($subjectCredits <= 0) {
+                continue;
+            }
+
+            $credits += $subjectCredits;
+            $weightedPoints += (float) ($grade->grade_point ?? 0) * $subjectCredits;
+        }
+
+        return $credits > 0 ? round($weightedPoints / $credits, 2) : 0.0;
+    }
+
     /**
      * Ҳисоби GPA барои як семестр
      */

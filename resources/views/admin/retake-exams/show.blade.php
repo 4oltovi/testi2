@@ -110,14 +110,16 @@
                                 <td>
                                     @if($latestAttempt && $latestAttempt->percentage !== null)
                                         <strong>{{ $latestAttempt->letter_grade }}</strong>
-                                        ({{ number_format($latestAttempt->percentage, 2) }}%)
+                                        <br><span class="text-muted">{{ number_format($latestAttempt->total_score, 2) }} / {{ number_format($latestAttempt->max_possible_score, 2) }}</span>
+                                        <small class="text-muted">({{ number_format($latestAttempt->percentage, 2) }}%)</small>
                                     @else
                                         <span class="text-muted">—</span>
                                     @endif
                                 </td>
                                 <td>
                                     @if($latestAttempt && $latestAttempt->percentage !== null)
-                                        <strong>{{ number_format($latestAttempt->percentage, 2) }}%</strong>
+                                        <strong>{{ number_format($latestAttempt->total_score, 2) }}</strong>
+                                        <small class="text-muted">({{ number_format($latestAttempt->percentage, 2) }}%)</small>
                                     @else
                                         <span class="text-muted">—</span>
                                     @endif

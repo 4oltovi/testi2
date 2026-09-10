@@ -28,13 +28,15 @@ class SettingsController extends Controller
         $organizationSettings = Setting::where('group', 'organization')->orderBy('key')->get();
         $securitySettings     = Setting::where('group', 'security')->orderBy('key')->get();
         $academicYears        = AcademicYear::orderBy('id', 'desc')->get();
+        $semesters            = Semester::with('academicYear')->orderBy('academic_year_id')->orderBy('number')->get();
 
         return view('admin.settings.index', compact(
             'formulaSettings',
             'testSettings',
             'organizationSettings',
             'securitySettings',
-            'academicYears'
+            'academicYears',
+            'semesters'
         ));
     }
 
@@ -179,34 +181,46 @@ class SettingsController extends Controller
      */
     public function activateYear(Request $request): RedirectResponse
     {
-        $request->validate(['academic_year_id' => 'required|exists:academic_years,id']);
+        $request->validate([
+            'academic_year_id' => 'required|exists:academic_years,id',
+            'semester_id' => 'nullable|exists:semesters,id',
+        ]);
 
         $year = AcademicYear::findOrFail($request->academic_year_id);
+        $selectedSemesterId = $request->integer('semester_id') ?: null;
 
-        DB::transaction(function () use ($year) {
-            // 1) Солҳои дигар: ғайриҷорӣ (фаъолҳо → анҷомёфта)
-            AcademicYear::where('id', '!=', $year->id)->update(['is_current' => 0]);
-            AcademicYear::where('id', '!=', $year->id)
+        if ($selectedSemesterId && !Semester::whereKey($selectedSemesterId)
+            ->where('academic_year_id', $year->id)
+            ->exists()) {
+            return back()->withErrors(['semester_id' => 'Семестри интихобшуда ба соли таҳсилии интихобшуда тааллуқ надорад.']);
+        }
+
+        DB::transaction(function () use ($year, $selectedSemesterId) {
+            // Солҳои дигар: ғайриҷорӣ (солҳои planning ҳамон planning мемонанд)
+            AcademicYear::whereKeyNot($year->id)->update(['is_current' => false]);
+            AcademicYear::whereKeyNot($year->id)
                 ->where('status', 'active')
                 ->update(['status' => 'completed']);
 
-            // 2) Соли интихобшуда: ҷорӣ ва фаъол
-            $year->update(['is_current' => 1, 'status' => 'active', 'is_active' => 1]);
+            // Соли интихобшуда: ҷорӣ ва фаъол
+            $year->update(['is_current' => true, 'status' => 'active', 'is_active' => true]);
 
-            // 3) Ҳамаи семестрҳо: ғайриҷорӣ (ин ислоҳи асосӣ аст!)
-            Semester::query()->update(['is_current' => 0]);
+            // Ҳамаи семестрҳо: ғайриҷорӣ
+            Semester::query()->update(['is_current' => false]);
 
-            // 4) Семестри ҷорӣ: агар имрӯз дар байни санаҳо бошад — ҳамон,
-            //    вагарна семестри аввали ҳамон сол
+            // Семестри ҷорӣ: агар имрӯз дар байни санаҳо бошад — ҳамон,
+            // вагарна семестри аввали ҳамон сол
             $semesters = $year->semesters()->orderBy('number')->get();
 
-            $current = $semesters->first(
-                fn ($s) => $s->start_date && $s->end_date
-                    && now()->between($s->start_date, $s->end_date)
-            ) ?? $semesters->first();
+            $current = $selectedSemesterId
+                ? $semesters->firstWhere('id', $selectedSemesterId)
+                : ($semesters->first(
+                    fn ($s) => $s->start_date && $s->end_date
+                        && now()->between($s->start_date, $s->end_date)
+                ) ?? $semesters->first());
 
             if ($current) {
-                $current->update(['is_current' => 1, 'status' => 'active']);
+                $current->update(['is_current' => true, 'status' => 'active']);
             }
         });
 

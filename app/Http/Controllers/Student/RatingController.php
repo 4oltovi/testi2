@@ -205,7 +205,7 @@ class RatingController extends Controller
             'finished_at' => now(),
         ]);
 
-        $this->updateSemesterGrade($ratingAttempt, $percentage);
+        $this->updateSemesterGrade($ratingAttempt);
 
         return redirect()->route('student.rating.result', $ratingAttempt)
             ->with('success', "✅ Рейтинг супорида шуд: {$percentage}%");
@@ -236,7 +236,7 @@ class RatingController extends Controller
         return view('student.rating.result', compact('attempt', 'session', 'questions', 'used'));
     }
 
-    private function updateSemesterGrade(RatingAttempt $ratingAttempt, float $percentage): void
+    private function updateSemesterGrade(RatingAttempt $ratingAttempt): void
     {
         $session = $ratingAttempt->session;
         if (!$session) {
@@ -270,14 +270,8 @@ class RatingController extends Controller
             ]);
         }
 
-        $period = $session->period;
-        if ($period === 'rating1') {
-            $semesterGrade->rating1_score = $percentage;
-        } elseif ($period === 'rating2') {
-            $semesterGrade->rating2_score = $percentage;
-        }
-
-        $semesterGrade->save();
+        // НЕ записываем raw percentage в rating1_score/rating2_score —
+        // GradeCalculator::recalculateAndPersist() сам вычислит score (max 40) на основе finished attempt.
 
         app(\App\Services\GradeCalculator::class)->recalculateAndPersist(
             $semesterGrade->student_id,

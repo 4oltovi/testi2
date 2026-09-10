@@ -145,7 +145,7 @@ class SemesterGrade extends Model
             return null;
         }
 
-        $total = round((($ratingScore + $journalScore) / 4) + $examScore, 2);
+        $total = round((($ratingScore + $journalScore) / 4) + ($examScore * 0.5), 2);
 
         return $total;
     }
@@ -164,7 +164,7 @@ class SemesterGrade extends Model
         $rating1 = (float) ($this->rating1_score ?? 0);
         $rating2 = (float) ($this->rating2_score ?? 0);
 
-        $totalScore = round(($rating1 + $rating2) / 4 + $examScore, 2);
+        $totalScore = round((($rating1 + $rating2) / 4) + ($examScore * 0.5), 2);
 
         $grade = GradeScale::fromPercentage($totalScore);
 

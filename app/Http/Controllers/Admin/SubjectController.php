@@ -13,7 +13,10 @@ class SubjectController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Subject::with(['department.faculty']);
+        $query = Subject::with([
+            'department:id,name,faculty_id', 
+            'department.faculty:id,name'
+        ]);
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
@@ -75,10 +78,9 @@ class SubjectController extends Controller
     public function show(Subject $subject): View
     {
         $subject->load([
-            'department.faculty',
-            'subjectAssignments.group',
-            'subjectAssignments.semester',
-            'questionBanks'
+            'department.faculty:id,name',
+            'subjectAssignments' => fn($q) => $q->with(['group:id,name', 'semester:id,number']),
+            'questionBanks' => fn($q) => $q->withCount('questions')
         ]);
 
         return view('admin.structure.subjects.show', compact('subject'));

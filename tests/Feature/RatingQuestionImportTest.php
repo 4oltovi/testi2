@@ -89,19 +89,19 @@ class RatingQuestionImportTest extends TestCase
         $response->assertSee('Импорти саволҳои рейтинг');
     }
 
-    public function test_can_import_rating_questions_via_csv(): void
+    public function test_can_import_rating_questions_via_excel(): void
     {
         $user = $this->createAdmin();
         $subject = $this->createSubject('Тест Фан', 'TF101');
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setCellValue('A1', '@Саволи тестӣ?');
-        $sheet->setCellValue('A2', '$Варианти дуруст');
-        $sheet->setCellValue('A3', '&Варианти нодуруст 1');
-        $sheet->setCellValue('A4', '&Варианти нодуруст 2');
-        $sheet->setCellValue('A5', '&Варианти нодуруст 3');
-        $sheet->setCellValue('A6', '');
+        $sheet->fromArray(['@Саволи тестӣ?'], null, 'A1');
+        $sheet->fromArray(['$Варианти дуруст'], null, 'A2');
+        $sheet->fromArray(['&Варианти нодуруст 1'], null, 'A3');
+        $sheet->fromArray(['&Варианти нодуруст 2'], null, 'A4');
+        $sheet->fromArray(['&Варианти нодуруст 3'], null, 'A5');
+        $sheet->fromArray([''], null, 'A6');
 
         $tmpFile = tempnam(sys_get_temp_dir(), 'rating_excel_') . '.xlsx';
         $writer = new Xlsx($spreadsheet);
@@ -113,6 +113,7 @@ class RatingQuestionImportTest extends TestCase
         ]);
 
         $response->assertRedirect(route('admin.rating-questions.import-preview'));
+        $response->assertSessionHas('rating_excel_import_preview.valid_count', 1);
 
         $confirmResponse = $this->actingAs($user)->post('/admin/rating-questions/import/confirm', [
             'confirm' => '1',
@@ -133,6 +134,38 @@ class RatingQuestionImportTest extends TestCase
         $question = Question::where('question_bank_id', $bank->id)->first();
         $this->assertNotNull($question);
         $this->assertEquals(1, $question->answerOptions->where('is_correct', true)->count());
+        $this->assertEquals(1, $question->difficulty_level);
+        $this->assertCount(4, $question->answerOptions);
+        $this->assertEquals('Варианти дуруст', $question->answerOptions->sortBy('sort_order')->first()->option_text);
+    }
+
+    public function test_rating_import_uses_exam_marker_format(): void
+    {
+        $user = $this->createAdmin();
+        $subject = $this->createSubject('Фани Marker', 'MRK101');
+        $spreadsheet = new Spreadsheet();
+        $spreadsheet->getActiveSheet()->fromArray(['@Саволи marker?'], null, 'A1');
+        $spreadsheet->getActiveSheet()->fromArray(['$Ҷавоби дуруст'], null, 'A2');
+        $spreadsheet->getActiveSheet()->fromArray(['&Ҷавоби дигар'], null, 'A3');
+        $tmpFile = tempnam(sys_get_temp_dir(), 'rating_marker_') . '.xlsx';
+        (new Xlsx($spreadsheet))->save($tmpFile);
+
+        $response = $this->actingAs($user)->post('/admin/rating-questions/import', [
+            'subject_id' => $subject->id,
+            'file' => new UploadedFile($tmpFile, 'marker.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true),
+        ]);
+
+        $response->assertRedirect(route('admin.rating-questions.import-preview'));
+        $response->assertSessionHas('rating_excel_import_preview.valid_count', 1);
+    }
+
+    public function test_rating_template_has_expected_workbook_structure(): void
+    {
+        $user = $this->createAdmin();
+        $response = $this->actingAs($user)->get('/admin/rating-questions/template');
+
+        $response->assertOk();
+        $response->assertHeader('Content-Disposition', 'attachment; filename=rating_questions_import_template.xlsx');
     }
 
     public function test_can_export_rating_questions(): void

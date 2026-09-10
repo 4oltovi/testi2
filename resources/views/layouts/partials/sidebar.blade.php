@@ -7,6 +7,7 @@
             $dashboardUrl = match(true) {
                 $user?->hasRole('admin') || $user?->hasRole('super_admin') => '/admin/dashboard',
                 $user?->hasRole('teacher') => '/teacher/dashboard',
+                $user?->hasAnyRole(['dean', 'vice_dean', 'department_head', 'registrar', 'accountant']) => route('management.dashboard'),
                 default => '/student/dashboard',
             };
         @endphp
@@ -228,6 +229,58 @@
                 </a>
             </li>
 
+            @elseif(auth()->user()?->hasAnyRole(['dean', 'vice_dean', 'department_head', 'registrar', 'accountant']))
+            {{-- ===== SIDEBAR ДЕКАН/ВИСЕ-ДЕКАН ===== --}}
+            <li class="nav-item">
+                <a class="nav-link text-white {{ request()->is('management/dashboard') ? 'active bg-primary rounded' : '' }}" href="{{ route('management.dashboard') }}">
+                    <i class="bi bi-speedometer2 me-2"></i> Панели асосӣ
+                </a>
+            </li>
+
+            <li class="nav-item mt-2">
+                <small class="nav-link text-uppercase fw-bold px-3" style="color:#8a94ff;">Идоракунӣ</small>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {{ request()->is('management/students*') ? 'active bg-primary rounded' : '' }}" href="{{ route('management.students.index') }}">
+                    <i class="bi bi-person-badge me-2"></i> Донишҷӯён
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {{ request()->is('management/teachers*') ? 'active bg-primary rounded' : '' }}" href="{{ route('management.teachers.index') }}">
+                    <i class="bi bi-person-workspace me-2"></i> Омӯзгорон
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {{ request()->is('management/specialties*') ? 'active bg-primary rounded' : '' }}" href="{{ route('management.specialties.index') }}">
+                    <i class="bi bi-bookmark-star me-2"></i> Ихтисосҳо
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {{ request()->is('management/groups*') ? 'active bg-primary rounded' : '' }}" href="{{ route('management.groups.index') }}">
+                    <i class="bi bi-people-fill me-2"></i> Гурӯҳҳо
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {{ request()->is('management/subjects*') ? 'active bg-primary rounded' : '' }}" href="{{ route('management.subjects.index') }}">
+                    <i class="bi bi-book me-2"></i> Фанҳо
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {{ request()->is('management/journal*') ? 'active bg-primary rounded' : '' }}" href="{{ route('management.journal.index') }}">
+                    <i class="bi bi-journal-text me-2"></i> Журнал
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {{ request()->is('management/debts*') ? 'active bg-primary rounded' : '' }}" href="{{ route('management.debts.index') }}">
+                    <i class="bi bi-exclamation-triangle me-2"></i> Қарздорӣ
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {{ request()->is('management/reports*') ? 'active bg-primary rounded' : '' }}" href="{{ route('management.reports.index') }}">
+                    <i class="bi bi-file-earmark-bar-graph me-2"></i> Ҳисоботҳо
+                </a>
+            </li>
+
             @elseif(auth()->user()?->hasRole('student'))
             {{-- ===== SIDEBAR ДОНИШҶӮ ===== --}}
             <li class="nav-item">
@@ -248,6 +301,11 @@
             <li class="nav-item">
                 <a class="nav-link text-white {{ request()->is('student/exams*') ? 'active bg-primary rounded' : '' }}" href="/student/exams">
                     <i class="bi bi-pencil-square me-2"></i> Тестҳо
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {{ request()->is('student/retake-exams*') ? 'active bg-primary rounded' : '' }}" href="{{ route('student.retake-exams.index') }}">
+                    <i class="bi bi-arrow-repeat me-2"></i> Имтиҳони такрорӣ
                 </a>
             </li>
 

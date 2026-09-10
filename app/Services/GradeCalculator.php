@@ -9,6 +9,8 @@ use App\Models\Exam;
 use App\Models\ExamAttempt;
 use App\Models\RetakeExam;
 use App\Models\RetakeExamStudent;
+use App\Models\RatingAttempt;
+use App\Models\RatingSession;
 use App\Models\Semester;
 use App\Models\SemesterGrade;
 use App\Models\Setting;
@@ -26,6 +28,10 @@ use Illuminate\Support\Facades\Cache;
 class GradeCalculator
 {
     private const CACHE_TTL = 300; // 5 дақиқа
+    private array $subjectIds = [];
+    private array $semesterStartDates = [];
+    private array $exams = [];
+    private array $examMaxPoints = [];
 
     // ================================================================
     // НАВ: Рейтинги пурра R1 = журнал (60) + тест (40)
@@ -42,14 +48,19 @@ class GradeCalculator
 
     private function calculateCombinedRating(int $studentId, int $subjectAssignmentId, int $semesterId, string $period): float
     {
+        // Гирифтани танзимоти тақсимоти балл (60 ба журнал, 40 ба тест)
         $journalMax = (float) Setting::get('journal_part_points', 60);
         $testMax = max(0, 100 - $journalMax);
 
-        $journalScore = $this->calculateJournalPercentage($studentId, $subjectAssignmentId, $semesterId, $period);
+        // 1. Ҳисоби балл аз Журнал (то 60 балл)
+        $journalPercentage = $this->calculateJournalPercentage($studentId, $subjectAssignmentId, $semesterId, $period);
+        $finalJournalPart = min($journalPercentage, $journalMax);
+        
+        // 2. Ҳисоби балл аз Тест (то 40 балл) - используем наш новый метод
+        $finalTestPart = $this->calculateComputerRatingScore($studentId, $subjectAssignmentId, $semesterId, $period);
 
-        $testPct = $this->calculateTestPercentage($studentId, $subjectAssignmentId, $semesterId, $period);
-
-        return round(min($journalScore, $journalMax) + ($testPct / 100 * $testMax), 2);
+        // Натиҷаи ниҳоӣ = Журнал + Тест
+        return round($finalJournalPart + $finalTestPart, 2);
     }
 
     // ================================================================
@@ -57,9 +68,11 @@ class GradeCalculator
     // ================================================================
     public function calculateJournalPercentage(int $studentId, int $subjectAssignmentId, int $semesterId, string $period = 'rating1'): float
     {
-        $semester = Semester::find($semesterId);
+        if (!array_key_exists($semesterId, $this->semesterStartDates)) {
+            $this->semesterStartDates[$semesterId] = Semester::whereKey($semesterId)->value('start_date');
+        }
 
-        if (!$semester || !$semester->start_date) {
+        if (!$this->semesterStartDates[$semesterId]) {
             return 0;
         }
 
@@ -83,15 +96,94 @@ class GradeCalculator
     }
 
     // ================================================================
+    // НАВ: БАЛЛИ ТЕСТИ КОМПЬЮТЕРӢ (ҳадди аксар 40 ба эътибори фоиз)
+    // ================================================================
+    public function calculateComputerRatingScore(int $studentId, int $subjectAssignmentId, int $semesterId, string $period = 'rating1'): float
+    {
+        // 1) аввал аз rating_attempts (online)
+        $subjectId = $this->subjectIds[$subjectAssignmentId]
+            ??= SubjectAssignment::whereKey($subjectAssignmentId)->value('subject_id');
+
+        \Log::debug('calculateComputerRatingScore START', [
+            'student_id' => $studentId,
+            'subject_assignment_id' => $subjectAssignmentId,
+            'semester_id' => $semesterId,
+            'period' => $period,
+            'subject_id' => $subjectId,
+        ]);
+
+        if ($subjectId) {
+            $attempt = RatingAttempt::where('student_id', $studentId)
+                ->where('subject_id', $subjectId)
+                ->where('status', 'finished')
+                ->whereHas('session', fn($q) => $q
+                    ->where('period', $period)
+                    ->where('semester_id', $semesterId))
+                ->orderByDesc('percentage')
+                ->first();
+
+            \Log::debug('calculateComputerRatingScore query params', [
+                'student_id' => $studentId,
+                'subject_id' => $subjectId,
+                'semester_id' => $semesterId,
+                'period' => $period,
+                'attempt_found' => $attempt?->id,
+                'attempt_percentage' => $attempt?->percentage,
+                'attempt_status' => $attempt?->status,
+                'attempt_session_id' => $attempt?->rating_session_id,
+            ]);
+
+            if ($attempt) {
+                $score = (float) min($attempt->percentage * 0.4, 40);
+                \Log::debug('calculateComputerRatingScore RESULT', ['score' => $score]);
+                return $score;
+            }
+        }
+
+        \Log::debug('calculateComputerRatingScore FALLBACK to old exam attempts', [
+            'subject_assignment_id' => $subjectAssignmentId,
+            'semester_id' => $semesterId,
+            'period' => $period,
+        ]);
+
+        // 2) омодагии кӯҳна дар exam_attempts (кӯҳна)
+
+        // 2) омодагии кӯҳна дар exam_attempts (кӯҳна)
+        $exam = $this->findExam($subjectAssignmentId, $semesterId, $period);
+
+        if (!$exam) return 0;
+
+        $attempt = ExamAttempt::where('exam_id', $exam->id)
+            ->where('student_id', $studentId)
+            ->orderByDesc('total_score')
+            ->first();
+
+        if (!$attempt) return 0;
+
+        $maxPoints = $this->examMaxPoints[$exam->id]
+            ??= (float) $exam->examQuestions()->sum('points');
+        if ($maxPoints <= 0) $maxPoints = (float) $exam->total_questions_count * 2.5;
+
+        if ($maxPoints <= 0) return 0;
+
+        // percentage = (score/max) * 100, ба балли 40 табдил меёбад
+        $percentage = ($attempt->total_score / $maxPoints) * 100;
+        $score = $percentage * 0.4;
+
+        return (float) min($score, 40);
+    }
+
+    // ================================================================
     // НАВ: Фоизи ТЕСТ (аз имтиҳони rating1/rating2, ки донишҷӯ бо компютер супурд)
     // ================================================================
     public function calculateTestPercentage(int $studentId, int $subjectAssignmentId, int $semesterId, string $period = 'rating1'): float
     {
         // НАВ: аввал аз рейтингҳои онлайн (rating_attempts)
-        $subjectId = \App\Models\SubjectAssignment::whereKey($subjectAssignmentId)->value('subject_id');
+        $subjectId = $this->subjectIds[$subjectAssignmentId]
+            ??= SubjectAssignment::whereKey($subjectAssignmentId)->value('subject_id');
 
         if ($subjectId) {
-            $attempt = \App\Models\RatingAttempt::where('student_id', $studentId)
+            $attempt = RatingAttempt::where('student_id', $studentId)
                 ->where('subject_id', $subjectId)
                 ->where('status', 'finished')
                 ->whereHas('session', fn($q) => $q
@@ -106,11 +198,7 @@ class GradeCalculator
         }
 
         // Захира: имтиҳонҳои кӯҳна (exam_type = rating1/rating2)
-        $exam = Exam::where('subject_assignment_id', $subjectAssignmentId)
-            ->where('semester_id', $semesterId)
-            ->where('exam_type', $period)
-            ->latest()
-            ->first();
+        $exam = $this->findExam($subjectAssignmentId, $semesterId, $period);
 
         if (!$exam) return 0;
 
@@ -121,31 +209,11 @@ class GradeCalculator
 
         if (!$attempt) return 0;
 
-        $maxPoints = $exam->examQuestions()->sum('points');
+        $maxPoints = $this->examMaxPoints[$exam->id]
+            ??= (float) $exam->examQuestions()->sum('points');
         if ($maxPoints <= 0) $maxPoints = (float) $exam->total_questions_count * 2.5;
 
         return $maxPoints > 0 ? round(min(100, ($attempt->total_score / $maxPoints) * 100), 2) : 0;
-    }
-
-    // ================================================================
-    // Коэффисиентҳо (барои формулаи ниҳоӣ)
-    // ================================================================
-    private function getWeights(bool $withIndependentWork = false): array
-    {
-        if ($withIndependentWork) {
-            return [
-                'rating1' => (float) Setting::get('formula_weight_rating1_with_iw', 0.15),
-                'rating2' => (float) Setting::get('formula_weight_rating2_with_iw', 0.15),
-                'independent_work' => (float) Setting::get('formula_weight_independent_work', 0.30),
-                'exam' => (float) Setting::get('formula_weight_exam_with_iw', 0.40),
-            ];
-        }
-
-        return [
-            'rating1' => (float) Setting::get('formula_weight_rating1', 0.30),
-            'rating2' => (float) Setting::get('formula_weight_rating2', 0.30),
-            'exam' => (float) Setting::get('formula_weight_exam', 0.40),
-        ];
     }
 
     /**
@@ -210,7 +278,7 @@ class GradeCalculator
             ];
         }
 
-        $totalScore = round(($rating1 + $rating2) / 4 + $examScore, 2);
+        $totalScore = round((($rating1 + $rating2) / 4) + ($examScore * 0.5), 2);
 
         $grade = GradeScale::fromPercentage($totalScore);
 
@@ -255,12 +323,15 @@ class GradeCalculator
         }
 
         // 3) ИМТИҲОН автоматӣ аз тести онлайн (омӯзгор дастӣ намегузорад!)
-        if ($semesterGrade->exam_score === null && $semesterGrade->subject_assignment_id) {
-            $semesterGrade->exam_score = $this->calculateExamPercentage(
+        if ($semesterGrade->subject_assignment_id) {
+            $examScore = $this->calculateExamScore(
                 $semesterGrade->student_id,
                 $semesterGrade->subject_assignment_id,
                 $semesterGrade->semester_id
             );
+            if ($examScore !== null) {
+                $semesterGrade->exam_score = $examScore;
+            }
         }
 
         // 4) Натиҷаи такрорсупорӣ
@@ -382,10 +453,15 @@ class GradeCalculator
     {
         $rating1 = $this->calculateRating1($studentId, $subjectAssignmentId, $semesterId);
         $rating2 = $this->calculateRating2($studentId, $subjectAssignmentId, $semesterId);
-        $exam = $this->calculateExamPercentage($studentId, $subjectAssignmentId, $semesterId, 'main');
+        
+        // Навсозӣ: гирифтани фоизи имтиҳон (на танҳо балл)
+        $exam = $this->calculateExamScore($studentId, $subjectAssignmentId, $semesterId);
 
         $retakeScore = null;
-        $retakeExam = RetakeExam::where('subject_id', SubjectAssignment::find($subjectAssignmentId)?->subject_id)
+        $assignment = SubjectAssignment::find($subjectAssignmentId);
+        $subjectId = $assignment?->subject_id;
+        
+        $retakeExam = RetakeExam::where('subject_id', $subjectId)
             ->where('semester_id', $semesterId)
             ->first();
 
@@ -399,15 +475,16 @@ class GradeCalculator
             }
         }
 
-        $effectiveExamScore = $retakeScore !== null ? $retakeScore : $exam;
+        $effectiveExamScore = $retakeScore !== null ? $retakeScore : ($exam ?? 0);
 
         $totalScore = null;
         $letterGrade = null;
         $gradePoint = null;
-        $status = null;
+        $status = 'in_progress';
 
+        // Формула: ((R1 + R2) / 4) + (Exam * 0.5)
         if ($effectiveExamScore > 0 || ($rating1 > 0 || $rating2 > 0)) {
-            $totalScore = round((($rating1 + $rating2) / 4) + ($effectiveExamScore * 0.5), 2);
+            $totalScore = round((((float)$rating1 + (float)$rating2) / 4) + ((float)$effectiveExamScore * 0.5), 2);
 
             $gradeEnum = GradeScale::fromPercentage($totalScore);
             $letterGrade = $gradeEnum->value;
@@ -430,23 +507,22 @@ class GradeCalculator
                 'letter_grade' => $letterGrade,
                 'grade_point' => $gradePoint,
                 'status' => $status,
+                'is_finalized' => true, // Акнун натиҷа дар журнал намоён мешавад
+                'finalized_at' => now(),
             ]
         );
 
-        $subjectId = SubjectAssignment::find($subjectAssignmentId)?->subject_id;
         if ($subjectId) {
             $debtDetector = app(\App\Services\DebtDetector::class);
-
-            if ($totalScore < 50 && $letterGrade !== null) {
+            if ($totalScore !== null && $totalScore < 50) {
                 $semesterGrade = SemesterGrade::where('student_id', $studentId)
                     ->where('subject_assignment_id', $subjectAssignmentId)
                     ->where('semester_id', $semesterId)
                     ->first();
-
                 if ($semesterGrade) {
                     $debtDetector->checkAndCreateDebt($semesterGrade);
                 }
-            } else {
+            } elseif ($totalScore !== null && $totalScore >= 50 && $letterGrade !== null) {
                 $debtDetector->resolveDebtAfterRetake($studentId, $subjectId, $semesterId, $totalScore, $letterGrade);
             }
         }
@@ -458,16 +534,7 @@ class GradeCalculator
      */
     public function calculateExamPercentage(int $studentId, int $subjectAssignmentId, int $semesterId, string $examType = 'main'): float
     {
-        $query = Exam::where('subject_assignment_id', $subjectAssignmentId)
-            ->where('semester_id', $semesterId);
-
-        if ($examType === 'main') {
-            $query->where('exam_type', 'main');
-        } else {
-            $query->whereIn('exam_type', ['main', 'retake', 'retake_commission']);
-        }
-
-        $exam = $query->latest('starts_at')->first();
+        $exam = $this->findExam($subjectAssignmentId, $semesterId, $examType === 'main' ? 'main' : 'all');
 
         if (!$exam) {
             return 0;
@@ -487,7 +554,8 @@ class GradeCalculator
             return (float) $attempt->percentage;
         }
 
-        $maxPoints = $exam->examQuestions()->sum('points');
+        $maxPoints = $this->examMaxPoints[$exam->id]
+            ??= (float) $exam->examQuestions()->sum('points');
         if ($maxPoints <= 0) {
             $maxPoints = (float) $exam->total_questions_count * 2.5;
         }
@@ -497,5 +565,43 @@ class GradeCalculator
         }
 
         return 0;
+    }
+
+    public function calculateExamScore(int $studentId, int $subjectAssignmentId, int $semesterId): ?float
+    {
+        $exam = $this->findExam($subjectAssignmentId, $semesterId, 'main');
+
+        if (!$exam) {
+            return null;
+        }
+
+        $attempt = ExamAttempt::where('exam_id', $exam->id)
+            ->where('student_id', $studentId)
+            ->whereIn('status', ['submitted', 'auto_submitted', 'graded'])
+            ->orderByDesc('submitted_at')
+            ->first();
+
+        return $attempt?->total_score !== null ? (float) $attempt->total_score : null;
+    }
+
+    private function findExam(int $subjectAssignmentId, int $semesterId, string $examType): ?Exam
+    {
+        $key = $subjectAssignmentId . ':' . $semesterId . ':' . $examType;
+        if (!array_key_exists($key, $this->exams)) {
+            $query = Exam::where('subject_assignment_id', $subjectAssignmentId)
+                ->where('semester_id', $semesterId);
+
+            if ($examType === 'main') {
+                $query->where('exam_type', 'main');
+            } elseif ($examType === 'all') {
+                $query->whereIn('exam_type', ['main', 'retake', 'retake_commission']);
+            } else {
+                $query->where('exam_type', $examType);
+            }
+
+            $this->exams[$key] = $query->latest('starts_at')->first();
+        }
+
+        return $this->exams[$key];
     }
 }

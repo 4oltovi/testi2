@@ -219,7 +219,7 @@ class DebtDetector
 
             $rating1 = $gradeCalculator->calculateRating1($student->id, $subjectAssignment->id, $semesterId);
             $rating2 = $gradeCalculator->calculateRating2($student->id, $subjectAssignment->id, $semesterId);
-            $exam = $gradeCalculator->calculateExamPercentage($student->id, $subjectAssignment->id, $semesterId);
+            $exam = $gradeCalculator->calculateExamScore($student->id, $subjectAssignment->id, $semesterId) ?? 0;
 
             $retakeScore = null;
             $retakeExam = \App\Models\RetakeExam::where('subject_id', $subjectId)

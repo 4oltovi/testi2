@@ -40,7 +40,7 @@
                                         <th>Баҳои аслӣ</th>
                                         <th>Холи аслӣ</th>
                                         <th>Кӯшиш</th>
-                                        <th>Баҳои такрорӣ</th>
+                                        <th>Бали такрорӣ</th>
                                         <th>Холи такрорӣ</th>
                                         <th>Ҳолат</th>
                                     </tr>
@@ -61,7 +61,7 @@
                                             {{ $row['retake_score'] }}
                                             @endif
                                         </td>
-                                        <td>{{ $row['retake_grade'] }}</td>
+                                        <td>{{ $row['retake_grade'] }} ({{ $row['retake_percentage'] }}%)</td>
                                         <td>
                                             @php
                                             $statusBadge = match($row['status']) {

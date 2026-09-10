@@ -206,7 +206,7 @@ class AcademicYearController extends Controller
             ->update(['status' => 'completed']);
 
         // Соли интихобшуда: ҷорӣ ва фаъол
-        $academicYear->update(['is_current' => true, 'status' => 'active']);
+        $academicYear->update(['is_current' => true, 'status' => 'active', 'is_active' => true]);
 
         // Ҳамаи семестрҳо: ғайриҷорӣ
         Semester::query()->update(['is_current' => false]);

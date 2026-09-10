@@ -98,15 +98,15 @@ class RatingQuestionController extends Controller
      */
     public function importForm(): RedirectResponse
     {
-        return redirect()->route('admin.rating-questions.excel-import');
+        return redirect()->route('admin.rating-questions.import-form');
     }
 
     /**
-     * Импорти CSV барои саволномаи рейтинг
+     * Импорти Excel барои саволномаи рейтинг
      */
     public function import(Request $request): RedirectResponse
     {
-        return redirect()->route('admin.rating-questions.excel-import-upload');
+        return redirect()->route('admin.rating-questions.import');
     }
 
     /**
@@ -141,14 +141,10 @@ class RatingQuestionController extends Controller
     }
 
     /**
-     * Зерфармоии шаблони CSV
+     * Зерфармоии шаблони Excel
      */
     public function downloadTemplate()
     {
-        $path = storage_path('app/templates/rating_questions_import_template.csv');
-
-        return response()->download($path, 'rating_questions_template.csv', [
-            'Content-Type' => 'text/csv',
-        ]);
+        return redirect()->route('admin.rating-questions.template');
     }
 }

@@ -39,7 +39,7 @@ class TranscriptGenerator
             $totalCreditsEarned = $grades->where('status', 'passed')->sum('credits_earned');
             $totalCreditsRequired = $student->specialty?->total_credits ?? 0;
             $totalSubjectsPassed = $grades->where('status', 'passed')->count();
-            $finalGpa = $student->cumulative_gpa;
+            $finalGpa = $this->gpaCalculator->calculateFromGrades($grades);
             $honors = $this->gpaCalculator->determineHonors($finalGpa);
 
             // Сохтани transcript

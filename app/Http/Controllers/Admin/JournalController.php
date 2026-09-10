@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
-use App\Enums\AttendanceStatus;
 use App\Enums\GradeScale;
+use App\Http\Controllers\Controller;
+use App\Models\AcademicYear;
 use App\Models\Attendance;
 use App\Models\CurrentGrade;
 use App\Models\Group;
@@ -12,7 +12,6 @@ use App\Models\RetakeExam;
 use App\Models\RetakeExamStudent;
 use App\Models\Semester;
 use App\Models\SemesterGrade;
-use App\Models\Student;
 use App\Models\Subject;
 use App\Models\SubjectAssignment;
 use App\Models\Teacher;
@@ -26,6 +25,7 @@ use Illuminate\View\View;
 class JournalController extends Controller
 {
     private GradeCalculator $gradeCalculator;
+
     private DebtDetector $debtDetector;
 
     public function __construct(GradeCalculator $gradeCalculator, DebtDetector $debtDetector)
@@ -42,7 +42,12 @@ class JournalController extends Controller
         $currentSemester = Semester::current();
         $semesterId = $request->get('semester_id', $currentSemester?->id);
 
-        $query = SubjectAssignment::with(['subject', 'teacher', 'group', 'semester'])
+        $query = SubjectAssignment::with([
+            'subject:id,name,code',
+            'teacher:id,first_name,last_name,middle_name',
+            'group:id,name',
+            'semester:id,number,academic_year_id',
+        ])
             ->where('is_active', true);
 
         if ($semesterId) {
@@ -58,10 +63,10 @@ class JournalController extends Controller
         }
 
         $assignments = $query->orderBy('group_id')->paginate(30)->withQueryString();
-        $currentYear = \App\Models\AcademicYear::where('is_current', true)->first();
+        $currentYear = AcademicYear::where('is_current', true)->first();
 
         $semesters = Semester::with('academicYear')
-            ->when($currentYear, fn($q) => $q->where('academic_year_id', $currentYear->id))
+            ->when($currentYear, fn ($q) => $q->where('academic_year_id', $currentYear->id))
             ->orderBy('number')
             ->get();
         $groups = Group::active()->orderBy('name')->get();
@@ -74,10 +79,10 @@ class JournalController extends Controller
         $subjects = Subject::orderBy('name')->get();
         $teachers = Teacher::with('user')->where('status', 'active')->orderBy('user_id')->get();
         $groups = Group::where('is_active', true)->orderBy('name')->get();
-        $currentYear = \App\Models\AcademicYear::where('is_current', true)->first();
+        $currentYear = AcademicYear::where('is_current', true)->first();
 
         $semesters = Semester::with('academicYear')
-            ->when($currentYear, fn($q) => $q->where('academic_year_id', $currentYear->id))
+            ->when($currentYear, fn ($q) => $q->where('academic_year_id', $currentYear->id))
             ->orderBy('number')
             ->get();
 
@@ -94,7 +99,7 @@ class JournalController extends Controller
             'semester_id' => 'required|exists:semesters,id',
             'lesson_type' => 'nullable|in:lecture,practice,lab',
             'hours_per_week' => 'nullable|integer|min:1|max:20',
-            'credits' => 'nullable|integer|min:1|max:30',   
+            'credits' => 'nullable|integer|min:1|max:30',
         ]);
 
         $subjectId = $request->subject_id;
@@ -102,7 +107,7 @@ class JournalController extends Controller
 
         // Санҷиш: оё фан мавҷуд аст?
         $subject = Subject::find($subjectId);
-        if (!$subject) {
+        if (! $subject) {
             return back()->withErrors(['subject_id' => 'Фан ёфт нашуд.'])->withInput();
         }
 
@@ -130,7 +135,7 @@ class JournalController extends Controller
         }
 
         return redirect()->route('admin.journal.index', ['semester_id' => $semesterId])
-            ->with('success', $created . ' таъин барои семестри интихобшуда сохта шуд.');
+            ->with('success', $created.' таъин барои семестри интихобшуда сохта шуд.');
     }
 
     public function destroyAssignment(SubjectAssignment $subjectAssignment): RedirectResponse
@@ -152,12 +157,18 @@ class JournalController extends Controller
 
         return back()->with('success', "Миқдори кредит навсозӣ шуд: {$request->integer('credits')}");
     }
+
     /**
      * Давомот — намоиш ва сабт
      */
     public function attendance(SubjectAssignment $subjectAssignment, Request $request): View
     {
-        $subjectAssignment->load(['subject', 'group.activeStudents.user', 'teacher', 'semester']);
+        $subjectAssignment->load([
+            'subject:id,name',
+            'group.activeStudents.user:id,first_name,last_name,middle_name',
+            'teacher:id,first_name,last_name,middle_name',
+            'semester:id,number',
+        ]);
         $students = $subjectAssignment->group->activeStudents->sortBy('user.last_name');
 
         // Санаи интихобшуда
@@ -234,7 +245,12 @@ class JournalController extends Controller
      */
     public function grades(SubjectAssignment $subjectAssignment, Request $request): View
     {
-        $subjectAssignment->load(['subject', 'group.activeStudents.user', 'teacher', 'semester']);
+        $subjectAssignment->load([
+            'subject:id,name',
+            'group.activeStudents.user:id,first_name,last_name,middle_name',
+            'teacher:id,first_name,last_name,middle_name',
+            'semester:id,number',
+        ]);
         $students = $subjectAssignment->group->activeStudents->sortBy('user.last_name');
         $semester = $subjectAssignment->semester;
 
@@ -275,7 +291,9 @@ class JournalController extends Controller
 
         DB::transaction(function () use ($subjectAssignment, $request, $semester) {
             foreach ($request->input('grades') as $studentId => $score) {
-                if ($score === null || $score === '') continue;
+                if ($score === null || $score === '') {
+                    continue;
+                }
 
                 CurrentGrade::create([
                     'student_id' => $studentId,
@@ -292,7 +310,9 @@ class JournalController extends Controller
         });
 
         foreach ($request->input('grades', []) as $studentId => $score) {
-            if ($score === null || $score === '') continue;
+            if ($score === null || $score === '') {
+                continue;
+            }
             $this->gradeCalculator->recalculateAndPersist($studentId, $subjectAssignment->id, $semester->id);
         }
 
@@ -300,14 +320,19 @@ class JournalController extends Controller
     }
 
     /**
-      * Баҳоҳои семестрӣ (R1, R2, Имтиҳон, Ниҳоӣ)
+     * Баҳоҳои семестрӣ (R1, R2, Имтиҳон, Ниҳоӣ)
      */
     public function semesterGrades(SubjectAssignment $subjectAssignment): View
     {
-        $subjectAssignment->load(['subject', 'group.activeStudents.user', 'teacher', 'semester']);
+        $subjectAssignment->load([
+            'subject:id,name',
+            'group.activeStudents.user:id,first_name,last_name,middle_name',
+            'teacher:id,first_name,last_name,middle_name',
+            'semester:id,number',
+        ]);
         $students = $subjectAssignment->group->activeStudents
             ->sortBy(function ($student) {
-                return $student->user?->last_name ?? '' . $student->user?->first_name ?? '';
+                return $student->user?->last_name ?? ''.$student->user?->first_name ?? '';
             })
             ->values();
 
@@ -331,7 +356,11 @@ class JournalController extends Controller
         foreach ($students as $student) {
             $rating1 = $this->gradeCalculator->calculateRating1($student->id, $subjectAssignment->id, $semester->id);
             $rating2 = $this->gradeCalculator->calculateRating2($student->id, $subjectAssignment->id, $semester->id);
-            $exam = $this->gradeCalculator->calculateExamPercentage($student->id, $subjectAssignment->id, $semester->id, 'main');
+            $examPercentage = $this->gradeCalculator->calculateExamPercentage($student->id, $subjectAssignment->id, $semester->id, 'main');
+            $exam = $this->gradeCalculator->calculateExamScore($student->id, $subjectAssignment->id, $semester->id);
+
+            $computerRating1 = $this->gradeCalculator->calculateComputerRatingScore($student->id, $subjectAssignment->id, $semester->id, 'rating1');
+            $computerRating2 = $this->gradeCalculator->calculateComputerRatingScore($student->id, $subjectAssignment->id, $semester->id, 'rating2');
 
             $retakeScore = null;
             $retakeGrade = null;
@@ -344,7 +373,7 @@ class JournalController extends Controller
                 $retakeGradePoint = $retakeExamStudent->grade_point;
             }
 
-            $effectiveExamScore = $retakeScore !== null ? $retakeScore : $exam;
+            $effectiveExamScore = $retakeScore !== null ? $retakeScore : ($exam ?? 0);
 
             $totalScore = null;
             $letterGrade = null;
@@ -357,7 +386,7 @@ class JournalController extends Controller
 
                 $totalScore = round(($r1 + $r2) / 4 + ($effectiveExamScore * 0.5), 2);
 
-                $gradeEnum = \App\Enums\GradeScale::fromPercentage($totalScore);
+                $gradeEnum = GradeScale::fromPercentage($totalScore);
                 $letterGrade = $gradeEnum->value;
                 $gradePoint = $gradeEnum->gradePoint();
                 $status = $gradeEnum->isPassing() ? 'passed' : ($gradeEnum->canRetake() ? 'retake' : 'failed');
@@ -366,6 +395,8 @@ class JournalController extends Controller
             $calculatedGrades[$student->id] = [
                 'rating1' => $rating1,
                 'rating2' => $rating2,
+                'computer_rating1' => $computerRating1,
+                'computer_rating2' => $computerRating2,
                 'exam' => $exam,
                 'retake_score' => $retakeScore,
                 'retake_letter_grade' => $retakeGrade,

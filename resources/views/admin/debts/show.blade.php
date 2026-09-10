@@ -67,16 +67,9 @@
                         <tr>
                             <th class="text-muted">Ҳолат</th>
                             <td>
-                                @php
-                                    $statusColors = [
-                                        'active' => 'warning',
-                                        'resolved' => 'success',
-                                        'escalated' => 'danger',
-                                        'expired' => 'dark',
-                                    ];
-                                    $color = $statusColors[$debt->status] ?? 'secondary';
-                                @endphp
-                                <span class="badge bg-{{ $color }}">{{ $debt->status_label ?? $debt->status }}</span>
+                                <span class="badge {{ $debt->status?->badgeClass() ?? 'bg-secondary' }}">
+                                    {{ $debt->status?->label() ?? 'Номаълум' }}
+                                </span>
                             </td>
                         </tr>
                     </tbody>

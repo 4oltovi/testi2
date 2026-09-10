@@ -5,11 +5,11 @@
 
 @section('page-actions')
     <div class="btn-group">
-        <a href="{{ route('admin.exams.questions.import-form') }}" class="btn btn-outline-success btn-sm">
-            <i class="bi bi-upload me-1"></i> Импорт CSV
-        </a>
         <a href="{{ route('admin.questions.excel-import-form') }}" class="btn btn-outline-primary btn-sm">
-            <i class="bi bi-file-earmark-spreadsheet me-1"></i> Импорт Excel
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i> Импорт саволҳо
+        </a>
+        <a href="{{ route('admin.exams.questions.export', ['subject_id' => request('subject_id')]) }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-download me-1"></i> Экспорт
         </a>
     </div>
 @endsection
@@ -19,11 +19,7 @@
     @if(!request('subject_id'))
         <div class="row g-3">
             @foreach($subjects as $subject)
-                @php
-                    $count = \App\Models\Question::where('subject_id', $subject->id)
-                        ->whereHas('questionBank', fn($q) => $q->where('bank_type', 'exam'))
-                        ->count();
-                @endphp
+                @php $count = $questionCounts->get($subject->id, 0); @endphp
                 <div class="col-6 col-md-4 col-lg-3">
                     <a href="{{ route('admin.exams.questions.index', ['subject_id' => $subject->id]) }}" class="text-decoration-none">
                         <div class="card border-0 shadow-sm h-100 hover-card">
