@@ -97,9 +97,6 @@
                             <span title="ЭЖ: {{ number_format($ej1, 0) }}/60 | ТК: {{ number_format($cr1, 0) }}/40">
                                 {{ $calc['rating1'] !== null ? number_format($r1, 0) : '—' }}
                             </span>
-                            @if($calc['rating1'] !== null)
-                                <br><small class="text-muted">ЭЖ {{ number_format($ej1, 0) }}/60 + ТК {{ number_format($cr1, 0) }}/40</small>
-                            @endif
                         </td>
                         <td>
                             @php
@@ -110,9 +107,6 @@
                             <span title="ЭЖ: {{ number_format($ej2, 0) }}/60 | ТК: {{ number_format($cr2, 0) }}/40">
                                 {{ $calc['rating2'] !== null ? number_format($r2, 0) : '—' }}
                             </span>
-                            @if($calc['rating2'] !== null)
-                                <br><small class="text-muted">ЭЖ {{ number_format($ej2, 0) }}/60 + ТК {{ number_format($cr2, 0) }}/40</small>
-                            @endif
                         </td>
                         <td>{{ $calc['exam'] !== null ? number_format($calc['exam'], 0) : '—' }}</td>
                         <td>

@@ -147,6 +147,53 @@ class JournalController extends Controller
     }
 
     /**
+     * Таҳрири таъиноти журнал
+     */
+    public function editAssignment(SubjectAssignment $subjectAssignment): View
+    {
+        $subjects = Subject::orderBy('name')->get();
+        $teachers = Teacher::with('user')->where('status', 'active')->orderBy('user_id')->get();
+        $groups = Group::where('is_active', true)->orderBy('name')->get();
+        $currentYear = AcademicYear::where('is_current', true)->first();
+
+        $semesters = Semester::with('academicYear')
+            ->when($currentYear, fn ($q) => $q->where('academic_year_id', $currentYear->id))
+            ->orderBy('number')
+            ->get();
+
+        return view('admin.journal.assignment-edit', compact('subjectAssignment', 'subjects', 'teachers', 'groups', 'semesters'));
+    }
+
+    /**
+     * Навсозии таъиноти журнал
+     */
+    public function updateAssignment(SubjectAssignment $subjectAssignment, Request $request): RedirectResponse
+    {
+        $request->validate([
+            'subject_id' => 'required|exists:subjects,id',
+            'teacher_id' => 'required|exists:users,id',
+            'group_id' => 'required|exists:groups,id',
+            'semester_id' => 'required|exists:semesters,id',
+            'lesson_type' => 'required|in:lecture,practice,lab',
+            'hours_per_week' => 'nullable|integer|min:1|max:20',
+            'credits' => 'required|integer|min:1|max:30',
+        ]);
+
+        $subjectAssignment->update([
+            'subject_id' => $request->subject_id,
+            'teacher_id' => $request->teacher_id,
+            'group_id' => $request->group_id,
+            'semester_id' => $request->semester_id,
+            'lesson_type' => $request->lesson_type,
+            'hours_per_week' => $request->hours_per_week ?? 2,
+            'credits' => $request->credits,
+        ]);
+
+        return redirect()->route('admin.journal.index')
+            ->with('success', 'Маълумоти журнал бомуваффақият навсозӣ шуд.');
+    }
+
+    /**
      * НАВ: Навсозии кредит аз журнал
      */
     public function updateCredits(SubjectAssignment $subjectAssignment, Request $request): RedirectResponse

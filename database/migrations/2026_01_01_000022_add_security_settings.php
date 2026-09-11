@@ -10,7 +10,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('session_token', 64)->nullable()->after('remember_token');
+            if (!Schema::hasColumn('users', 'session_token')) {
+                $table->string('session_token', 64)->nullable()->after('remember_token');
+            }
         });
 
         $items = [

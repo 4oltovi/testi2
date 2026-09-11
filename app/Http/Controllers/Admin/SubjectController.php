@@ -68,6 +68,7 @@ class SubjectController extends Controller
 
         $validated['is_active'] = $request->boolean('is_active', true);
         $validated['exam_type'] = $validated['exam_type'] ?? 'exam';
+        $validated['credits'] = $validated['credits'] ?? 3;
 
         $subject = Subject::create($validated);
 

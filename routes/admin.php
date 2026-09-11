@@ -77,6 +77,8 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\JournalController::class, 'index'])->name('index');
         Route::get('/assignments/create', [\App\Http\Controllers\Admin\JournalController::class, 'createAssignment'])->name('assignments.create');
         Route::post('/assignments', [\App\Http\Controllers\Admin\JournalController::class, 'storeAssignment'])->name('assignments.store');
+        Route::get('/assignments/{subjectAssignment}/edit', [\App\Http\Controllers\Admin\JournalController::class, 'editAssignment'])->name('assignments.edit');
+        Route::put('/assignments/{subjectAssignment}', [\App\Http\Controllers\Admin\JournalController::class, 'updateAssignment'])->name('assignments.update');
         Route::delete('/assignments/{subjectAssignment}', [\App\Http\Controllers\Admin\JournalController::class, 'destroyAssignment'])->name('assignments.destroy');
         Route::get('/attendance/{subjectAssignment}', [\App\Http\Controllers\Admin\JournalController::class, 'attendance'])->name('attendance');
         Route::post('/attendance/{subjectAssignment}', [\App\Http\Controllers\Admin\JournalController::class, 'storeAttendance'])->name('attendance.store');

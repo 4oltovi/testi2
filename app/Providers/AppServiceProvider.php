@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\RatingAttempt;
+use App\Observers\RatingAttemptObserver;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Event;
@@ -10,17 +12,11 @@ use Illuminate\Support\Str;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
         //
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
         // Ҳангоми ворид шудан — токени ягонаи сессия сохта мешавад
@@ -32,5 +28,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Custom pagination view with smaller arrows
         Paginator::defaultView('vendor.pagination.bootstrap-5');
+
+        // НАВ: Observer барои rating_attempts → semester_grades
+        RatingAttempt::observe(RatingAttemptObserver::class);
     }
 }

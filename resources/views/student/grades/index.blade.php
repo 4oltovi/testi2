@@ -35,28 +35,14 @@
                         <td class="text-center">
                                 @php
                                     $r1 = $calc['rating1'] ?? 0;
-                                    $cr1 = $calc['computer_rating1'] ?? 0;
-                                    $ej1 = max(0, $r1 - $cr1);
                                 @endphp
-                                @if($calc['rating1'] !== null)
-                                    {{ number_format($r1, 0) }}
-                                    <br><small class="text-muted">ЭЖ {{ number_format($ej1, 0) }}/60 + ТК {{ number_format($cr1, 0) }}/40</small>
-                                @else
-                                    —
-                                @endif
+                                {{ $calc['rating1'] !== null ? number_format($r1, 0) : '—' }}
                             </td>
                             <td class="text-center">
                                 @php
                                     $r2 = $calc['rating2'] ?? 0;
-                                    $cr2 = $calc['computer_rating2'] ?? 0;
-                                    $ej2 = max(0, $r2 - $cr2);
                                 @endphp
-                                @if($calc['rating2'] !== null)
-                                    {{ number_format($r2, 0) }}
-                                    <br><small class="text-muted">ЭЖ {{ number_format($ej2, 0) }}/60 + ТК {{ number_format($cr2, 0) }}/40</small>
-                                @else
-                                    —
-                                @endif
+                                {{ $calc['rating2'] !== null ? number_format($r2, 0) : '—' }}
                             </td>
                         <td class="text-center">{{ $calc['exam'] !== null ? number_format($calc['exam'], 0) : '—' }}</td>
                         <td class="text-center"><strong>{{ $calc['total_score'] !== null ? number_format($calc['total_score'], 1) : '—' }}</strong></td>
