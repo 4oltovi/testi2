@@ -379,14 +379,14 @@ class RetakeExamController extends Controller
 
             if ($retakeExamStudent) {
                 $retakeExamStudent->update([
-                    'score' => $percentage,
+                    'score' => $totalScore,
                     'letter_grade' => $gradeInfo['letter_grade'],
                     'examined_at' => $attempt->submitted_at ?? now(),
                 ]);
 
                 \Log::info('RetakeExamStudent updated', [
                     'retake_exam_student_id' => $retakeExamStudent->id,
-                    'saved_score' => $percentage,
+                    'saved_score' => $totalScore,
                     'saved_letter_grade' => $gradeInfo['letter_grade'],
                 ]);
 
@@ -425,7 +425,7 @@ class RetakeExamController extends Controller
 
                 if ($semesterGrade) {
                     $semesterGrade->update([
-                        'retake_score' => $percentage,
+                        'retake_score' => $totalScore,
                         'retake_date' => now(),
                     ]);
 
@@ -442,7 +442,7 @@ class RetakeExamController extends Controller
                         $attempt->student_id,
                         $retakeExam->subject_id,
                         $retakeExam->semester_id,
-                        $percentage,
+                        $totalScore,
                         $gradeInfo['letter_grade']
                     );
                 }

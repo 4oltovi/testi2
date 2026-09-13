@@ -212,7 +212,7 @@ class AutoGradeExpiredExams extends Command
             $retakeExamStudent = $attempt->retakeExamStudent;
             if ($retakeExamStudent) {
                 $retakeExamStudent->update([
-                    'score' => $percentage,
+                    'score' => $totalScore,
                     'examined_at' => now(),
                 ]);
 
