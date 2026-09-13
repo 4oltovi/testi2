@@ -82,12 +82,14 @@ class RetakeExamController extends Controller
 
         $subjectId = $request->get('subject_id');
         $semesterId = $request->get('semester_id');
+        $retakeType = $request->get('retake_type');
 
         return view('admin.retake-exams.create', compact(
             'subjects',
             'semesters',
             'subjectId',
-            'semesterId'
+            'semesterId',
+            'retakeType'
         ));
     }
 
@@ -98,6 +100,7 @@ class RetakeExamController extends Controller
             'subject_id' => 'required|exists:subjects,id',
             'semester_id' => 'required|exists:semesters,id',
             'exam_date' => 'required|date',
+            'retake_type' => 'required|in:fx,f',
         ]);
 
         $mainExam = Exam::where('subject_assignment_id', function ($query) use ($validated) {
@@ -118,15 +121,30 @@ class RetakeExamController extends Controller
             return back()->with('error', 'Барои имтиҳони асосӣ саволнома омода нашудааст. Аввал саволномаро анҷом диҳед.');
         }
 
-        $hasEligibleDebt = AcademicDebt::where('subject_id', $validated['subject_id'])
-            ->whereIn('status', ['active', 'retake_scheduled', 'escalated'])
-            ->exists();
+        $retakeType = $validated['retake_type'];
 
-        if (!$hasEligibleDebt) {
-            return back()->with('error', 'Барои ин фан қарздории фаъол вуҷуд надорад. Имтиҳони такрорӣ танҳо барои фанҳои қарздор эҷод карда мешавад.');
+        // Филтри донишҷӯёни мувофиқи тавсеа
+        $eligibleDebts = AcademicDebt::where('subject_id', $validated['subject_id'])
+            ->where('semester_id', $validated['semester_id'])
+            ->whereIn('status', ['active', 'retake_scheduled', 'escalated']);
+
+        if ($retakeType === 'fx') {
+            $eligibleDebts = $eligibleDebts->where('debt_type', 'fx')
+                ->where('retake_allowed', true);
+        } else {
+            $eligibleDebts = $eligibleDebts->where('debt_type', 'f')
+                ->where('payment_status', 'verified')
+                ->where('retake_allowed', true);
         }
 
-        $retakeExam = DB::transaction(function () use ($validated, $mainExam, $questionCount) {
+        $eligibleDebts = $eligibleDebts->get();
+
+        if ($eligibleDebts->isEmpty()) {
+            $typeLabel = $retakeType === 'fx' ? 'Fx' : 'F';
+            return back()->with('error', "Барои ин фан ва семестр донишҷӯёни назди тавсеаи {$typeLabel} ёфт нашуд.");
+        }
+
+        $retakeExam = DB::transaction(function () use ($validated, $mainExam, $questionCount, $retakeType, $eligibleDebts) {
             $retakeExam = RetakeExam::create([
                 'subject_id' => $validated['subject_id'],
                 'semester_id' => $validated['semester_id'],
@@ -138,15 +156,11 @@ class RetakeExamController extends Controller
                 'passing_score' => $mainExam->passing_score,
                 'max_attempts' => $mainExam->max_attempts,
                 'exam_date' => $validated['exam_date'],
+                'retake_type' => $retakeType,
                 'notes' => null,
                 'created_by' => auth()->id(),
                 'status' => 'scheduled',
             ]);
-
-            $eligibleDebts = AcademicDebt::where('subject_id', $validated['subject_id'])
-                ->where('semester_id', $validated['semester_id'])
-                ->whereIn('status', ['active', 'retake_scheduled', 'escalated'])
-                ->get();
 
             foreach ($eligibleDebts as $debt) {
                 RetakeExamStudent::create([
@@ -193,6 +207,7 @@ class RetakeExamController extends Controller
         $request->validate([
             'subject_id' => 'required|exists:subjects,id',
             'semester_id' => 'required|exists:semesters,id',
+            'retake_type' => 'required|in:fx,f',
         ]);
 
         $mainExam = Exam::where('subject_assignment_id', function ($query) use ($request) {
@@ -211,16 +226,26 @@ class RetakeExamController extends Controller
             ]);
         }
 
+        $retakeType = $request->retake_type;
         $questionCount = $mainExam->examQuestions()->count();
+
         $eligibleDebts = AcademicDebt::where('subject_id', $request->subject_id)
             ->where('semester_id', $request->semester_id)
-            ->whereIn('status', ['active', 'retake_scheduled', 'escalated'])
-            ->count();
+            ->whereIn('status', ['active', 'retake_scheduled', 'escalated']);
+
+        if ($retakeType === 'fx') {
+            $eligibleDebts = $eligibleDebts->where('debt_type', 'fx')->where('retake_allowed', true);
+        } else {
+            $eligibleDebts = $eligibleDebts->where('debt_type', 'f')->where('payment_status', 'verified')->where('retake_allowed', true);
+        }
+
+        $eligibleDebts = $eligibleDebts->count();
 
         if ($eligibleDebts <= 0) {
+            $typeLabel = $retakeType === 'fx' ? 'Fx' : 'F';
             return response()->json([
                 'exists' => false,
-                'message' => 'Барои ин фан ва семестр қарздории фаъол вуҷуд надорад. Имтиҳони такрорӣ танҳо барои фанҳои қарздор эҷод карда мешавад.',
+                'message' => "Барои ин фан ва семестр донишҷӯёни назди тавсеаи {$typeLabel} ёфт нашуд.",
             ]);
         }
 

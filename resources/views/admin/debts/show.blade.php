@@ -47,6 +47,48 @@
                             </td>
                         </tr>
                         <tr>
+                            <th class="text-muted">Тавсеаи қарз</th>
+                            <td>
+                                @if($debt->isFx())
+                                    <span class="badge bg-danger">Fx (45-49%)</span>
+                                @elseif($debt->isF())
+                                    <span class="badge bg-dark">F (0-44%)</span>
+                                @else
+                                    <span class="badge bg-secondary">—</span>
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Ҳолати пардохт</th>
+                            <td>
+                                @if($debt->payment_status === 'verified')
+                                    <span class="badge bg-success">Тасдиқ шудааст</span>
+                                @elseif($debt->payment_status === 'pending')
+                                    <span class="badge bg-warning">Тасдиқ нашудааст</span>
+                                @else
+                                    <span class="badge bg-secondary">Зарурат надорад</span>
+                                @endif
+                            </td>
+                        </tr>
+                        @if($debt->payment_amount)
+                        <tr>
+                            <th class="text-muted">Маблағи пардохт</th>
+                            <td>{{ $debt->payment_amount }} сўм</td>
+                        </tr>
+                        @endif
+                        @if($debt->payment_receipt)
+                        <tr>
+                            <th class="text-muted">Шаҳодатнома</th>
+                            <td><small>{{ $debt->payment_receipt }}</small></td>
+                        </tr>
+                        @endif
+                        @if($debt->payment_verified_at)
+                        <tr>
+                            <th class="text-muted">Санаи тасдиқ</th>
+                            <td>{{ $debt->payment_verified_at->format('d.m.Y H:i') }}</td>
+                        </tr>
+                        @endif
+                        <tr>
                             <th class="text-muted">Санаи қарз</th>
                             <td>{{ $debt->created_at ? $debt->created_at->format('d.m.Y') : '—' }}</td>
                         </tr>
@@ -126,6 +168,27 @@
                 <h5 class="card-title mb-0"><i class="bi bi-gear"></i> Амалҳо</h5>
             </div>
             <div class="card-body">
+                @if($debt->isF() && $debt->payment_status === 'pending')
+                <form action="{{ route('admin.debts.verify-payment', $debt) }}" method="POST" class="mb-3" onsubmit="return confirm('Пардохтини донишҷӯро тасдиқ кардан?')">
+                    @csrf
+                    <div class="mb-3">
+                        <label for="payment_amount" class="form-label">Маблағи пардохт (сўм)</label>
+                        <input type="number" name="payment_amount" id="payment_amount" class="form-control" min="0" step="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="payment_receipt" class="form-label">Шаҳодатнома (радиф/файл)</label>
+                        <input type="text" name="payment_receipt" id="payment_receipt" class="form-control" placeholder="Радифи қабулнома ё номи файл">
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="bi bi-check-circle"></i> Тасдиқи пардохт
+                    </button>
+                </form>
+                @elseif($debt->isF() && $debt->payment_status === 'verified')
+                <div class="alert alert-success mb-3">
+                    <i class="bi bi-check-circle me-2"></i>Пардохт тасдиқ шудааст. Донишҷӯ имкони такрорсупорӣ дорад.
+                </div>
+                @endif
+
                 @if($debt->canRetake())
                     <form action="{{ route('admin.debts.schedule-retake', $debt) }}" method="POST" class="mb-3">
                         @csrf

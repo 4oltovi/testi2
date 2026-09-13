@@ -7,31 +7,45 @@
 @section('content')
 {{-- Омор --}}
 <div class="row g-3 mb-4">
-    <div class="col-sm-6 col-lg-3">
+    <div class="col-sm-6 col-lg-2">
         <div class="card border-0 shadow-sm border-danger border-start border-3">
             <div class="card-body">
                 <h4 class="text-danger mb-0">{{ $stats['total_open'] }}</h4><small class="text-muted">Қарздориҳои кушод</small>
             </div>
         </div>
     </div>
-    <div class="col-sm-6 col-lg-3">
+    <div class="col-sm-6 col-lg-2">
         <div class="card border-0 shadow-sm">
             <div class="card-body">
                 <h4 class="mb-0">{{ $stats['active'] }}</h4><small class="text-muted">Фаъол</small>
             </div>
         </div>
     </div>
-    <div class="col-sm-6 col-lg-3">
+    <div class="col-sm-6 col-lg-2">
         <div class="card border-0 shadow-sm">
             <div class="card-body">
                 <h4 class="text-warning mb-0">{{ $stats['retake_scheduled'] }}</h4><small class="text-muted">Такрорсупорӣ таъин</small>
             </div>
         </div>
     </div>
-    <div class="col-sm-6 col-lg-3">
+    <div class="col-sm-6 col-lg-2">
         <div class="card border-0 shadow-sm">
             <div class="card-body">
                 <h4 class="text-success mb-0">{{ $stats['resolved_this_month'] }}</h4><small class="text-muted">Ҳалшуда (ин моҳ)</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-2">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h4 class="bg-danger text-white p-1 mb-0">{{ $stats['fx_total'] }}</h4><small class="text-muted">Fx қарз</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-2">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h4 class="bg-dark text-white p-1 mb-0">{{ $stats['f_total'] }}</h4><small class="text-muted">F қарз</small>
             </div>
         </div>
     </div>
@@ -53,6 +67,21 @@
                     <option value="escalated" {{ request('status') == 'escalated' ? 'selected' : '' }}>Комиссия</option>
                     <option value="repeat_course" {{ request('status') == 'repeat_course' ? 'selected' : '' }}>Дубора хондан</option>
                     <option value="expelled" {{ request('status') == 'expelled' ? 'selected' : '' }}>Хориҷшуда</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="debt_type" class="form-select">
+                    <option value="">Ҳама навъҳо</option>
+                    <option value="fx" {{ request('debt_type') == 'fx' ? 'selected' : '' }}>Fx (45-49%)</option>
+                    <option value="f" {{ request('debt_type') == 'f' ? 'selected' : '' }}>F (0-44%)</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="payment_status" class="form-select">
+                    <option value="">Ҳама ҳолатҳои пардохт</option>
+                    <option value="not_required" {{ request('payment_status') == 'not_required' ? 'selected' : '' }}>Зарурат надорад</option>
+                    <option value="pending" {{ request('payment_status') == 'pending' ? 'selected' : '' }}>Тасдиқ нашуда</option>
+                    <option value="verified" {{ request('payment_status') == 'verified' ? 'selected' : '' }}>Тасдиқ шуда</option>
                 </select>
             </div>
             <div class="col-md-2">
@@ -88,6 +117,8 @@
                         <th>Фан</th>
                         <th>Сабаб</th>
                         <th>Баҳо</th>
+                        <th>Тавсеа</th>
+                        <th>Пардохт</th>
                         <th>Санаи қарз</th>
                         <th>Кӯшиш</th>
                         <th>Ҳолат</th>
@@ -102,11 +133,35 @@
                         <td><small>{{ $debt->subject?->name }}</small></td>
                         <td><small>{{ $debt->reason_label }}</small></td>
                         <td><span class="badge bg-danger">{{ $debt->original_grade }}</span> ({{ $debt->original_score }}%)</td>
+                        <td>
+                            @if($debt->isFx())
+                                <span class="badge bg-danger">Fx</span>
+                            @elseif($debt->isF())
+                                <span class="badge bg-dark">F</span>
+                            @else
+                                <span class="badge bg-secondary">—</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if($debt->payment_status === 'verified')
+                                <span class="badge bg-success">Тасдиқ</span>
+                            @elseif($debt->payment_status === 'pending')
+                                <span class="badge bg-warning">Тасдиқ нашуда</span>
+                            @else
+                                <span class="badge bg-secondary">Зарурат надорад</span>
+                            @endif
+                        </td>
                         <td><small>{{ $debt->debt_date?->format('d.m.Y') }}</small></td>
                         <td>{{ $debt->retake_attempts_used }}/{{ $debt->max_retake_attempts }}</td>
                         <td><span class="badge {{ $debt->status->badgeClass() }}">{{ $debt->status->label() }}</span></td>
                         <td class="text-end">
                             <a href="{{ route('admin.debts.show', $debt) }}" class="btn btn-sm btn-outline-info"><i class="bi bi-eye"></i></a>
+                            @if($debt->isF() && $debt->payment_status === 'pending')
+                            <form action="{{ route('admin.debts.verify-payment', $debt) }}" method="POST" class="d-inline" onsubmit="return confirm('Пардохтини донишҷӯро тасдиқ кардан?')">
+                                @csrf
+                                <button class="btn btn-sm btn-outline-success" title="Тасдиқи пардохт"><i class="bi bi-check-circle"></i></button>
+                            </form>
+                            @endif
                             @if($debt->canRetake())
                             <form action="{{ route('admin.debts.schedule-retake', $debt) }}" method="POST" class="d-inline">
                                 @csrf
@@ -117,7 +172,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9" class="text-center text-muted py-4">Қарздорӣ ёфт нашуд.</td>
+                        <td colspan="11" class="text-center text-muted py-4">Қарздорӣ ёфт нашуд.</td>
                     </tr>
                     @endforelse
                 </tbody>

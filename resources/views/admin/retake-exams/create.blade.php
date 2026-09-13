@@ -38,6 +38,15 @@
                             </select>
                         </div>
                         <div class="col-md-4">
+                            <label class="form-label">Навъи имтиҳон <span class="text-danger">*</span></label>
+                            <select name="retake_type" class="form-select" required id="retakeTypeSelect">
+                                <option value="">Интихоб кунед...</option>
+                                <option value="fx" {{ ($retakeType ?? '') === 'fx' ? 'selected' : '' }}>Такрорсупорӣ барои Fx (45-49%)</option>
+                                <option value="f" {{ ($retakeType ?? '') === 'f' ? 'selected' : '' }}>Такрорсупорӣ барои F (0-44%) — пасандози пардохт</option>
+                            </select>
+                            <small class="text-muted d-block mt-1">Fx: олӣ имконият. F: танҳо донишҷӯёни пардохттасдиқшуда.</small>
+                        </div>
+                        <div class="col-md-4">
                             <label class="form-label">Санаи имтиҳон <span class="text-danger">*</span></label>
                             <input type="date" name="exam_date" class="form-control" required value="{{ old('exam_date', date('Y-m-d')) }}">
                         </div>
@@ -89,13 +98,14 @@
 document.addEventListener('DOMContentLoaded', function() {
     const subjectSelect = document.getElementById('subjectSelect');
     const semesterSelect = document.getElementById('semesterSelect');
+    const retakeTypeSelect = document.getElementById('retakeTypeSelect');
     const submitBtn = document.getElementById('submitBtn');
     const mainExamInfo = document.getElementById('mainExamInfo');
     const debtorInfo = document.getElementById('debtorInfo');
     
     function checkSelection() {
-        if (subjectSelect.value && semesterSelect.value) {
-            fetch(`{{ route('admin.retake-exams.check-main-exam') }}?subject_id=${subjectSelect.value}&semester_id=${semesterSelect.value}`)
+        if (subjectSelect.value && semesterSelect.value && retakeTypeSelect.value) {
+            fetch(`{{ route('admin.retake-exams.check-main-exam') }}?subject_id=${subjectSelect.value}&semester_id=${semesterSelect.value}&retake_type=${retakeTypeSelect.value}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.exists) {
@@ -128,12 +138,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    if (subjectSelect.value && semesterSelect.value) {
+    if (subjectSelect.value && semesterSelect.value && retakeTypeSelect.value) {
         checkSelection();
     }
     
     subjectSelect.addEventListener('change', checkSelection);
     semesterSelect.addEventListener('change', checkSelection);
+    retakeTypeSelect.addEventListener('change', checkSelection);
 });
 </script>
 @endpush

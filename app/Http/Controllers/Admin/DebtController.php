@@ -30,6 +30,14 @@ class DebtController extends Controller
             $query->where('status', $status);
         }
 
+        if ($debtType = $request->get('debt_type')) {
+            $query->where('debt_type', $debtType);
+        }
+
+        if ($paymentStatus = $request->get('payment_status')) {
+            $query->where('payment_status', $paymentStatus);
+        }
+
         if ($groupId = $request->get('group_id')) {
             $query->whereHas('student', fn($q) => $q->where('group_id', $groupId));
         }
@@ -58,6 +66,9 @@ class DebtController extends Controller
             'overdue' => AcademicDebt::overdue()->count(),
             'resolved_this_month' => AcademicDebt::where('status', DebtStatus::RESOLVED)
                 ->where('resolved_date', '>=', now()->startOfMonth())->count(),
+            'fx_total' => AcademicDebt::where('debt_type', 'fx')->open()->count(),
+            'f_total' => AcademicDebt::where('debt_type', 'f')->open()->count(),
+            'f_pending' => AcademicDebt::where('debt_type', 'f')->where('payment_status', 'pending')->open()->count(),
         ];
 
         return view('admin.debts.index', compact('debts', 'groups', 'semesters', 'stats'));
@@ -100,8 +111,45 @@ class DebtController extends Controller
 
     public function show(AcademicDebt $debt): View
     {
-        $debt->load(['student.user', 'student.group', 'subject', 'semester', 'subject', 'history.performedBy', 'semesterGrade']);
+        $debt->load(['student.user', 'student.group', 'subject', 'semester', 'subject', 'history.performedBy', 'semesterGrade', 'paymentVerifiedByUser']);
         return view('admin.debts.show', compact('debt'));
+    }
+
+    public function verifyPayment(AcademicDebt $debt, Request $request): RedirectResponse
+    {
+        $this->authorize('admin');
+
+        if (!$debt->isF()) {
+            return back()->with('error', 'Ин қарздорӣ барои тасдиқи пардохт мувофиқ нест (тавсеа Fx аст).');
+        }
+
+        $request->validate([
+            'payment_amount' => 'required|numeric|min:0',
+            'payment_receipt' => 'nullable|string|max:255',
+        ]);
+
+        if ($debt->payment_status === 'verified') {
+            return back()->with('warning', 'Пардохт аллакай тасдиқ шудааст.');
+        }
+
+        $debt->update([
+            'payment_status' => 'verified',
+            'payment_amount' => $request->input('payment_amount'),
+            'payment_receipt' => $request->input('payment_receipt'),
+            'payment_verified_at' => now(),
+            'payment_verified_by' => auth()->id(),
+            'retake_allowed' => true,
+        ]);
+
+        $debt->history()->create([
+            'action' => 'payment_verified',
+            'from_status' => $debt->getOriginal('payment_status'),
+            'to_status' => 'verified',
+            'comment' => "Пардохти донишҷӯ тасдиқ шуд. Маблағ: {$request->input('payment_amount')} сўм.",
+            'performed_by' => auth()->id(),
+        ]);
+
+        return back()->with('success', 'Пардохт тасдиқ шуд. Донишҷӯ ҳозир имкони такрорсупорӣ дорад.');
     }
 
     public function scheduleRetake(AcademicDebt $debt, Request $request): RedirectResponse

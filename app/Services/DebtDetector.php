@@ -72,6 +72,10 @@ class DebtDetector
 
             $reason = $this->determineReason($semesterGrade);
 
+            $debtType = $grade === GradeScale::FX ? 'fx' : 'f';
+            $paymentStatus = $grade === GradeScale::FX ? 'not_required' : 'pending';
+            $retakeAllowed = $grade === GradeScale::FX;
+
             $debt = AcademicDebt::create([
                 'student_id' => $semesterGrade->student_id,
                 'semester_grade_id' => $semesterGrade->id,
@@ -81,8 +85,10 @@ class DebtDetector
                 'debt_date' => now(),
                 'original_score' => $semesterGrade->total_score,
                 'original_grade' => $grade->value,
-                'retake_allowed' => $grade->canRetake(),
-                'max_retake_attempts' => $grade->canRetake() ? 2 : 0,
+                'debt_type' => $debtType,
+                'payment_status' => $paymentStatus,
+                'retake_allowed' => $retakeAllowed,
+                'max_retake_attempts' => 2,
                 'retake_deadline' => $grade->canRetake()
                     ? $semesterGrade->semester?->retake_end_date
                     : null,
@@ -257,8 +263,10 @@ class DebtDetector
                     $existingDebt->update([
                         'original_score' => $finalScore,
                         'original_grade' => $grade->value,
+                        'debt_type' => $grade === GradeScale::FX ? 'fx' : 'f',
+                        'payment_status' => $grade === GradeScale::FX ? 'not_required' : 'pending',
                         'retake_allowed' => $grade->canRetake(),
-                        'max_retake_attempts' => $grade->canRetake() ? 2 : 0,
+                        'max_retake_attempts' => 2,
                         'semester_grade_id' => $semesterGrade?->id,
                     ]);
                 } else {
@@ -271,8 +279,10 @@ class DebtDetector
                         'debt_date' => now(),
                         'original_score' => $finalScore,
                         'original_grade' => $grade->value,
+                        'debt_type' => $grade === GradeScale::FX ? 'fx' : 'f',
+                        'payment_status' => $grade === GradeScale::FX ? 'not_required' : 'pending',
                         'retake_allowed' => $grade->canRetake(),
-                        'max_retake_attempts' => $grade->canRetake() ? 2 : 0,
+                        'max_retake_attempts' => 2,
                         'status' => DebtStatus::ACTIVE,
                         'created_by' => \Illuminate\Support\Facades\Auth::id() ?? 1,
                     ]);
@@ -358,8 +368,10 @@ class DebtDetector
                     $existingDebt->update([
                         'original_score' => $finalScore,
                         'original_grade' => $grade->value,
+                        'debt_type' => $grade === GradeScale::FX ? 'fx' : 'f',
+                        'payment_status' => $grade === GradeScale::FX ? 'not_required' : 'pending',
                         'retake_allowed' => $grade->canRetake(),
-                        'max_retake_attempts' => $grade->canRetake() ? 2 : 0,
+                        'max_retake_attempts' => 2,
                         'semester_grade_id' => $semesterGrade?->id,
                     ]);
                 } else {
@@ -372,8 +384,10 @@ class DebtDetector
                         'debt_date' => now(),
                         'original_score' => $finalScore,
                         'original_grade' => $grade->value,
+                        'debt_type' => $grade === GradeScale::FX ? 'fx' : 'f',
+                        'payment_status' => $grade === GradeScale::FX ? 'not_required' : 'pending',
                         'retake_allowed' => $grade->canRetake(),
-                        'max_retake_attempts' => $grade->canRetake() ? 2 : 0,
+                        'max_retake_attempts' => 2,
                         'status' => DebtStatus::ACTIVE,
                         'created_by' => \Illuminate\Support\Facades\Auth::id() ?? 1,
                     ]);

@@ -22,6 +22,12 @@ class AcademicDebt extends Model
         'debt_date',
         'original_score',
         'original_grade',
+        'debt_type',
+        'payment_status',
+        'payment_amount',
+        'payment_receipt',
+        'payment_verified_at',
+        'payment_verified_by',
         'retake_allowed',
         'retake_attempts_used',
         'max_retake_attempts',
@@ -45,6 +51,8 @@ class AcademicDebt extends Model
             'retake_allowed' => 'boolean',
             'original_score' => 'decimal:2',
             'resolved_score' => 'decimal:2',
+            'payment_amount' => 'decimal:10,2',
+            'payment_verified_at' => 'datetime',
         ];
     }
 
@@ -73,6 +81,11 @@ class AcademicDebt extends Model
     public function resolvedByUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'resolved_by');
+    }
+
+    public function paymentVerifiedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'payment_verified_by');
     }
 
     public function createdByUser(): BelongsTo
@@ -131,6 +144,46 @@ class AcademicDebt extends Model
             && $this->retake_attempts_used < $this->max_retake_attempts
             && $this->status->isOpen()
             && (!$this->retake_deadline || $this->retake_deadline->isFuture());
+    }
+
+    /**
+     * Агар ҳолати қарздорӣ Fx бошад?
+     */
+    public function isFx(): bool
+    {
+        return $this->debt_type === 'fx';
+    }
+
+    /**
+     * Агар ҳолати қарздорӣ F бошад?
+     */
+    public function isF(): bool
+    {
+        return $this->debt_type === 'f';
+    }
+
+    /**
+     * Агар пардохти тасдиқ шуда бошад?
+     */
+    public function isPaymentVerified(): bool
+    {
+        return $this->payment_status === 'verified';
+    }
+
+    /**
+     * Оё донишҷӯ метавонад ба имтиҳон такрорӣ илова карда шавад?
+     * Fx ҳамеша метавонад.
+     * F танҳо агар пардохт тасдиқ шуда бошад.
+     */
+    public function canBeAddedToRetakeExam(): bool
+    {
+        if ($this->isFx()) {
+            return $this->canRetake();
+        }
+
+        return $this->isF()
+            && $this->isPaymentVerified()
+            && $this->canRetake();
     }
 
     /**

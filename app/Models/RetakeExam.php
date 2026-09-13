@@ -23,6 +23,7 @@ class RetakeExam extends Model
         'passing_score',
         'max_attempts',
         'exam_date',
+        'retake_type',
         'status',
         'notes',
         'created_by',

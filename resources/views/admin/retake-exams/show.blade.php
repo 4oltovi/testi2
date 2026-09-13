@@ -63,6 +63,16 @@
                         @endphp
                         <span class="badge {{ $statusBadge }}">{{ $retakeExam->status }}</span>
                     </div>
+                    <div class="col-md-3">
+                        <strong>Тавсеа:</strong>
+                        @if($retakeExam->retake_type === 'fx')
+                            <span class="badge bg-danger">Fx (45-49%)</span>
+                        @elseif($retakeExam->retake_type === 'f')
+                            <span class="badge bg-dark">F (0-44%)</span>
+                        @else
+                            <span class="badge bg-secondary">—</span>
+                        @endif
+                    </div>
                 </div>
 
                 <div class="alert alert-info">
