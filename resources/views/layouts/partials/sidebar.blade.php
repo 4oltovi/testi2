@@ -107,7 +107,7 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link text-white {{ request()->is('operator/attendance*') ? 'active bg-primary rounded' : '' }}" href="/operator/attendance">
+                <a class="nav-link text-white {{ request()->is('admin/attendance*') ? 'active bg-primary rounded' : '' }}" href="/admin/attendance">
                     <i class="bi bi-check2-square me-2"></i> Давомот
                 </a>
             </li>

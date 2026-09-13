@@ -164,6 +164,13 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/export/{type}', [\App\Http\Controllers\Admin\ReportController::class, 'export'])->name('export');
     });
 
+    // Ҳисоботи давомот
+    Route::prefix('attendance')->name('attendance.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\AttendanceReportController::class, 'index'])->name('index');
+        Route::get('/export/excel', [\App\Http\Controllers\Admin\AttendanceReportController::class, 'exportExcel'])->name('export.excel');
+        Route::get('/export/pdf', [\App\Http\Controllers\Admin\AttendanceReportController::class, 'exportPdf'])->name('export.pdf');
+    });
+
     // Танзимот (Формулаҳо ва Тест)
     Route::prefix('settings')->name('settings.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('index');
