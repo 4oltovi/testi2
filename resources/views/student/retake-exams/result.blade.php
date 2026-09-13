@@ -21,14 +21,15 @@
                         <div class="card border-0 shadow-sm">
                             <div class="card-body text-center">
                                 <h6 class="text-muted mb-2">Баҳо</h6>
-                                <div class="display-4 fw-bold {{ $attempt->percentage >= $retakeExam->passing_score ? 'text-success' : 'text-danger' }}">
+                                <div class="display-4 fw-bold">
                                     {{ number_format($attempt->total_score, 1) }} / {{ number_format($attempt->max_possible_score, 1) }}
                                 </div>
                                 <small class="text-muted">{{ number_format($attempt->percentage, 1) }}%</small>
                                 <div class="mt-2">
-                                    <span class="badge bg-{{ $attempt->percentage >= $retakeExam->passing_score ? 'success' : 'danger' }}">
-                                        {{ $attempt->letter_grade }}
-                                    </span>
+                                    <small>
+                                        <strong>Дуруст:</strong> {{ $attempt->answers->where('is_correct', true)->count() }} |
+                                        <strong>Нодуруст:</strong> {{ $attempt->answers->where('is_correct', false)->count() }}
+                                    </small>
                                 </div>
                             </div>
                         </div>

@@ -77,12 +77,22 @@ class RetakeExamController extends Controller
             return back()->with('error', 'Ин имтиҳони такрорӣ ҳоло дастрас нест.');
         }
 
-        if ($retakeExam->exam_date && $retakeExam->exam_date->isFuture()) {
-            \Log::info('RetakeExam start blocked by date', [
-                'exam_date' => $retakeExam->exam_date,
-                'now' => now(),
-            ]);
-            return back()->with('error', 'Имтиҳон соати ' . $retakeExam->exam_date->format('d.m.Y') . ' оғоз мешавад.');
+        if ($retakeExam->exam_date) {
+            if ($retakeExam->exam_date->isFuture()) {
+                \Log::info('RetakeExam start blocked by future date', [
+                    'exam_date' => $retakeExam->exam_date,
+                    'now' => now(),
+                ]);
+                return back()->with('error', 'Имтиҳон санаи ' . $retakeExam->exam_date->format('d.m.Y') . ' оғоз мешавад.');
+            }
+
+            if ($retakeExam->exam_date->isPast() && !$retakeExam->exam_date->isToday()) {
+                \Log::info('RetakeExam start blocked by past date', [
+                    'exam_date' => $retakeExam->exam_date,
+                    'now' => now(),
+                ]);
+                return back()->with('error', 'Вақти тест аллакай гузаштааст.');
+            }
         }
 
         $retakeExamStudent = RetakeExamStudent::where('retake_exam_id', $retakeExam->id)

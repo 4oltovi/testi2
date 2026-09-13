@@ -38,7 +38,10 @@
                                 @php
                                     $examAttempts = $attempts[$exam->id] ?? collect();
                                     $activeAttempt = $examAttempts->where('status', 'in_progress')->first();
-                                    $canStart = $examAttempts->count() < $exam->max_attempts && ($exam->status === 'scheduled' || $exam->status === 'active');
+                                    $examDate = $exam->exam_date;
+                                    $canStart = $examAttempts->count() < $exam->max_attempts
+                                        && ($exam->status === 'scheduled' || $exam->status === 'active')
+                                        && (!$examDate || $examDate->isFuture() || $examDate->isToday());
                                 @endphp
                                 @if($activeAttempt)
                                 <a href="{{ route('student.retake-exams.take', [$exam, $activeAttempt]) }}" class="btn btn-warning btn-sm w-100">
