@@ -148,7 +148,7 @@ class TranscriptController extends Controller
             ->sortBy(function ($g) {
                 return [
                     (int) ($g->semester?->number ?? $g->semester_id),
-                    mb_strtolower($g->subjectAssignment?->subject?->name ?? ''),
+                    \mb_strtolower($g->subjectAssignment?->subject?->name ?? ''),
                 ];
             });
 
@@ -156,7 +156,7 @@ class TranscriptController extends Controller
             $assignment = $g->subjectAssignment;
             $subj = $assignment?->subject;
             $semNumber = (int) ($g->semester?->number ?? $g->semester_id);
-            $isPE = mb_str_contains(mb_strtolower($subj?->name ?? ''), 'тарбияи ҷисмонӣ');
+            $isPE = str_contains(\mb_strtolower($subj?->name ?? ''), 'тарбияи ҷисмонӣ');
             $hasGrade = $g->letter_grade !== null;
 
             $point = (float) ($g->grade_point ?? 0);

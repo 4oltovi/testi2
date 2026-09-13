@@ -402,7 +402,7 @@
                 <div class="header-meta">{{ $exam->subjectAssignment->subject->name ?? '' }}</div>
             </div>
             <div class="controls">
-                <div class="timer" id="timer">00:00</div>
+                <div class="timer" id="timer" @if(isset($hasTimeLimit) && $hasTimeLimit) data-has-time-limit="1" @elseif(isset($hasTimeLimit) && !$hasTimeLimit) data-has-time-limit="0" @endif>00:00</div>
                 <div class="dark-toggle" id="darkToggle" title="Тема">🌙</div>
             </div>
         </div>
@@ -560,20 +560,25 @@
         });
 
         // Timer
+        const timerEl = document.getElementById('timer');
+        const hasTimeLimitAttr = timerEl.dataset.hasTimeLimit;
+        const hasTimeLimit = hasTimeLimitAttr !== '0';
+        if (!hasTimeLimit) {
+            timerEl.style.display = 'none';
+        }
         const serverEndTime = @json($exam->ends_at?->toISOString() ?? null);
         const serverNow = @json(now()->toISOString());
-        let remainingSeconds = {{ $remainingSeconds > 0 ? $remainingSeconds : ($exam->duration_minutes * 60) }};
+        let remainingSeconds = hasTimeLimit ? ({{ $remainingSeconds ?? 0 }}) : 999999999;
 
-        if (serverEndTime) {
+        if (serverEndTime && hasTimeLimit && !isRetakeMode) {
             const endTimestamp = new Date(serverEndTime).getTime();
             const nowTimestamp = new Date(serverNow).getTime();
             const secondsToEnd = Math.max(0, Math.floor((endTimestamp - nowTimestamp) / 1000));
             remainingSeconds = Math.min(remainingSeconds, secondsToEnd);
         }
 
-        const timerEl = document.getElementById('timer');
-
         function updateTimer() {
+            if (!hasTimeLimit) return;
             if (remainingSeconds <= 0) {
                 timerEl.textContent = '00:00';
                 timerEl.classList.add('danger');
@@ -588,8 +593,10 @@
                 timerEl.classList.add('danger');
             }
         }
-        updateTimer();
-        setInterval(updateTimer, 1000);
+        if (hasTimeLimit) {
+            updateTimer();
+            setInterval(updateTimer, 1000);
+        }
 
         // Navigation
         function goToQuestion(idx) {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AcademicYear;
 use App\Models\Faculty;
 use App\Models\Group;
 use App\Models\Semester;
@@ -99,21 +100,94 @@ class RatingController extends Controller
         return view('admin.ratings.top-students', compact('topStudents', 'semesters', 'semesterId', 'academicYears', 'academicYearId', 'faculties'));
     }
 
+    public function statements(Request $request)
+    {
+        [$semesters, $academicYears, $semesterId, $academicYearId] = $this->resolveSemesterFilters($request);
+        $groups = Group::active()->orderBy('name')->get();
+        $selectedGroupId = $request->get('group_id');
+
+        $vedomosts = [];
+
+        if ($selectedGroupId && $semesterId) {
+            $group = Group::with('activeStudents')->find($selectedGroupId);
+
+            if ($group) {
+                $subjectAssignments = \App\Models\SubjectAssignment::where('semester_id', $semesterId)
+                    ->where('group_id', $selectedGroupId)
+                    ->with(['subject', 'teacher'])
+                    ->get();
+
+                foreach ($subjectAssignments as $assignment) {
+                    $studentGrades = \App\Models\SemesterGrade::where('subject_assignment_id', $assignment->id)
+                        ->where('semester_id', $semesterId)
+                        ->whereIn('student_id', $group->activeStudents->pluck('id'))
+                        ->with('student')
+                        ->get()
+                        ->keyBy('student_id');
+
+                    $studentsData = $group->activeStudents->map(function ($student) use ($studentGrades) {
+                        $grade = $studentGrades->get($student->id);
+                        return [
+                            'id' => $student->id,
+                            'student_id_number' => $student->student_id_number,
+                            'full_name' => $student->full_name,
+                            'rating1_score' => $grade?->rating1_score,
+                            'rating2_score' => $grade?->rating2_score,
+                        ];
+                    })->sortBy('full_name')->values();
+
+                    $vedomosts[] = [
+                        'subject' => $assignment->subject,
+                        'teacher' => $assignment->teacher,
+                        'group' => $group,
+                        'semester' => \App\Models\Semester::find($semesterId),
+                        'students' => $studentsData,
+                    ];
+                }
+            }
+        }
+
+        if ($request->get('download') === 'pdf' && !empty($vedomosts)) {
+            $pdf = \PDF::loadView('admin.ratings.statements_pdf', [
+                'vedomosts' => $vedomosts,
+                'institutionName' => \App\Models\Setting::get('institution_name', 'Номи муассиса'),
+                'logo' => \App\Models\Setting::get('logo') ? asset('storage/' . \App\Models\Setting::get('logo')) : null,
+            ]);
+            return $pdf->download('vedomost-rating-' . $group->name . '.pdf');
+        }
+
+        $institutionName = \App\Models\Setting::get('institution_name', 'Номи муассиса');
+        $logo = \App\Models\Setting::get('logo') ? asset('storage/' . \App\Models\Setting::get('logo')) : null;
+
+        return view('admin.ratings.statements', compact(
+            'semesters',
+            'academicYears',
+            'semesterId',
+            'academicYearId',
+            'groups',
+            'selectedGroupId',
+            'vedomosts',
+            'institutionName',
+            'logo'
+        ));
+    }
+
+
     /**
      * Рӯйхати семестрҳо ва филтри асосӣ
      */
     private function resolveSemesterFilters(Request $request): array
     {
-        $currentSemester = Semester::current();
-        $semesterId = $request->get('semester_id', $currentSemester?->id);
-        $academicYearId = $request->get('academic_year_id');
+        $academicYears = AcademicYear::orderBy('name', 'desc')->get();
+        $academicYearId = $request->get('academic_year_id', \App\Models\Setting::get('current_academic_year_id'));
 
-        $query = Semester::with('academicYear')->orderByDesc('start_date');
+        $semesterQuery = Semester::with('academicYear');
         if ($academicYearId) {
-            $query->where('academic_year_id', $academicYearId);
+            $semesterQuery->where('academic_year_id', $academicYearId);
         }
-        $semesters = $query->get();
-        $academicYears = \App\Models\AcademicYear::orderByDesc('start_date')->get();
+        $semesters = $semesterQuery->orderBy('name')->get();
+
+        $semesterId = $request->get('semester_id', \App\Models\Setting::get('current_semester_id') ?? \App\Models\Semester::current()?->id);
 
         return [$semesters, $academicYears, $semesterId, $academicYearId];
     }

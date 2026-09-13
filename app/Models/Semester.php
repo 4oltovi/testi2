@@ -32,11 +32,6 @@ class Semester extends Model
         return $this->belongsTo(AcademicYear::class);
     }
 
-    public function curriculum(): HasMany
-    {
-        return $this->hasMany(Curriculum::class);
-    }
-
     public function subjectAssignments(): HasMany
     {
         return $this->hasMany(SubjectAssignment::class);

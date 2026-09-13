@@ -454,13 +454,16 @@ class GradeCalculator
         $rating1 = $this->calculateRating1($studentId, $subjectAssignmentId, $semesterId);
         $rating2 = $this->calculateRating2($studentId, $subjectAssignmentId, $semesterId);
         
-        // Навсозӣ: гирифтани фоизи имтиҳон (на танҳо балл)
         $exam = $this->calculateExamScore($studentId, $subjectAssignmentId, $semesterId);
-
-        $retakeScore = null;
+        
         $assignment = SubjectAssignment::find($subjectAssignmentId);
         $subjectId = $assignment?->subject_id;
         
+        if (!$subjectId) {
+            return;
+        }
+
+        $retakeScore = null;
         $retakeExam = RetakeExam::where('subject_id', $subjectId)
             ->where('semester_id', $semesterId)
             ->first();
@@ -482,7 +485,6 @@ class GradeCalculator
         $gradePoint = null;
         $status = 'in_progress';
 
-        // Формула: ((R1 + R2) / 4) + (Exam * 0.5)
         if ($effectiveExamScore > 0 || ($rating1 > 0 || $rating2 > 0)) {
             $totalScore = round((((float)$rating1 + (float)$rating2) / 4) + ((float)$effectiveExamScore * 0.5), 2);
 
@@ -495,10 +497,11 @@ class GradeCalculator
         SemesterGrade::updateOrCreate(
             [
                 'student_id' => $studentId,
-                'subject_assignment_id' => $subjectAssignmentId,
+                'subject_id' => $subjectId, // Хатман бояд бошад (unique constraint)
                 'semester_id' => $semesterId,
             ],
             [
+                'subject_assignment_id' => $subjectAssignmentId,
                 'rating1_score' => $rating1,
                 'rating2_score' => $rating2,
                 'exam_score' => $exam,
@@ -507,24 +510,22 @@ class GradeCalculator
                 'letter_grade' => $letterGrade,
                 'grade_point' => $gradePoint,
                 'status' => $status,
-                'is_finalized' => true, // Акнун натиҷа дар журнал намоён мешавад
+                'is_finalized' => true,
                 'finalized_at' => now(),
             ]
         );
 
-        if ($subjectId) {
-            $debtDetector = app(\App\Services\DebtDetector::class);
-            if ($totalScore !== null && $totalScore < 50) {
-                $semesterGrade = SemesterGrade::where('student_id', $studentId)
-                    ->where('subject_assignment_id', $subjectAssignmentId)
-                    ->where('semester_id', $semesterId)
-                    ->first();
-                if ($semesterGrade) {
-                    $debtDetector->checkAndCreateDebt($semesterGrade);
-                }
-            } elseif ($totalScore !== null && $totalScore >= 50 && $letterGrade !== null) {
-                $debtDetector->resolveDebtAfterRetake($studentId, $subjectId, $semesterId, $totalScore, $letterGrade);
+        $debtDetector = app(\App\Services\DebtDetector::class);
+        if ($totalScore !== null && $totalScore < 50) {
+            $semesterGrade = SemesterGrade::where('student_id', $studentId)
+                ->where('subject_id', $subjectId)
+                ->where('semester_id', $semesterId)
+                ->first();
+            if ($semesterGrade) {
+                $debtDetector->checkAndCreateDebt($semesterGrade);
             }
+        } elseif ($totalScore !== null && $totalScore >= 50 && $letterGrade !== null) {
+            $debtDetector->resolveDebtAfterRetake($studentId, $subjectId, $semesterId, $totalScore, $letterGrade);
         }
     }
 

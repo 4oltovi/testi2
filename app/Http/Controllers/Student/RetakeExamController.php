@@ -168,9 +168,17 @@ class RetakeExamController extends Controller
 
         // Вақти боқимондаро аз оғози attempt ҳисоб кунед
         $startedAt = $attempt->started_at ?? now();
+        $hasTimeLimit = !empty($retakeExam->duration_minutes);
         $totalSeconds = $retakeExam->duration_minutes * 60;
         $elapsedSeconds = (int) abs(now()->timestamp - $startedAt->timestamp);
-        $remainingSeconds = (int) max(0, $totalSeconds - $elapsedSeconds);
+        $remainingSeconds = $hasTimeLimit ? (int) max(0, $totalSeconds - $elapsedSeconds) : null;
+
+        // Агар вақт тамом шуда бошад — авто-супоридан (ҳамон механизми Main Exam)
+        if ($remainingSeconds !== null && $remainingSeconds <= 0) {
+            $this->processSubmission($attempt, $retakeExam, 'auto_submitted');
+            return redirect()->route('student.retake-exams.result', [$retakeExam, $attempt])
+                ->with('info', 'Вақти имтиҳон ба охир расид.');
+        }
 
         $retakeSaveUrl = route('student.retake-exams.save-answer', [$retakeExam, $attempt]);
         $retakeSubmitUrl = route('student.retake-exams.submit', [$retakeExam, $attempt]);
@@ -193,6 +201,7 @@ class RetakeExamController extends Controller
             'examQuestions' => $examQuestions,
             'existingAnswers' => $existingAnswers,
             'remainingSeconds' => $remainingSeconds,
+            'hasTimeLimit' => $hasTimeLimit,
             'isRetakeMode' => true,
             'retakeExam' => $retakeExam,
             'retakeSaveUrl' => $retakeSaveUrl,

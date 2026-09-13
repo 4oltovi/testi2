@@ -63,6 +63,41 @@ class DebtController extends Controller
         return view('admin.debts.index', compact('debts', 'groups', 'semesters', 'stats'));
     }
 
+    public function exportPdf(Request $request)
+    {
+        $query = AcademicDebt::with(['student.user', 'student.group', 'subject', 'semester']);
+
+        if ($status = $request->get('status')) {
+            $query->where('status', $status);
+        }
+
+        if ($groupId = $request->get('group_id')) {
+            $query->whereHas('student', fn($q) => $q->where('group_id', $groupId));
+        }
+
+        if ($semesterId = $request->get('semester_id')) {
+            $query->where('semester_id', $semesterId);
+        }
+
+        if ($search = $request->get('search')) {
+            $query->whereHas('student.user', fn($q) =>
+                $q->where('last_name', 'like', "%{$search}%")
+                    ->orWhere('first_name', 'like', "%{$search}%")
+            );
+        }
+
+        $debts = $query->orderBy('student_id', 'asc')->orderByDesc('debt_date')->get();
+
+        $groupedDebts = $debts->groupBy(function ($debt) {
+            return $debt->student?->group?->name ?? 'Без гурӯҳ';
+        });
+
+        $pdf = \PDF::loadView('admin.debts.export-pdf', compact('groupedDebts'));
+        $pdf->setPaper('a4');
+
+        return $pdf->download('қарздориҳо.pdf');
+    }
+
     public function show(AcademicDebt $debt): View
     {
         $debt->load(['student.user', 'student.group', 'subject', 'semester', 'subject', 'history.performedBy', 'semesterGrade']);

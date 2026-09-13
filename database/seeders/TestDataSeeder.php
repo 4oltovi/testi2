@@ -6,7 +6,6 @@ use App\Models\AcademicYear;
 use App\Models\Attendance;
 use App\Models\Course;
 use App\Models\CurrentGrade;
-use App\Models\Curriculum;
 use App\Models\Department;
 use App\Models\Faculty;
 use App\Models\Group;
@@ -111,21 +110,6 @@ class TestDataSeeder extends Seeder
             'academic_year_id' => $year->id, 'name' => 'ТИ-2-24',
             'max_students' => 25, 'is_active' => true,
         ]);
-
-        // Нақшаи таълимӣ (curriculum)
-        $cur1 = Curriculum::firstOrCreate(
-            ['specialty_id' => $spec->id, 'subject_id' => $subj1->id, 'semester_id' => $sem2->id],
-            ['course_id' => $course1->id, 'credits' => 6, 'total_hours' => 180,
-             'lecture_hours' => 60, 'practice_hours' => 60, 'independent_hours' => 60,
-             'exam_type' => 'exam', 'control_type' => 'rating_exam', 'is_active' => true]
-        );
-
-        $cur2 = Curriculum::firstOrCreate(
-            ['specialty_id' => $spec->id, 'subject_id' => $subj2->id, 'semester_id' => $sem2->id],
-            ['course_id' => $course1->id, 'credits' => 3, 'total_hours' => 90,
-             'lecture_hours' => 30, 'practice_hours' => 30, 'independent_hours' => 30,
-             'exam_type' => 'exam', 'control_type' => 'rating_exam', 'is_active' => true]
-        );
 
         // Омӯзгорон (2 нафар)
         $teacherRole = Role::where('name', 'teacher')->first();

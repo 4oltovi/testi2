@@ -67,6 +67,11 @@ class ClassroomController extends Controller
             ->with('success', 'Аудитория бомуваффақият сохта шуд.');
     }
 
+    public function show(Classroom $classroom): View
+    {
+        return view('admin.structure.classrooms.show', compact('classroom'));
+    }
+
     public function edit(Classroom $classroom): View
     {
         return view('admin.structure.classrooms.edit', compact('classroom'));

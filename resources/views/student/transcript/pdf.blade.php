@@ -51,7 +51,7 @@
             <tr>
                 <td colspan="3"><strong>Маҷмӯъ:</strong></td>
                 <td class="text-center"><strong>{{ $grades->sum('credits_earned') }}</strong></td>
-                <td class="text-center"><strong>{{ number_format($grades->avg('total_score'), 0) }}%</strong></td>
+                <td class="text-center"><strong>{{ number_format($grades->avg('total_score'), 0) }}</strong></td>
                 <td></td>
                 <td class="text-center"><strong>{{ number_format($grades->avg('grade_point'), 2) }}</strong></td>
             </tr>

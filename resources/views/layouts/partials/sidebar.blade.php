@@ -133,6 +133,11 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link text-white {{ request()->is('admin/ratings/statements*') ? 'active bg-primary rounded' : '' }}" href="{{ route('admin.ratings.statements') }}">
+                    <i class="bi bi-file-earmark-check me-2"></i> Ведомости рейтингӣ
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link text-white {{ request()->is('admin/exams*') || request()->is('admin/retake-exams*') ? 'active bg-primary rounded' : '' }}" href="#collapseExams" data-bs-toggle="collapse" aria-expanded="{{ request()->is('admin/exams*') || request()->is('admin/retake-exams*') ? 'true' : 'false' }}">
                     <i class="bi bi-pencil-square me-2"></i> Имтиҳонҳо
                 </a>
@@ -178,11 +183,7 @@
                     <i class="bi bi-file-earmark-bar-graph me-2"></i> Ҳисоботҳо
                 </a>
             </li>
-            <li class="nav-item">
-                <a class="nav-link text-white {{ request()->is('admin/import*') ? 'active bg-primary rounded' : '' }}" href="/admin/import">
-                    <i class="bi bi-upload me-2"></i> Импорт
-                </a>
-            </li>
+            
             <li class="nav-item">
                 <a class="nav-link text-white {{ request()->is('admin/settings*') ? 'active bg-primary rounded' : '' }}" href="/admin/settings">
                     <i class="bi bi-gear me-2"></i> Танзимот

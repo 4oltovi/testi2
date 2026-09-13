@@ -12,6 +12,7 @@ class SemesterGrade extends Model
 {
     protected $fillable = [
         'student_id',
+        'subject_id',
         'subject_assignment_id',
         'semester_id',
         'rating1_score',
@@ -57,6 +58,11 @@ class SemesterGrade extends Model
     public function student(): BelongsTo
     {
         return $this->belongsTo(Student::class);
+    }
+
+    public function subject(): BelongsTo
+    {
+        return $this->belongsTo(Subject::class);
     }
 
     public function subjectAssignment(): BelongsTo

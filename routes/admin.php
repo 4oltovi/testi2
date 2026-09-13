@@ -98,6 +98,7 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
     // Рейтингҳо
     Route::prefix('ratings')->name('ratings.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\RatingController::class, 'index'])->name('index');
+        Route::get('/statements', [\App\Http\Controllers\Admin\RatingController::class, 'statements'])->name('statements');
         Route::get('/group/{group}', [\App\Http\Controllers\Admin\RatingController::class, 'group'])->name('group');
         Route::get('/faculty/{faculty}', [\App\Http\Controllers\Admin\RatingController::class, 'faculty'])->name('faculty');
         Route::get('/top-students', [\App\Http\Controllers\Admin\RatingController::class, 'topStudents'])->name('top-students');
@@ -136,6 +137,7 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
     // Қарздорӣ
     Route::prefix('debts')->name('debts.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\DebtController::class, 'index'])->name('index');
+        Route::get('/export-pdf', [\App\Http\Controllers\Admin\DebtController::class, 'exportPdf'])->name('export-pdf');
         Route::get('/{debt}', [\App\Http\Controllers\Admin\DebtController::class, 'show'])->name('show');
         Route::post('/{debt}/schedule-retake', [\App\Http\Controllers\Admin\DebtController::class, 'scheduleRetake'])->name('schedule-retake');
         Route::post('/{debt}/resolve', [\App\Http\Controllers\Admin\DebtController::class, 'resolve'])->name('resolve');

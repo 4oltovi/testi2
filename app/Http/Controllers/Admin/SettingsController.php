@@ -8,13 +8,13 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use App\Models\Group;
 use Illuminate\View\View;
 use App\Models\AcademicYear;
 use App\Models\Course;
-use App\Models\Group;
 use App\Models\Semester;
 use App\Models\Student;
-use Illuminate\Support\Facades\Schema;
 
 class SettingsController extends Controller
 {

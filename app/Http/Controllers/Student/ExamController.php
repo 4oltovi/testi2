@@ -352,6 +352,7 @@ class ExamController extends Controller
         if (!$semesterGrade) {
             $semesterGrade = SemesterGrade::create([
                 'student_id' => $attempt->student_id,
+                'subject_id' => $subjectAssignment->subject_id,
                 'subject_assignment_id' => $subjectAssignment->id,
                 'semester_id' => $exam->semester_id,
                 'status' => 'in_progress',
