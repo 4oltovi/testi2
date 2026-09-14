@@ -139,7 +139,6 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\DebtController::class, 'index'])->name('index');
         Route::get('/export-pdf', [\App\Http\Controllers\Admin\DebtController::class, 'exportPdf'])->name('export-pdf');
         Route::get('/{debt}', [\App\Http\Controllers\Admin\DebtController::class, 'show'])->name('show');
-        Route::post('/{debt}/verify-payment', [\App\Http\Controllers\Admin\DebtController::class, 'verifyPayment'])->name('verify-payment');
         Route::post('/{debt}/schedule-retake', [\App\Http\Controllers\Admin\DebtController::class, 'scheduleRetake'])->name('schedule-retake');
         Route::post('/{debt}/resolve', [\App\Http\Controllers\Admin\DebtController::class, 'resolve'])->name('resolve');
         Route::post('/{debt}/escalate', [\App\Http\Controllers\Admin\DebtController::class, 'escalate'])->name('escalate');

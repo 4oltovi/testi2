@@ -168,22 +168,7 @@
                 <h5 class="card-title mb-0"><i class="bi bi-gear"></i> Амалҳо</h5>
             </div>
             <div class="card-body">
-                @if($debt->isF() && $debt->payment_status === 'pending')
-                <form action="{{ route('admin.debts.verify-payment', $debt) }}" method="POST" class="mb-3" onsubmit="return confirm('Пардохтини донишҷӯро тасдиқ кардан?')">
-                    @csrf
-                    <div class="mb-3">
-                        <label for="payment_amount" class="form-label">Маблағи пардохт (сўм)</label>
-                        <input type="number" name="payment_amount" id="payment_amount" class="form-control" min="0" step="0.01" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="payment_receipt" class="form-label">Шаҳодатнома (радиф/файл)</label>
-                        <input type="text" name="payment_receipt" id="payment_receipt" class="form-control" placeholder="Радифи қабулнома ё номи файл">
-                    </div>
-                    <button type="submit" class="btn btn-success w-100">
-                        <i class="bi bi-check-circle"></i> Тасдиқи пардохт
-                    </button>
-                </form>
-                @elseif($debt->isF() && $debt->payment_status === 'verified')
+                @if($debt->isF() && $debt->payment_status === 'verified')
                 <div class="alert alert-success mb-3">
                     <i class="bi bi-check-circle me-2"></i>Пардохт тасдиқ шудааст. Донишҷӯ имкони такрорсупорӣ дорад.
                 </div>

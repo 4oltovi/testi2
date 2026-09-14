@@ -156,12 +156,6 @@
                         <td><span class="badge {{ $debt->status->badgeClass() }}">{{ $debt->status->label() }}</span></td>
                         <td class="text-end">
                             <a href="{{ route('admin.debts.show', $debt) }}" class="btn btn-sm btn-outline-info"><i class="bi bi-eye"></i></a>
-                            @if($debt->isF() && $debt->payment_status === 'pending')
-                            <form action="{{ route('admin.debts.verify-payment', $debt) }}" method="POST" class="d-inline" onsubmit="return confirm('Пардохтини донишҷӯро тасдиқ кардан?')">
-                                @csrf
-                                <button class="btn btn-sm btn-outline-success" title="Тасдиқи пардохт"><i class="bi bi-check-circle"></i></button>
-                            </form>
-                            @endif
                             @if($debt->canRetake())
                             <form action="{{ route('admin.debts.schedule-retake', $debt) }}" method="POST" class="d-inline">
                                 @csrf
