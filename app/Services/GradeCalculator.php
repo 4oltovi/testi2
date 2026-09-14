@@ -494,6 +494,8 @@ class GradeCalculator
             $status = $gradeEnum->isPassing() ? 'passed' : ($gradeEnum->canRetake() ? 'retake' : 'failed');
         }
 
+        $creditsEarned = $status === 'passed' ? (int) ($assignment?->credits ?? 0) : 0;
+
         SemesterGrade::updateOrCreate(
             [
                 'student_id' => $studentId,
@@ -509,11 +511,20 @@ class GradeCalculator
                 'total_score' => $totalScore,
                 'letter_grade' => $letterGrade,
                 'grade_point' => $gradePoint,
+                'credits_earned' => $creditsEarned,
                 'status' => $status,
                 'is_finalized' => true,
                 'finalized_at' => now(),
             ]
         );
+
+        if ($totalScore !== null) {
+            $student = Student::find($studentId);
+            $semester = Semester::find($semesterId);
+            if ($student && $semester) {
+                app(GpaCalculator::class)->calculateSemesterGpa($student, $semester);
+            }
+        }
 
         $debtDetector = app(\App\Services\DebtDetector::class);
         if ($totalScore !== null && $totalScore < 50) {

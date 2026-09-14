@@ -132,7 +132,7 @@ class ReportController extends Controller
         $semesterId = $request->get('semester_id', $currentSemester?->id);
 
         $gpaData = Student::active()
-            ->with(['user', 'group'])
+            ->with(['user', 'group', 'specialty'])
             ->orderByDesc('cumulative_gpa')
             ->paginate(50)
             ->withQueryString();

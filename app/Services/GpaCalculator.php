@@ -87,15 +87,24 @@ class GpaCalculator
                 'semester_id' => $semester->id,
             ],
             [
+                'academic_year_id' => $semester->academic_year_id,
                 'gpa' => $gpa,
                 'cumulative_gpa' => $cumulativeGpa,
                 'credits_attempted' => $totalCreditsAttempted,
                 'credits_earned' => $totalCreditsEarned,
+                'total_grade_points' => $totalGradePoints,
+                'total_subjects' => $subjectsPassed + $subjectsFailed,
                 'subjects_passed' => $subjectsPassed,
                 'subjects_failed' => $subjectsFailed,
+                'cumulative_credits_earned' => $cumulativeResult['credits'],
                 'calculated_at' => now(),
             ]
         );
+
+        $student->update([
+            'cumulative_gpa' => $cumulativeGpa,
+            'total_credits_earned' => $cumulativeResult['credits'],
+        ]);
 
         return $semesterGpa;
     }
@@ -126,7 +135,7 @@ class GpaCalculator
         $latestGrades = $this->getLatestGradesPerSubject($allGrades);
 
         foreach ($latestGrades as $grade) {
-            $credits = $grade->subjectAssignment?->subject?->credits ?? 0;
+            $credits = $grade->subjectAssignment?->credits ?? 0;
             $gradePoint = $grade->grade_point ?? 0;
 
             $totalCreditsAttempted += $credits;
