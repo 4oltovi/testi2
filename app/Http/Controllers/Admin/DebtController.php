@@ -34,10 +34,6 @@ class DebtController extends Controller
             $query->where('debt_type', $debtType);
         }
 
-        if ($paymentStatus = $request->get('payment_status')) {
-            $query->where('payment_status', $paymentStatus);
-        }
-
         if ($groupId = $request->get('group_id')) {
             $query->whereHas('student', fn($q) => $q->where('group_id', $groupId));
         }

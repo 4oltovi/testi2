@@ -36,16 +36,28 @@
         </div>
     </div>
     <div class="col-sm-6 col-lg-2">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <h4 class="bg-danger text-white p-1 mb-0">{{ $stats['fx_total'] }}</h4><small class="text-muted">Fx қарз</small>
+        <div class="card border-0 shadow-sm bg-gradient-danger text-white">
+            <div class="card-body py-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h2 class="fw-bold mb-0">{{ $stats['fx_total'] }}</h2>
+                        <small class="opacity-75">Fx қарз</small>
+                    </div>
+                    <i class="bi bi-exclamation-octagon-fill" style="font-size: 2.5rem; opacity: 0.3;"></i>
+                </div>
             </div>
         </div>
     </div>
     <div class="col-sm-6 col-lg-2">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <h4 class="bg-dark text-white p-1 mb-0">{{ $stats['f_total'] }}</h4><small class="text-muted">F қарз</small>
+        <div class="card border-0 shadow-sm bg-gradient-dark text-white">
+            <div class="card-body py-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h2 class="fw-bold mb-0">{{ $stats['f_total'] }}</h2>
+                        <small class="opacity-75">F қарз</small>
+                    </div>
+                    <i class="bi bi-exclamation-circle-fill" style="font-size: 2.5rem; opacity: 0.3;"></i>
+                </div>
             </div>
         </div>
     </div>
@@ -74,14 +86,6 @@
                     <option value="">Ҳама навъҳо</option>
                     <option value="fx" {{ request('debt_type') == 'fx' ? 'selected' : '' }}>Fx (45-49%)</option>
                     <option value="f" {{ request('debt_type') == 'f' ? 'selected' : '' }}>F (0-44%)</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <select name="payment_status" class="form-select">
-                    <option value="">Ҳама ҳолатҳои пардохт</option>
-                    <option value="not_required" {{ request('payment_status') == 'not_required' ? 'selected' : '' }}>Зарурат надорад</option>
-                    <option value="pending" {{ request('payment_status') == 'pending' ? 'selected' : '' }}>Тасдиқ нашуда</option>
-                    <option value="verified" {{ request('payment_status') == 'verified' ? 'selected' : '' }}>Тасдиқ шуда</option>
                 </select>
             </div>
             <div class="col-md-2">
@@ -117,8 +121,6 @@
                         <th>Фан</th>
                         <th>Сабаб</th>
                         <th>Баҳо</th>
-                        <th>Тавсеа</th>
-                        <th>Пардохт</th>
                         <th>Санаи қарз</th>
                         <th>Кӯшиш</th>
                         <th>Ҳолат</th>
@@ -133,24 +135,6 @@
                         <td><small>{{ $debt->subject?->name }}</small></td>
                         <td><small>{{ $debt->reason_label }}</small></td>
                         <td><span class="badge bg-danger">{{ $debt->original_grade }}</span> ({{ $debt->original_score }}%)</td>
-                        <td>
-                            @if($debt->isFx())
-                                <span class="badge bg-danger">Fx</span>
-                            @elseif($debt->isF())
-                                <span class="badge bg-dark">F</span>
-                            @else
-                                <span class="badge bg-secondary">—</span>
-                            @endif
-                        </td>
-                        <td>
-                            @if($debt->payment_status === 'verified')
-                                <span class="badge bg-success">Тасдиқ</span>
-                            @elseif($debt->payment_status === 'pending')
-                                <span class="badge bg-warning">Тасдиқ нашуда</span>
-                            @else
-                                <span class="badge bg-secondary">Зарурат надорад</span>
-                            @endif
-                        </td>
                         <td><small>{{ $debt->debt_date?->format('d.m.Y') }}</small></td>
                         <td>{{ $debt->retake_attempts_used }}/{{ $debt->max_retake_attempts }}</td>
                         <td><span class="badge {{ $debt->status->badgeClass() }}">{{ $debt->status->label() }}</span></td>
@@ -166,7 +150,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="11" class="text-center text-muted py-4">Қарздорӣ ёфт нашуд.</td>
+                        <td colspan="9" class="text-center text-muted py-4">Қарздорӣ ёфт нашуд.</td>
                     </tr>
                     @endforelse
                 </tbody>
