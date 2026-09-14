@@ -117,7 +117,9 @@ class DebtController extends Controller
 
     public function verifyPayment(AcademicDebt $debt, Request $request): RedirectResponse
     {
-        $this->authorize('admin');
+        if (!auth()->user()?->isAdmin()) {
+            return back()->with('error', 'Таъҷилӣ. Шумо амрдор нестед.');
+        }
 
         if (!$debt->isF()) {
             return back()->with('error', 'Ин қарздорӣ барои тасдиқи пардохт мувофиқ нест (тавсеа Fx аст).');
