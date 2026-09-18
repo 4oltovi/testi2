@@ -32,16 +32,6 @@
                             <input type="text" class="form-control" id="short_name" name="short_name" value="{{ old('short_name', $faculty->short_name) }}">
                         </div>
                         <div class="col-md-4">
-                            <label for="institution_id" class="form-label">Муассиса <span class="text-danger">*</span></label>
-                            <select class="form-select" id="institution_id" name="institution_id" required>
-                                @foreach($institutions as $inst)
-                                    <option value="{{ $inst->id }}" {{ old('institution_id', $faculty->institution_id) == $inst->id ? 'selected' : '' }}>
-                                        {{ $inst->short_name ?? $inst->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-4">
                             <label for="dean_id" class="form-label">Декан</label>
                             <select class="form-select" id="dean_id" name="dean_id">
                                 <option value="">— Интихоб кунед —</option>

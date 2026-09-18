@@ -8,8 +8,6 @@ use App\Models\Course;
 use App\Models\CurrentGrade;
 use App\Models\Department;
 use App\Models\Faculty;
-use App\Models\Group;
-use App\Models\Institution;
 use App\Models\Role;
 use App\Models\Semester;
 use App\Models\SemesterGrade;
@@ -46,14 +44,9 @@ class TestDataSeeder extends Seeder
             'is_current' => true, 'status' => 'active',
         ]);
 
-        // Муассиса
-        $inst = Institution::firstOrCreate(['id' => 1], [
-            'name' => 'Донишгоҳи давлатии тиббии Тоҷикистон', 'short_name' => 'ДДТТ',
-        ]);
-
         // Факултет
         $faculty = Faculty::firstOrCreate(['code' => 'FT'], [
-            'institution_id' => $inst->id, 'name' => 'Факултети тиббӣ',
+            'name' => 'Факултети тиббӣ',
             'short_name' => 'ФТ', 'is_active' => true,
         ]);
 

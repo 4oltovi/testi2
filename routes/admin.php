@@ -67,6 +67,14 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\TeacherController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\Admin\TeacherController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\Admin\TeacherController::class, 'store'])->name('store');
+
+        Route::get('/excel-import', [\App\Http\Controllers\Admin\TeacherExcelImportController::class, 'importForm'])->name('excel-import');
+        Route::post('/excel-import/upload', [\App\Http\Controllers\Admin\TeacherExcelImportController::class, 'upload'])->name('excel-import.upload');
+        Route::get('/excel-import/preview', [\App\Http\Controllers\Admin\TeacherExcelImportController::class, 'preview'])->name('excel-import-preview');
+        Route::post('/excel-import/confirm', [\App\Http\Controllers\Admin\TeacherExcelImportController::class, 'confirm'])->name('excel-import.confirm');
+        Route::get('/excel-import/result', [\App\Http\Controllers\Admin\TeacherExcelImportController::class, 'result'])->name('excel-import-result');
+        Route::get('/excel-import/template', [\App\Http\Controllers\Admin\TeacherExcelImportController::class, 'downloadTemplate'])->name('excel-import.template');
+
         Route::get('/{teacher}', [\App\Http\Controllers\Admin\TeacherController::class, 'show'])->name('show');
         Route::get('/{teacher}/edit', [\App\Http\Controllers\Admin\TeacherController::class, 'edit'])->name('edit');
         Route::put('/{teacher}', [\App\Http\Controllers\Admin\TeacherController::class, 'update'])->name('update');
@@ -134,7 +142,13 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/questions/excel-import/preview', [\App\Http\Controllers\Admin\QuestionExcelImportController::class, 'preview'])->name('questions.excel-import-preview');
         Route::post('/questions/excel-import/confirm', [\App\Http\Controllers\Admin\QuestionExcelImportController::class, 'confirm'])->name('questions.excel-import-confirm');
 
-    // Қарздорӣ
+        Route::get('/questions/matching-import', [\App\Http\Controllers\Admin\QuestionExcelImportController::class, 'importMatchingForm'])->name('questions.matching-import');
+        Route::get('/questions/matching-import/template', [\App\Http\Controllers\Admin\QuestionExcelImportController::class, 'downloadMatchingTemplate'])->name('questions.matching-import-template');
+        Route::post('/questions/matching-import/upload', [\App\Http\Controllers\Admin\QuestionExcelImportController::class, 'uploadMatching'])->name('questions.matching-import-upload');
+        Route::get('/questions/matching-import/preview', [\App\Http\Controllers\Admin\QuestionExcelImportController::class, 'previewMatching'])->name('questions.matching-import-preview');
+        Route::post('/questions/matching-import/confirm', [\App\Http\Controllers\Admin\QuestionExcelImportController::class, 'confirmMatching'])->name('questions.matching-import-confirm');
+
+        // Қарздорӣ
     Route::prefix('debts')->name('debts.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\DebtController::class, 'index'])->name('index');
         Route::get('/export-pdf', [\App\Http\Controllers\Admin\DebtController::class, 'exportPdf'])->name('export-pdf');
@@ -182,6 +196,7 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
         Route::post('clear-cache', [\App\Http\Controllers\Admin\SettingsController::class, 'clearCache'])->name('clear-cache');
         Route::post('new-year', [\App\Http\Controllers\Admin\SettingsController::class, 'newYear'])->name('new-year');
         Route::post('activate-year', [\App\Http\Controllers\Admin\SettingsController::class, 'activateYear'])->name('activate-year');
+        Route::get('promote-all/preview', [\App\Http\Controllers\Admin\SettingsController::class, 'promoteAllPreview'])->name('promote-all.preview');
         Route::post('promote-all', [\App\Http\Controllers\Admin\SettingsController::class, 'promoteAll'])->name('promote-all');
         });
 

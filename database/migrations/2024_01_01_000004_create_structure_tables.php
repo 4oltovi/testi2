@@ -66,7 +66,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('code', 20)->unique(); // Рамзи ихтисос (мисол: 1-40 01 01)
             $table->enum('education_level', ['bachelor', 'master', 'specialist'])->default('bachelor');
-            $table->unsignedTinyInteger('study_years'); // Муддати таҳсил (4, 5, 2...)
+            $table->unsignedTinyInteger('study_years')->default(4); // Муддати таҳсил (4, 5, 2...)
             $table->unsignedSmallInteger('total_credits'); // Маҷмӯи кредитҳо
             $table->enum('study_form', ['full_time', 'part_time', 'evening'])->default('full_time');
             $table->boolean('is_active')->default(true);

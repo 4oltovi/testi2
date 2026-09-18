@@ -18,17 +18,10 @@ class QuestionExcelParser
         $this->warnings = [];
         $this->totalRows = 0;
 
-        try {
-            $reader = IOFactory::createReaderForFile($filePath);
-            $reader->setReadDataOnly(true);
-            $spreadsheet = $reader->load($filePath);
-        } catch (ReaderException $e) {
-            $this->errors[] = 'Наметавонистам файли Excel-ро бихонам: ' . $e->getMessage();
+        $rows = $this->loadSpreadsheet($filePath);
+        if ($rows === null) {
             return collect();
         }
-
-        $sheet = $spreadsheet->getActiveSheet();
-        $rows = $sheet->toArray(null, true, true, false);
 
         if (empty($rows)) {
             $this->errors[] = 'Файл холӣ аст.';
@@ -39,6 +32,149 @@ class QuestionExcelParser
         $questions = $this->parseMarkerFormat($rows);
 
         return $questions;
+    }
+
+    private function loadSpreadsheet(string $filePath): ?array
+    {
+        try {
+            $reader = IOFactory::createReaderForFile($filePath);
+            $reader->setReadDataOnly(true);
+            $spreadsheet = $reader->load($filePath);
+        } catch (ReaderException $e) {
+            $this->errors[] = 'Наметавонистам файли Excel-ро бихонам: ' . $e->getMessage();
+            return null;
+        }
+
+        $sheet = $spreadsheet->getActiveSheet();
+        $rows = $sheet->toArray(null, true, true, false);
+
+        return $rows;
+    }
+
+    public function parseMatching(string $filePath): Collection
+    {
+        $this->errors = [];
+        $this->warnings = [];
+        $this->totalRows = 0;
+
+        $rows = $this->loadSpreadsheet($filePath);
+        if ($rows === null) {
+            return collect();
+        }
+
+        if (empty($rows)) {
+            $this->errors[] = 'Файл холӣ аст.';
+            return collect();
+        }
+
+        $this->totalRows = count($rows);
+        $questions = $this->parseMatchingFormat($rows);
+
+        return $questions;
+    }
+
+    private function parseMatchingFormat(array $rows): Collection
+    {
+        $questions = collect();
+        $currentQuestion = null;
+
+        foreach ($rows as $rowIndex => $row) {
+            $rowNum = $rowIndex + 1;
+            $colA = trim((string)($row[0] ?? ''));
+            $colB = trim((string)($row[1] ?? ''));
+            $colC = trim((string)($row[2] ?? ''));
+            $colD = trim((string)($row[3] ?? ''));
+
+            if ($colA === '' && $colB === '' && $colC === '' && $colD === '') {
+                if ($currentQuestion !== null) {
+                    $this->finalizeMatchingQuestion($currentQuestion);
+                    $questions->push($currentQuestion);
+                    $currentQuestion = null;
+                }
+                continue;
+            }
+
+            if ($currentQuestion === null) {
+                $currentQuestion = [
+                    'row_num' => $rowNum,
+                    'type' => 'matching',
+                    'question_text' => '',
+                    'difficulty_level' => 1,
+                    'explanation' => '',
+                    'pairs' => [],
+                    'extra_options' => [],
+                    'errors' => [],
+                ];
+            }
+
+            if ($colB !== '') {
+                if ($currentQuestion['question_text'] === '') {
+                    $currentQuestion['question_text'] = $colB;
+                } else {
+                    $currentQuestion['pairs'][] = [
+                        'item' => $colB,
+                        'match' => $colD,
+                    ];
+                }
+            } elseif ($colD !== '') {
+                $currentQuestion['extra_options'][] = [
+                    'text' => $colD,
+                ];
+            }
+        }
+
+        if ($currentQuestion !== null) {
+            $this->finalizeMatchingQuestion($currentQuestion);
+            $questions->push($currentQuestion);
+        }
+
+        return $questions;
+    }
+
+    private function finalizeMatchingQuestion(array &$question): void
+    {
+        if (empty($question['question_text'])) {
+            $question['errors'][] = 'Матни савол холӣ аст.';
+            $this->errors[] = "Сатри {$question['row_num']}: Матни савол холӣ аст.";
+        }
+
+        if (count($question['pairs']) < 2) {
+            $question['errors'][] = 'Ҳадди ақал 2 ҷуфт лозим аст.';
+            $this->errors[] = "Сатри {$question['row_num']}: Ҳадди ақал 2 ҷуфт лозим аст.";
+        }
+
+        foreach ($question['pairs'] as $idx => $pair) {
+            if (trim($pair['item'] ?? '') === '') {
+                $question['errors'][] = "Ҷуфти " . ($idx + 1) . ": Матни item холӣ аст.";
+                $this->errors[] = "Сатри {$question['row_num']}: Матни item холӣ аст.";
+            }
+            if (trim($pair['match'] ?? '') === '') {
+                $question['errors'][] = "Ҷуфти " . ($idx + 1) . ": Матни match холӣ аст.";
+                $this->errors[] = "Сатри {$question['row_num']}: Матни match холӣ аст.";
+            }
+        }
+
+        $allMatchTexts = array_merge(
+            array_column($question['pairs'], 'match'),
+            array_column($question['extra_options'], 'text')
+        );
+        $allItemTexts = array_column($question['pairs'], 'item');
+
+        $dupMatches = $this->findDuplicateOptions($allMatchTexts);
+        if (!empty($dupMatches)) {
+            $question['warnings'][] = 'Такроршаванда match матнҳо: ' . implode(', ', $dupMatches);
+            $this->warnings[] = "Сатри {$question['row_num']}: Такроршаванда match матнҳо: " . implode(', ', $dupMatches);
+        }
+
+        $dupItems = $this->findDuplicateOptions($allItemTexts);
+        if (!empty($dupItems)) {
+            $question['warnings'][] = 'Такроршаванда item матнҳо: ' . implode(', ', $dupItems);
+            $this->warnings[] = "Сатри {$question['row_num']}: Такроршаванда item матнҳо: " . implode(', ', $dupItems);
+        }
+
+        if (empty($question['extra_options'])) {
+            $this->warnings[] = "Сатри {$question['row_num']}: Вариант иловагӣ (distractor) надорад — ба тавсияи афзалӣ мувофиқ намекунад.";
+        }
     }
 
     private function parseMarkerFormat(array $rows): Collection

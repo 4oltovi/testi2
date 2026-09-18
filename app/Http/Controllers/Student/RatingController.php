@@ -265,6 +265,7 @@ class RatingController extends Controller
             $semesterGrade = SemesterGrade::create([
                 'student_id' => $ratingAttempt->student_id,
                 'subject_assignment_id' => $subjectAssignment->id,
+                'subject_id' => $subjectAssignment->subject_id,
                 'semester_id' => $session->semester_id,
                 'status' => 'in_progress',
             ]);

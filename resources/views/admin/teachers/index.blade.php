@@ -8,6 +8,9 @@
     <a href="{{ route('admin.teachers.create') }}" class="btn btn-primary">
         <i class="bi bi-plus-lg me-1"></i> Омӯзгори нав
     </a>
+    <a href="{{ route('admin.teachers.excel-import') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-upload me-1"></i> Импорт аз Excel
+    </a>
 @endsection
 
 @section('content')

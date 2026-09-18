@@ -47,9 +47,6 @@
                         </div>
                     </div>
 
-                    {{-- Муассиса автоматикӣ (пинҳон) --}}
-                    <input type="hidden" name="institution_id" value="{{ $institutions->first()?->id }}">
-
                     <div class="mb-4">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1" {{ old('is_active', '1') ? 'checked' : '' }}>

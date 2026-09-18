@@ -7,9 +7,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\Subject;
-use App\Models\Department;
 use App\Models\Faculty;
-use App\Models\Institution;
 use App\Models\QuestionBank;
 use App\Models\Question;
 use App\Models\AnswerOption;
@@ -38,13 +36,7 @@ class RatingQuestionImportTest extends TestCase
 
     private function createSubject(string $name, string $code): Subject
     {
-        $institution = Institution::create([
-            'name' => 'Муассисаи ' . $name,
-            'is_active' => true,
-        ]);
-
         $faculty = Faculty::create([
-            'institution_id' => $institution->id,
             'name' => 'Факултети ' . $name,
             'code' => 'FAC-' . strtoupper(substr($code, 0, 3)),
             'is_active' => true,

@@ -51,7 +51,7 @@ class UserController extends Controller
      */
     public function create(): View
     {
-        $roles = Role::orderBy('level', 'desc')->get();
+        $roles = Role::where('name', '!=', 'teacher')->orderBy('level', 'desc')->get();
         return view('admin.users.create', compact('roles'));
     }
 
@@ -89,6 +89,14 @@ class UserController extends Controller
                 ->with('error', 'Донишҷӯро аз саҳифаи «Донишҷӯён» созед, то login ва рақами донишҷӯӣ якхела бошанд.');
         }
 
+        // Таъиноти нақши "teacher" дар ин саҳифа мумкин нест — омӯзгорон бояд танҳо аз саҳифаи «Омӯзгорон» (Сабти омӯзгори нав) сохта шаванд,
+        // то ки профили омӯзгор (кафедра, рақами корманд, вазифа, санаи қабулият ва дигар маълумот) ҳам сохта шавад.
+        $teacherRoleId = Role::where('name', 'teacher')->value('id');
+        if ($teacherRoleId && in_array((int) $teacherRoleId, array_map('intval', $validated['roles']), true)) {
+            return redirect()->route('admin.users.create')
+                ->with('error', 'Барои сохтани омӯзгор аз саҳифаи «Омӯзгорон» истифода баред, то профили омӯзгор (кафедра, рақам, вазифа ва дигар) ҳам сохта шавад.');
+        }
+
         $user = User::create([
             'login' => $validated['login'],
             'email' => $validated['email'] ?? null,
@@ -123,7 +131,7 @@ class UserController extends Controller
      */
     public function edit(User $user): View
     {
-        $roles = Role::orderBy('level', 'desc')->get();
+        $roles = Role::where('name', '!=', 'teacher')->orderBy('level', 'desc')->get();
         $userRoles = $user->roles->pluck('id')->toArray();
         return view('admin.users.edit', compact('user', 'roles', 'userRoles'));
     }
@@ -151,6 +159,14 @@ class UserController extends Controller
             && !$user->student()->exists()) {
             return redirect()->route('admin.students.create')
                 ->with('error', 'Ин корбар Student profile надорад. Донишҷӯро аз саҳифаи «Донишҷӯён» созед.');
+        }
+
+        // Таъиноти нақши "teacher" дар ин саҳифа мумкин нест — омӯзгорон бояд танҳо аз саҳифаи «Омӯзгорон» (Сабти омӯзгори нав) сохта шаванд,
+        // то ки профили омӯзгор (кафедра, рақам, вазифа, санаи қабулият ва дигар маълумот) ҳам сохта шавад.
+        $teacherRoleId = Role::where('name', 'teacher')->value('id');
+        if ($teacherRoleId && in_array((int) $teacherRoleId, array_map('intval', $validated['roles']), true)) {
+            return redirect()->route('admin.users.edit', $user)
+                ->with('error', 'Барои таҳрири профили омӯзгор аз саҳифаи «Омӯзгорон» истифода баред.');
         }
 
         $oldValues = $user->toArray();

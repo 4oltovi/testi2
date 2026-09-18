@@ -8,6 +8,9 @@
         <a href="{{ route('admin.questions.excel-import-form') }}" class="btn btn-outline-primary btn-sm">
             <i class="bi bi-file-earmark-spreadsheet me-1"></i> Импорт саволҳо
         </a>
+        <a href="{{ route('admin.questions.matching-import') }}" class="btn btn-outline-info btn-sm">
+            <i class="bi bi-shuffle me-1"></i> Импорт мувофиқоварӣ
+        </a>
         <a href="{{ route('admin.exams.questions.export', ['subject_id' => request('subject_id')]) }}" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-download me-1"></i> Экспорт
         </a>

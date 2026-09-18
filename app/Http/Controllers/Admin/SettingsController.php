@@ -3,21 +3,237 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AcademicDebt;
+use App\Models\AcademicYear;
+use App\Models\AuditLog;
+use App\Models\Course;
+use App\Models\Group;
 use App\Models\Setting;
+use App\Models\Semester;
+use App\Models\Student;
+use App\Models\StudentPromotion;
+use App\Models\StudentStatusHistory;
+use App\Enums\DebtStatus;
+use App\Enums\StudentStatus;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use App\Models\Group;
 use Illuminate\View\View;
-use App\Models\AcademicYear;
-use App\Models\Course;
-use App\Models\Semester;
-use App\Models\Student;
 
 class SettingsController extends Controller
 {
+    /**
+     * Preview: dry-run promotion for all active students.
+     */
+    public function promoteAllPreview(): View
+    {
+        $categories = [
+            'graduated'               => [],
+            'graduated_with_debts'    => [],
+            'promoted'                => [],
+            'needs_review_no_group'   => [],
+            'needs_review_no_duration' => [],
+            'skipped_no_course'       => [],
+            'on_leave_excluded'       => [],
+        ];
+
+        $students = Student::where('status', StudentStatus::ACTIVE)->with(['course', 'group', 'specialty', 'academicDebts'])->get();
+
+        foreach ($students as $s) {
+            $num = (int) ($s->course->number ?? preg_replace('/\D/', '', $s->course->name ?? '') ?: 0);
+
+            if ($num <= 0) {
+                $categories['skipped_no_course'][] = [
+                    'student' => $s,
+                    'reason' => 'Course number could not be determined',
+                ];
+                continue;
+            }
+
+            $specialty = $s->specialty;
+            $duration = $specialty?->study_years;
+
+            if ($duration === null || $duration <= 0) {
+                $categories['needs_review_no_duration'][] = [
+                    'student' => $s,
+                    'reason' => 'Specialty duration not configured',
+                ];
+                continue;
+            }
+
+            if ($num >= $duration) {
+                $openDebts = AcademicDebt::open()->where('student_id', $s->id)->count();
+                if ($openDebts > 0) {
+                    $categories['graduated_with_debts'][] = [
+                        'student' => $s,
+                        'open_debts' => $openDebts,
+                    ];
+                } else {
+                    $categories['graduated'][] = ['student' => $s];
+                }
+                continue;
+            }
+
+            $next = Course::where('number', $num + 1)->first()
+                ?? Course::where('name', 'like', '%' . ($num + 1) . '%')->first();
+
+            if (!$next) {
+                $categories['skipped_no_course'][] = [
+                    'student' => $s,
+                    'reason' => 'Next course not found',
+                ];
+                continue;
+            }
+
+            $nextGroup = Group::where('specialty_id', $s->specialty_id)
+                ->where('course_id', $next->id)
+                ->first();
+
+            if (!$nextGroup) {
+                $categories['needs_review_no_group'][] = [
+                    'student' => $s,
+                    'reason' => 'No matching group for specialty + next course',
+                ];
+                continue;
+            }
+
+            $categories['promoted'][] = [
+                'student' => $s,
+                'from_group' => $s->group,
+                'to_group' => $nextGroup,
+                'from_course' => $s->course,
+                'to_course' => $next,
+            ];
+        }
+
+        return view('admin.settings.promote-preview', compact('categories'));
+    }
+
+    /**
+     * 🎓 Гузариш ба соли нав — ҳамаи донишҷӯён
+     */
+    public function promoteAll(Request $request): RedirectResponse
+    {
+        $results = [
+            'promoted'               => [],
+            'graduated'              => [],
+            'graduated_with_debts'   => [],
+            'needs_review_no_group'  => [],
+            'needs_review_no_duration' => [],
+            'skipped_no_course'      => [],
+            'on_leave_excluded'      => [],
+        ];
+
+        Student::where('status', StudentStatus::ACTIVE)->with(['course', 'group', 'specialty', 'academicDebts'])->chunk(200, function ($students) use (&$results) {
+            DB::transaction(function () use ($students, &$results) {
+                foreach ($students as $s) {
+                    $num = (int) ($s->course->number ?? preg_replace('/\D/', '', $s->course->name ?? '') ?: 0);
+
+                    if ($num <= 0) {
+                        $results['skipped_no_course'][] = $s->id;
+                        continue;
+                    }
+
+                    $specialty = $s->specialty;
+                    $duration = $specialty?->study_years;
+
+                    if ($duration === null || $duration <= 0) {
+                        $results['needs_review_no_duration'][] = $s->id;
+                        continue;
+                    }
+
+                    if ($num >= $duration) {
+                        $openDebts = AcademicDebt::open()->where('student_id', $s->id)->count();
+                        if ($openDebts > 0) {
+                            $results['graduated_with_debts'][] = $s->id;
+                            continue;
+                        }
+
+                        $prevStatus = $s->status;
+                        $s->update([
+                            'status' => StudentStatus::GRADUATED,
+                            'status_date' => now(),
+                            'status_reason' => 'Хатми муваффақонаи курси таҳсил',
+                        ]);
+
+                        StudentStatusHistory::create([
+                            'student_id' => $s->id,
+                            'from_status' => $prevStatus->value,
+                            'to_status' => StudentStatus::GRADUATED->value,
+                            'reason' => 'Хатми муваффақонаи курси таҳсил',
+                            'created_by' => auth()->id(),
+                        ]);
+
+                        AuditLog::log(
+                            'promote',
+                            "Донишҷӯ хатм кард: {$s->user?->full_name}",
+                            Student::class,
+                            $s->id,
+                            ['status' => $prevStatus->value, 'course_id' => $s->course_id],
+                            ['status' => StudentStatus::GRADUATED->value]
+                        );
+
+                        $results['graduated'][] = $s->id;
+                        continue;
+                    }
+
+                    $next = Course::where('number', $num + 1)->first()
+                        ?? Course::where('name', 'like', '%' . ($num + 1) . '%')->first();
+
+                    if (!$next) {
+                        $results['skipped_no_course'][] = $s->id;
+                        continue;
+                    }
+
+                    $nextGroup = Group::where('specialty_id', $s->specialty_id)
+                        ->where('course_id', $next->id)
+                        ->first();
+
+                    if (!$nextGroup) {
+                        $results['needs_review_no_group'][] = $s->id;
+                        continue;
+                    }
+
+                    $oldGroupId = $s->group_id;
+                    $oldCourseId = $s->course_id;
+
+                    $s->update([
+                        'course_id' => $next->id,
+                        'group_id' => $nextGroup->id,
+                    ]);
+
+                    StudentPromotion::create([
+                        'student_id' => $s->id,
+                        'from_group_id' => $oldGroupId,
+                        'to_group_id' => $nextGroup->id,
+                        'from_course_id' => $oldCourseId,
+                        'to_course_id' => $next->id,
+                        'academic_year_id' => AcademicYear::current()?->id ?? 1,
+                        'gpa_at_promotion' => $s->cumulative_gpa,
+                        'created_by' => auth()->id(),
+                    ]);
+
+                    AuditLog::log(
+                        'promote',
+                        "Донишҷӯ гузаронида шуд: {$s->user?->full_name}",
+                        Student::class,
+                        $s->id,
+                        ['group_id' => $oldGroupId, 'course_id' => $oldCourseId],
+                        ['group_id' => $nextGroup->id, 'course_id' => $next->id]
+                    );
+
+                    $results['promoted'][] = $s->id;
+                }
+            });
+        });
+
+        $totalProcessed = array_sum(array_map('count', $results));
+
+        return back()->with('success', "🎓 Гузариш ба соли нав: {$totalProcessed} донишҷӯ обработ шуданд.")->with('results', $results);
+    }
+
     /**
      * Ҳамаи танзимот (умумӣ)
      */
@@ -196,20 +412,15 @@ class SettingsController extends Controller
         }
 
         DB::transaction(function () use ($year, $selectedSemesterId) {
-            // Солҳои дигар: ғайриҷорӣ (солҳои planning ҳамон planning мемонанд)
             AcademicYear::whereKeyNot($year->id)->update(['is_current' => false]);
             AcademicYear::whereKeyNot($year->id)
                 ->where('status', 'active')
                 ->update(['status' => 'completed']);
 
-            // Соли интихобшуда: ҷорӣ ва фаъол
             $year->update(['is_current' => true, 'status' => 'active', 'is_active' => true]);
 
-            // Ҳамаи семестрҳо: ғайриҷорӣ
             Semester::query()->update(['is_current' => false]);
 
-            // Семестри ҷорӣ: агар имрӯз дар байни санаҳо бошад — ҳамон,
-            // вагарна семестри аввали ҳамон сол
             $semesters = $year->semesters()->orderBy('number')->get();
 
             $current = $selectedSemesterId
@@ -225,57 +436,5 @@ class SettingsController extends Controller
         });
 
         return back()->with('success', "⭐ Соли {$year->name} ҳамчун соли ҷорӣ фаъол шуд!");
-    }
-
-    /**
-     * 🎓 Гузариш ба соли нав — ҳамаи донишҷӯён
-     */
-    public function promoteAll(): RedirectResponse
-    {
-        $promoted = 0;
-        $graduated = 0;
-        $skipped = 0;
-
-        Student::where('status', 'active')->with(['course', 'group'])->get()
-            ->each(function ($s) use (&$promoted, &$graduated, &$skipped) {
-                $num = (int) ($s->course->number ?? preg_replace('/\D/', '', $s->course->name ?? '') ?: 0);
-
-                if ($num <= 0) {
-                    $skipped++;
-                    return;
-                }
-
-                // Курси охирин → хатмкарда
-                if ($num >= 4) {
-                    $s->update(['status' => 'graduated']);
-                    $graduated++;
-                    return;
-                }
-
-                $next = Course::where('number', $num + 1)->first()
-                    ?? Course::where('name', 'like', '%' . ($num + 1) . '%')->first();
-
-                if (!$next) {
-                    $skipped++;
-                    return;
-                }
-
-                $update = ['course_id' => $next->id];
-
-                if (Schema::hasColumn('groups', 'course_id') && $s->specialty_id) {
-                    $nextGroup = Group::where('specialty_id', $s->specialty_id)
-                        ->where('course_id', $next->id)
-                        ->first();
-                    if ($nextGroup) $update['group_id'] = $nextGroup->id;
-                }
-
-                $s->update($update);
-                $promoted++;
-            });
-
-        return back()->with(
-            'success',
-            "🎓 Гузариш ба соли нав: {$promoted} гузашт, {$graduated} хатм карданд, {$skipped} гузашта нашуданд."
-        );
     }
 }

@@ -13,18 +13,13 @@ class Faculty extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'institution_id', 'name', 'short_name', 'code',
+        'name', 'short_name', 'code',
         'dean_id', 'phone', 'email', 'is_active', 'sort_order',
     ];
 
     protected function casts(): array
     {
         return ['is_active' => 'boolean'];
-    }
-
-    public function institution(): BelongsTo
-    {
-        return $this->belongsTo(Institution::class);
     }
 
     public function dean(): BelongsTo

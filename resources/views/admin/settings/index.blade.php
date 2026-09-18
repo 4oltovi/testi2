@@ -297,15 +297,17 @@
 
             {{-- Гузариш ба соли нав --}}
             <div class="col-md-4">
-                <form method="POST" action="{{ url('admin/settings/promote-all') }}"
-                    onsubmit="return confirm('Диққат! Ҳамаи донишҷӯёни фаъол ба курси нав мегузаранд ва курси 4 хатм мекунанд. Давом диҳед?');">
-                    @csrf
-                    <label class="form-label">Гузариш ба соли нав</label>
-                    <div class="d-grid">
-                        <button class="btn btn-warning" type="submit">🎓 Гузариш ба соли нав</button>
+                <a href="{{ route('admin.settings.promote-all.preview') }}" class="d-block">
+                    <div class="card border-0 shadow-sm text-center p-4 h-100">
+                        <div class="card-body">
+                            <label class="form-label">
+                                <h5>🎓 Гузариш ба соли нав</h5>
+                            </label>
+                            <div class="btn btn-warning btn-lg w-100">Пешназорӣ & Иҷро</div>
+                        </div>
+                        <small class="text-muted">Донишҷӯён курс+1, гурӯҳи нав, курси 4 → хатм</small>
                     </div>
-                    <small class="text-muted">Донишҷӯён курс+1, гурӯҳи нав, курси 4 → хатм</small>
-                </form>
+                </a>
             </div>
         </div>
 
@@ -315,20 +317,20 @@
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const year = document.getElementById('activateAcademicYear');
-    const semester = document.getElementById('activateSemester');
-    if (!year || !semester) return;
+    document.addEventListener('DOMContentLoaded', function() {
+        const year = document.getElementById('activateAcademicYear');
+        const semester = document.getElementById('activateSemester');
+        if (!year || !semester) return;
 
-    function filterSemesters() {
-        [...semester.options].forEach(function (option) {
-            option.hidden = option.value !== '' && option.dataset.year !== year.value;
-        });
-        if (semester.selectedOptions[0]?.hidden) semester.value = '';
-    }
+        function filterSemesters() {
+            [...semester.options].forEach(function(option) {
+                option.hidden = option.value !== '' && option.dataset.year !== year.value;
+            });
+            if (semester.selectedOptions[0]?.hidden) semester.value = '';
+        }
 
-    year.addEventListener('change', filterSemesters);
-    filterSemesters();
-});
+        year.addEventListener('change', filterSemesters);
+        filterSemesters();
+    });
 </script>
 @endpush
