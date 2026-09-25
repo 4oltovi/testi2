@@ -21,7 +21,7 @@ trait ResolvesDeanFaculty
         return static::$deanFacultyIdCache;
     }
 
-    protected function applyFacultyScope($query, string $relationChain = 'specialty.department.faculty')
+    protected function applyFacultyScope($query, string $relationChain = 'specialty.faculty')
     {
         $facultyId = $this->facultyId();
 
@@ -47,14 +47,14 @@ trait ResolvesDeanFaculty
     protected function extractFacultyId($model): ?int
     {
         return match (get_class($model)) {
-            \App\Models\Student::class => $model->specialty?->department?->faculty?->id,
+            \App\Models\Student::class => $model->specialty?->faculty?->id,
             \App\Models\Teacher::class => $model->department?->faculty?->id,
-            \App\Models\Group::class => $model->specialty?->department?->faculty?->id,
-            \App\Models\Specialty::class => $model->department?->faculty?->id,
+            \App\Models\Group::class => $model->specialty?->faculty?->id,
+            \App\Models\Specialty::class => $model->faculty?->id,
             \App\Models\Subject::class => $model->department?->faculty?->id,
-            \App\Models\AcademicDebt::class => $model->student?->specialty?->department?->faculty?->id,
-            \App\Models\SubjectAssignment::class => $model->group?->specialty?->department?->faculty?->id,
-            \App\Models\SemesterGrade::class => $model->subjectAssignment?->group?->specialty?->department?->faculty?->id,
+            \App\Models\AcademicDebt::class => $model->student?->specialty?->faculty?->id,
+            \App\Models\SubjectAssignment::class => $model->group?->specialty?->faculty?->id,
+            \App\Models\SemesterGrade::class => $model->subjectAssignment?->group?->specialty?->faculty?->id,
             default => null,
         };
     }

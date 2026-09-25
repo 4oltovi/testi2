@@ -79,7 +79,7 @@
                             <tr>
                                 <td>
                                     <a href="{{ route('admin.structure.groups.show', $group) }}" class="fw-semibold text-decoration-none">
-                                        {{ $group->name }}
+                                        {{ $group->full_name }}
                                     </a>
                                     <br><small class="text-muted">{{ $group->code }}</small>
                                 </td>

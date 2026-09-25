@@ -61,7 +61,7 @@ class TranscriptController extends Controller
         $student->load([
             'user',
             'group',
-            'specialty.department.faculty',
+            'specialty.faculty',
             'course',
             'semesterGrades' => fn($q) => $q->where('is_finalized', true)->with(['subjectAssignment.subject', 'semester']),
             'semesterGpas.semester',
@@ -140,7 +140,7 @@ class TranscriptController extends Controller
      */
     protected function buildTranscriptData(Student $student, ?string $number): array
     {
-        $student->load(['user', 'group', 'specialty.department.faculty', 'course']);
+        $student->load(['user', 'group', 'specialty.faculty', 'course']);
 
         $grades = SemesterGrade::with(['subjectAssignment.subject', 'subjectAssignment.group', 'semester'])
             ->where('student_id', $student->id)

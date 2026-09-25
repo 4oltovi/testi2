@@ -19,7 +19,7 @@ class Exam extends Model
         'duration_minutes', 'total_questions_count', 'simple_questions_count', 'matching_questions_count', 'passing_score',
         'shuffle_questions', 'shuffle_answers', 'show_results_immediately',
         'allow_back_navigation', 'max_attempts', 'auto_save',
-        'starts_at', 'ends_at', 'status', 'is_published',
+        'starts_at', 'ends_at', 'status', 'is_published', 'no_shows_processed_at',
     ];
 
     protected function casts(): array

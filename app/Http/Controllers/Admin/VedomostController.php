@@ -67,9 +67,9 @@ class VedomostController extends Controller
             });
 
             $vedomosts = Vedomost::with([
-                'subject:id,name',
+                'subject:id,name,credits',
                 'group:id,name',
-                'teacher:id,first_name,last_name',
+                'teacher:id,first_name,last_name,middle_name',
                 'semester:id,number',
                 'academicYear:id,name',
             ])
@@ -77,6 +77,14 @@ class VedomostController extends Controller
                 ->get()
                 ->sortBy(fn ($v) => mb_strtolower($v->subject->name ?? ''))
                 ->values();
+
+            $examRows = Exam::whereIn('subject_assignment_id', $vedomosts->pluck('subject_assignment_id')->unique())
+                ->where('semester_id', $semesterId)
+                ->get()
+                ->groupBy('subject_assignment_id');
+            $vedomosts->each(function ($v) use ($examRows) {
+                $v->examRecord = $examRows->get($v->subject_assignment_id)?->sortByDesc('starts_at')->first();
+            });
         }
 
         return view('admin.vedomosts.index', compact(
@@ -197,7 +205,7 @@ class VedomostController extends Controller
             ];
         });
         // Санаи имтиҳон аз журнал (semester_grades.exam_date)
-        $examDate = $grades->first(fn ($g) => $g->exam_date)?->exam_date;
+        $examDate = $exam?->starts_at ?? $grades->first(fn ($g) => $g->exam_date)?->exam_date;
 
         return [
             'v' => $vedomost,
@@ -216,7 +224,7 @@ class VedomostController extends Controller
         $pdf = Pdf::loadView('admin.vedomosts.pdf', $data);
         $pdf->setPaper('a4');
 
-        $name = 'vedomost_'.($vedomost->group->name ?? 'group').'_'.($vedomost->subject->name ?? 'fan').'.pdf';
+        $name = 'vedomost_'.($vedomost->group->full_name ?? 'group').'_'.($vedomost->subject->name ?? 'fan').'.pdf';
 
         return $pdf->download($name);
     }
@@ -331,13 +339,34 @@ class VedomostController extends Controller
 
     protected function buildRetakeVedomostData(RetakeVedomost $retakeVedomost): array
     {
-        $retakeVedomost->load([
-            'retakeExam.subject:id,name',
-            'retakeExam.semester:id,number',
-            'group:id,name',
-        ]);
-
+        $retakeVedomost->load(['retakeExam.subject', 'retakeExam.semester', 'group']);
         $retakeExam = $retakeVedomost->retakeExam;
+
+        $subjectAssignment = \App\Models\SubjectAssignment::where('group_id', $retakeVedomost->group_id)
+            ->where('subject_id', $retakeExam->subject_id)
+            ->where('semester_id', $retakeExam->semester_id)
+            ->first();
+
+        $v = null;
+        if ($subjectAssignment) {
+            $v = Vedomost::firstOrCreate(
+                ['subject_assignment_id' => $subjectAssignment->id, 'semester_id' => $subjectAssignment->semester_id],
+                [
+                    'group_id' => $subjectAssignment->group_id,
+                    'subject_id' => $subjectAssignment->subject_id,
+                    'teacher_id' => $subjectAssignment->teacher_id,
+                    'academic_year_id' => $subjectAssignment->group?->academic_year_id,
+                    'status' => 'draft',
+                ]
+            );
+            $v->load([
+                'subject',
+                'group.specialty.department.faculty',
+                'semester',
+                'academicYear',
+                'subjectAssignment',
+            ]);
+        }
 
         $retakeStudents = RetakeExamStudent::where('retake_exam_id', $retakeExam->id)
             ->whereHas('student', fn ($q) => $q->where('group_id', $retakeVedomost->group_id))
@@ -410,6 +439,7 @@ class VedomostController extends Controller
             'groupedRows' => $groupedRows,
             'students' => $students,
             'group' => $group,
+            'v' => $v,
             'institutionName' => Setting::get('institution_name', 'Муассисаи ғайридавлатии коллеҷи тиббии "Даво" Маркази тестӣ'),
             'deputyDirector' => Setting::get('deputy_director_name', 'Гулов М.'),
             'centerHead' => Setting::get('testing_center_head_name', 'Хоҷаев М.М.'),
@@ -431,7 +461,7 @@ class VedomostController extends Controller
         $pdf = Pdf::loadView('admin.vedomosts.retake-pdf', $data);
         $pdf->setPaper('a4');
 
-        $name = 'retake_vedomost_'.($retakeVedomost->retakeExam->subject->name ?? 'fan').'_'.($retakeVedomost->group->name ?? 'group').'.pdf';
+        $name = 'retake_vedomost_'.($retakeVedomost->retakeExam->subject->name ?? 'fan').'_'.($retakeVedomost->group->full_name ?? 'group').'.pdf';
 
         return $pdf->download($name);
     }

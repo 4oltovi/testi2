@@ -14,6 +14,7 @@ use App\Models\Teacher;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -39,13 +40,13 @@ class ReportController extends Controller
 
     public function students(Request $request): View
     {
-        $query = Student::with(['user', 'group', 'specialty.department.faculty', 'course'])->active();
+        $query = Student::with(['user', 'group', 'specialty.faculty', 'course'])->active();
 
         if ($groupId = $request->get('group_id')) {
             $query->where('group_id', $groupId);
         }
         if ($facultyId = $request->get('faculty_id')) {
-            $query->whereHas('specialty.department', fn($q) => $q->where('faculty_id', $facultyId));
+            $query->whereHas('specialty', fn($q) => $q->where('faculty_id', $facultyId));
         }
         if ($orphanType = $request->get('orphan_type')) {
             $query->where('orphan_type', $orphanType);
@@ -90,34 +91,35 @@ class ReportController extends Controller
 
         $attendanceData = collect();
 
-        if ($groupId && $semesterId) {
-            // Оптимизатсия: як query барои ҳама донишҷӯён (без N+1)
-            $studentIds = Student::where('group_id', $groupId)->active()->pluck('id');
+        if ($groupId) {
+            $group = Group::find($groupId);
+            if ($group) {
+                $studentIds = Student::where('group_id', $groupId)->active()->pluck('id');
 
-            $attendanceStats = Attendance::whereIn('student_id', $studentIds)
-                ->whereHas('subjectAssignment', fn($q) => $q->where('semester_id', $semesterId))
-                ->selectRaw('student_id, 
-                    COUNT(*) as total, 
-                    SUM(CASE WHEN status IN ("present", "late", "excused", "sick") THEN 1 ELSE 0 END) as present')
-                ->groupBy('student_id')
-                ->get()
-                ->keyBy('student_id');
+                $attendanceStats = DB::table('daily_attendance')
+                    ->whereIn('student_id', $studentIds)
+                    ->where('group_id', $groupId)
+                    ->selectRaw('student_id, COUNT(*) as total, SUM(CASE WHEN status = "present" THEN 1 ELSE 0 END) as present')
+                    ->groupBy('student_id')
+                    ->get()
+                    ->keyBy('student_id');
 
-            $students = Student::whereIn('id', $studentIds)->with('user')->get();
+                $students = Student::whereIn('id', $studentIds)->with('user')->get();
 
-            $attendanceData = $students->map(function ($student) use ($attendanceStats) {
-                $stats = $attendanceStats->get($student->id);
-                $total = $stats?->total ?? 0;
-                $present = $stats?->present ?? 0;
+                $attendanceData = $students->map(function ($student) use ($attendanceStats) {
+                    $stats = $attendanceStats->get($student->id);
+                    $total = $stats?->total ?? 0;
+                    $present = $stats?->present ?? 0;
 
-                return [
-                    'student_name' => $student->user?->full_name,
-                    'total' => $total,
-                    'present' => $present,
-                    'absent' => $total - $present,
-                    'percentage' => $total > 0 ? round(($present / $total) * 100, 1) : 100,
-                ];
-            })->sortBy('percentage');
+                    return [
+                        'student_name' => $student->user?->full_name,
+                        'total' => $total,
+                        'present' => $present,
+                        'absent' => $total - $present,
+                        'percentage' => $total > 0 ? round(($present / $total) * 100, 1) : 100,
+                    ];
+                })->sortBy('percentage');
+            }
         }
 
         $groups = Group::active()->orderBy('name')->get();
@@ -194,7 +196,7 @@ class ReportController extends Controller
 
     private function exportStudentsExcel(?int $groupId)
     {
-        $query = Student::with(['user', 'group', 'specialty.department.faculty', 'course'])->active();
+        $query = Student::with(['user', 'group', 'specialty.faculty', 'course'])->active();
         if ($groupId) {
             $query->where('group_id', $groupId);
         }

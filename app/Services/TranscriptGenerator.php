@@ -90,7 +90,7 @@ class TranscriptGenerator
      */
     public function getTranscriptData(Transcript $transcript): array
     {
-        $student = $transcript->student()->with(['user', 'group', 'specialty.department.faculty', 'course'])->first();
+        $student = $transcript->student()->with(['user', 'group', 'specialty.faculty', 'course'])->first();
         $lines = $transcript->lines()->with('semester.academicYear')->orderBy('sort_order')->get();
 
         // Гурӯҳбандӣ аз рӯйи семестр
@@ -102,7 +102,7 @@ class TranscriptGenerator
                 'full_name' => $student->user->full_name,
                 'student_id' => $student->student_id_number,
                 'record_book' => $student->record_book_number,
-                'faculty' => $student->specialty?->department?->faculty?->name,
+                'faculty' => $student->specialty?->faculty?->name,
                 'department' => $student->specialty?->department?->name,
                 'specialty' => $student->specialty?->name,
                 'specialty_code' => $student->specialty?->code,

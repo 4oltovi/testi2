@@ -67,27 +67,70 @@ class DebtDetector
                 ->first();
 
             if ($existingDebt) {
-                return $existingDebt;
+                return $this->syncGrade($semesterGrade, $existingDebt);
             }
 
-            $reason = $this->determineReason($semesterGrade);
+            return $this->createNewDebt($semesterGrade, $grade, $subjectId);
+        });
+    }
 
-            $debtType = $grade === GradeScale::FX ? 'fx' : 'f';
-            $paymentStatus = $grade === GradeScale::FX ? 'not_required' : 'pending';
-            $retakeAllowed = $grade === GradeScale::FX;
+    /**
+     * Синхронизатсияи қарздорӣ бо баҳои ниҳоии донишҷӯ
+     */
+    public function syncGrade(SemesterGrade $semesterGrade, AcademicDebt $existingDebt): AcademicDebt
+    {
+        $grade = GradeScale::tryFrom($semesterGrade->letter_grade);
 
+        if (!$grade) {
+            return $existingDebt;
+        }
+
+        $debtType = $grade === GradeScale::FX ? 'fx' : 'f';
+        $paymentStatus = $grade === GradeScale::FX ? 'not_required' : 'pending';
+        $retakeAllowed = $grade === GradeScale::FX;
+
+        $existingDebt->update([
+            'semester_grade_id' => $semesterGrade->id,
+            'original_score' => $semesterGrade->total_score,
+            'original_grade' => $grade->value,
+            'debt_type' => $debtType,
+            'payment_status' => $paymentStatus,
+            'retake_allowed' => $retakeAllowed,
+            'retake_deadline' => $grade->canRetake()
+                ? $semesterGrade->semester?->retake_end_date
+                : null,
+        ]);
+
+        AcademicDebtHistory::create([
+            'academic_debt_id' => $existingDebt->id,
+            'action' => 'updated',
+            'from_status' => $existingDebt->status->value,
+            'to_status' => $existingDebt->status->value,
+            'comment' => "Қарздорӣ навсозӣ шуд. Баҳои нав: {$grade->value} ({$semesterGrade->total_score}%)",
+            'performed_by' => Auth::id() ?? 1,
+        ]);
+
+        return $existingDebt;
+    }
+
+    /**
+     * Эҷоди қарздории нав
+     */
+    private function createNewDebt(SemesterGrade $semesterGrade, GradeScale $grade, int $subjectId): AcademicDebt
+    {
+        return DB::transaction(function () use ($semesterGrade, $grade, $subjectId) {
             $debt = AcademicDebt::create([
                 'student_id' => $semesterGrade->student_id,
                 'semester_grade_id' => $semesterGrade->id,
                 'subject_id' => $subjectId,
                 'semester_id' => $semesterGrade->semester_id,
-                'reason' => $reason,
+                'reason' => $this->determineReason($semesterGrade),
                 'debt_date' => now(),
                 'original_score' => $semesterGrade->total_score,
                 'original_grade' => $grade->value,
-                'debt_type' => $debtType,
-                'payment_status' => $paymentStatus,
-                'retake_allowed' => $retakeAllowed,
+                'debt_type' => $grade === GradeScale::FX ? 'fx' : 'f',
+                'payment_status' => $grade === GradeScale::FX ? 'not_required' : 'pending',
+                'retake_allowed' => $grade === GradeScale::FX,
                 'max_retake_attempts' => 2,
                 'retake_deadline' => $grade->canRetake()
                     ? $semesterGrade->semester?->retake_end_date
@@ -96,17 +139,15 @@ class DebtDetector
                 'created_by' => Auth::id() ?? 1,
             ]);
 
-            // Сабти таърих
             AcademicDebtHistory::create([
                 'academic_debt_id' => $debt->id,
                 'action' => 'created',
                 'from_status' => null,
                 'to_status' => DebtStatus::ACTIVE->value,
-                'comment' => "Қарздории академӣ эҷод шуд. Баҳо: {$grade->value} ({$semesterGrade->total_score}%)",
+                'comment' => "Қарзории академӣ эҷод шуд. Баҳо: {$grade->value} ({$semesterGrade->total_score}%)",
                 'performed_by' => Auth::id() ?? 1,
             ]);
 
-            // Навсозии ҳолати донишҷӯ
             $semesterGrade->student->update(['has_debts' => true]);
 
             return $debt;
@@ -188,6 +229,35 @@ class DebtDetector
     }
 
     /**
+     * Синхронизатсияи қарздорӣ бо баҳои ниҳоии донишҷӯ (эрнит ё эҷод)
+     */
+    public function syncOrCreateDebt(SemesterGrade $semesterGrade): AcademicDebt
+    {
+        $grade = GradeScale::tryFrom($semesterGrade->letter_grade);
+
+        if (!$grade) {
+            throw new \RuntimeException('No grade found for semester grade ' . $semesterGrade->id);
+        }
+
+        $subjectId = $semesterGrade->subjectAssignment?->subject_id;
+        if (!$subjectId) {
+            throw new \RuntimeException('No subject_id for semester grade ' . $semesterGrade->id);
+        }
+
+        $existingDebt = AcademicDebt::where('student_id', $semesterGrade->student_id)
+            ->where('subject_id', $subjectId)
+            ->where('semester_id', $semesterGrade->semester_id)
+            ->whereIn('status', ['active', 'retake_scheduled', 'escalated'])
+            ->first();
+
+        if ($existingDebt) {
+            return $this->syncGrade($semesterGrade, $existingDebt);
+        }
+
+        return $this->createNewDebt($semesterGrade, $grade, $subjectId);
+    }
+
+    /**
      * Синхронизатсияи қарздориҳо барои фан/семестр
      *
      * Ҳамаи донишҷӯёни гурӯҳро тафтиш мекунад:
@@ -259,35 +329,17 @@ class DebtDetector
                     ->where('semester_id', $semesterId)
                     ->first();
 
-                if ($existingDebt) {
-                    $existingDebt->update([
-                        'original_score' => $finalScore,
-                        'original_grade' => $grade->value,
-                        'debt_type' => $grade === GradeScale::FX ? 'fx' : 'f',
-                        'payment_status' => $grade === GradeScale::FX ? 'not_required' : 'pending',
-                        'retake_allowed' => $grade->canRetake(),
-                        'max_retake_attempts' => 2,
-                        'semester_grade_id' => $semesterGrade?->id,
-                    ]);
-                } else {
-                    AcademicDebt::create([
-                        'student_id' => $student->id,
-                        'semester_grade_id' => $semesterGrade?->id,
-                        'subject_id' => $subjectId,
-                        'semester_id' => $semesterId,
-                        'reason' => 'exam_failed',
-                        'debt_date' => now(),
-                        'original_score' => $finalScore,
-                        'original_grade' => $grade->value,
-                        'debt_type' => $grade === GradeScale::FX ? 'fx' : 'f',
-                        'payment_status' => $grade === GradeScale::FX ? 'not_required' : 'pending',
-                        'retake_allowed' => $grade->canRetake(),
-                        'max_retake_attempts' => 2,
-                        'status' => DebtStatus::ACTIVE,
-                        'created_by' => \Illuminate\Support\Facades\Auth::id() ?? 1,
+                if ($semesterGrade) {
+                    $semesterGrade->update([
+                        'total_score' => $finalScore,
+                        'letter_grade' => $grade->value,
+                        'grade_point' => $grade->gradePoint(),
+                        'traditional_grade' => $grade->traditionalGrade(),
+                        'status' => $grade->canRetake() ? 'retake' : 'failed',
+                        'credits_earned' => 0,
                     ]);
 
-                    $student->update(['has_debts' => true]);
+                    $this->syncOrCreateDebt($semesterGrade);
                 }
             } else {
                 if ($existingDebt) {
@@ -364,35 +416,27 @@ class DebtDetector
                     ->where('semester_id', $semesterId)
                     ->first();
 
-                if ($existingDebt) {
-                    $existingDebt->update([
-                        'original_score' => $finalScore,
-                        'original_grade' => $grade->value,
-                        'debt_type' => $grade === GradeScale::FX ? 'fx' : 'f',
-                        'payment_status' => $grade === GradeScale::FX ? 'not_required' : 'pending',
-                        'retake_allowed' => $grade->canRetake(),
-                        'max_retake_attempts' => 2,
-                        'semester_grade_id' => $semesterGrade?->id,
-                    ]);
-                } else {
-                    AcademicDebt::create([
-                        'student_id' => $student->id,
-                        'semester_grade_id' => $semesterGrade?->id,
-                        'subject_id' => $subjectId,
-                        'semester_id' => $semesterId,
-                        'reason' => 'exam_absent',
-                        'debt_date' => now(),
-                        'original_score' => $finalScore,
-                        'original_grade' => $grade->value,
-                        'debt_type' => $grade === GradeScale::FX ? 'fx' : 'f',
-                        'payment_status' => $grade === GradeScale::FX ? 'not_required' : 'pending',
-                        'retake_allowed' => $grade->canRetake(),
-                        'max_retake_attempts' => 2,
-                        'status' => DebtStatus::ACTIVE,
-                        'created_by' => \Illuminate\Support\Facades\Auth::id() ?? 1,
+                if ($semesterGrade) {
+                    $semesterGrade->update([
+                        'total_score' => $finalScore,
+                        'letter_grade' => $grade->value,
+                        'grade_point' => $grade->gradePoint(),
+                        'traditional_grade' => $grade->traditionalGrade(),
+                        'status' => $grade->canRetake() ? 'retake' : 'failed',
+                        'credits_earned' => 0,
                     ]);
 
-                    $student->update(['has_debts' => true]);
+                    if ($finalScore < 50) {
+                        $this->syncOrCreateDebt($semesterGrade);
+                    } elseif ($existingDebt) {
+                        $existingDebt->update([
+                            'original_score' => $finalScore,
+                            'original_grade' => $grade->value,
+                            'debt_type' => $grade === GradeScale::FX ? 'fx' : 'f',
+                            'payment_status' => $grade === GradeScale::FX ? 'not_required' : 'pending',
+                            'retake_allowed' => $grade->canRetake(),
+                        ]);
+                    }
                 }
             }
         }

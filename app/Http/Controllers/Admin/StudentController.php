@@ -125,8 +125,8 @@ class StudentController extends Controller
 
     public function create(): View
     {
-        $groups = Group::active()->with('specialty.department.faculty', 'course')->orderBy('name')->get();
-        $specialties = Specialty::active()->with('department.faculty')->get();
+        $groups = Group::active()->with('specialty.faculty', 'course')->orderBy('name')->get();
+        $specialties = Specialty::active()->with('faculty')->get();
         $courses = Course::orderBy('number')->get();
 
         return view('admin.students.create', compact('groups', 'specialties', 'courses'));
@@ -234,8 +234,8 @@ class StudentController extends Controller
     {
         $student->load([
             'user',
-            'group.specialty.department.faculty',
-            'specialty.department.faculty',
+            'group.specialty.faculty',
+            'specialty.faculty',
             'course',
             'statusHistory' => fn($q) => $q->with('createdByUser:id,first_name,last_name')->latest(),
             'promotions' => fn($q) => $q->with(['fromGroup', 'toGroup', 'fromCourse', 'toCourse'])->latest(),
@@ -250,8 +250,8 @@ class StudentController extends Controller
     public function edit(Student $student): View
     {
         $student->load('user');
-        $groups = Group::active()->with('specialty.department.faculty', 'course')->orderBy('name')->get();
-        $specialties = Specialty::active()->with('department.faculty')->get();
+        $groups = Group::active()->with('specialty.faculty', 'course')->orderBy('name')->get();
+        $specialties = Specialty::active()->with('faculty')->get();
         $courses = Course::orderBy('number')->get();
 
         return view('admin.students.edit', compact('student', 'groups', 'specialties', 'courses'));

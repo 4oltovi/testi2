@@ -75,7 +75,7 @@
                 </div>
                 <div class="card-body">
                     <table class="table table-sm table-borderless mb-0">
-                        <tr><td class="text-muted">Система:</td><td>Донишёр v1.0</td></tr>
+                        <tr><td class="text-muted">Система:</td><td>Донишёр v2.0</td></tr>
                         <tr><td class="text-muted">Корбарон:</td><td>{{ $stats['total_users'] ?? 0 }}</td></tr>
                         <tr><td class="text-muted">Низоми баҳо:</td><td>Кредитии Тоҷикистон (A-F)</td></tr>
                         <tr><td class="text-muted">Формула:</td><td>R1 + R2 / 4 + Имт.×0.50</td></tr>

@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Models\RatingAttempt;
+use App\Models\SemesterGrade;
 use App\Observers\RatingAttemptObserver;
+use App\Observers\SemesterGradeObserver;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Event;
@@ -31,5 +33,6 @@ class AppServiceProvider extends ServiceProvider
 
         // НАВ: Observer барои rating_attempts → semester_grades
         RatingAttempt::observe(RatingAttemptObserver::class);
+        SemesterGrade::observe(SemesterGradeObserver::class);
     }
 }

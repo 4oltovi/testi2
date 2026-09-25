@@ -60,7 +60,7 @@
                                                value="{{ $group->id }}" id="group_{{ $group->id }}"
                                                {{ in_array($group->id, old('group_ids', [])) ? 'checked' : '' }}>
                                         <label class="form-check-label" for="group_{{ $group->id }}">
-                                            {{ $group->name }}
+                                            {{ $group->full_name }}
                                         </label>
                                     </div>
                                 </div>

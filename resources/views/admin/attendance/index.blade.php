@@ -44,7 +44,7 @@
                 <select name="group_id" class="form-select form-select-sm">
                     <option value="">— Ҳамаи гурӯҳҳо —</option>
                     @foreach($groups as $group)
-                        <option value="{{ $group->id }}" {{ $groupId == $group->id ? 'selected' : '' }}>{{ $group->name }}</option>
+                        <option value="{{ $group->id }}" {{ $groupId == $group->id ? 'selected' : '' }}>{{ $group->full_name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -132,7 +132,7 @@
                 @forelse($groupStats as $group)
                     <div class="mb-3">
                         <div class="d-flex justify-content-between mb-1">
-                            <span class="fw-semibold small">{{ $group->name }}</span>
+                            <span class="fw-semibold small">{{ $group->full_name }}</span>
                             <span class="small fw-semibold {{ $group->percentage >= 80 ? 'text-success' : ($group->percentage >= 60 ? 'text-warning' : 'text-danger') }}">
                                 {{ $group->percentage }}%
                             </span>

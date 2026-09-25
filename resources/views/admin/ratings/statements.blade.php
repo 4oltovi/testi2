@@ -31,7 +31,7 @@
                                     <option value="">Гурӯҳро интихоб кунед</option>
                                     @foreach($groups as $group)
                                         <option value="{{ $group->id }}" {{ $selectedGroupId == $group->id ? 'selected' : '' }}>
-                                            {{ $group->name }}
+                                            {{ $group->full_name }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -57,7 +57,7 @@
                                 @if($logo)
                                     <img src="{{ asset('storage/' . $logo) }}" alt="Логотип" style="max-height: 80px;">
                                 @endif
-                                <h5>{{ $institutionName ?? 'Номи муассиса' }}</h5>
+                                <h5>{!! nl2br(e($institutionName ?? 'Номи муассиса')) !!} </h5>
                                 <h3>Ведомости рейтингӣ</h3>
                             </div>
                             <div class="d-flex justify-content-between">

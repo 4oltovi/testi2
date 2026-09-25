@@ -112,10 +112,15 @@
 
             {{-- Ҷадвали гурӯҳҳо (режими by_group) --}}
             <div class="card border-0 shadow-sm d-none" id="groupsCard">
-                <div class="card-header bg-white">
-                    <h6 class="mb-0">Равзанаи вақт барои гурӯҳҳо</h6>
-                    <small class="text-muted">Агар холӣ бошад — равзанаи умумӣ истифода мешавад</small>
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Равзанаи вақт барои гурӯҳҳо</h6>
+                <div>
+                    <small class="text-muted me-2">Агар холӣ бошад — равзанаи умумӣ истифода мешавад</small>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copySessionTimeToAll()">
+                        <i class="bi bi-copy me-1"></i>Ҳамагӯҳ ба ҳамон вақт
+                    </button>
                 </div>
+            </div>
                 <div class="card-body p-0" style="max-height: 300px; overflow-y: auto;">
                     <table class="table table-sm mb-0">
                         <thead class="table-light sticky-top">
@@ -166,6 +171,13 @@
                 if (!i.value) i.value = e;
             });
         }
+    }
+
+    function copySessionTimeToAll() {
+        const s = document.getElementById('start_at').value;
+        const e = document.getElementById('end_at').value;
+        document.querySelectorAll('.gw-start').forEach(i => { i.value = s; });
+        document.querySelectorAll('.gw-end').forEach(i => { i.value = e; });
     }
 </script>
 @endsection

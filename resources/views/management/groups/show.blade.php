@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Гурӯҳ: ' . $group->name)
-@section('page-header', 'Гурӯҳ: ' . $group->name)
+@section('title', 'Гурӯҳ: ' . $group->full_name)
+@section('page-header', 'Гурӯҳ: ' . $group->full_name)
 @section('page-description')
     {{ $group->specialty?->name }} | {{ $group->course?->name }} | {{ $group->academicYear?->name }}
 @endsection

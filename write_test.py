@@ -1,0 +1,1 @@
+content = """@extends('layouts.app')

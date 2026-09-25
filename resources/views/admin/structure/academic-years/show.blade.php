@@ -140,7 +140,7 @@
                         <tbody>
                             @foreach($academicYear->groups as $group)
                                 <tr>
-                                    <td><a href="/admin/structure/groups/{{ $group->id }}">{{ $group->name }}</a></td>
+                                    <td><a href="/admin/structure/groups/{{ $group->id }}">{{ $group->full_name }}</a></td>
                                     <td><small>{{ $group->specialty?->name }}</small></td>
                                     <td>
                                         @if($group->is_active)

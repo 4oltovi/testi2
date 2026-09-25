@@ -37,7 +37,13 @@ class SettingsController extends Controller
             'needs_review_no_duration' => [],
             'skipped_no_course'       => [],
             'on_leave_excluded'       => [],
+            'groups_renamed'          => [],
+            'groups_code_unchanged'   => [],
         ];
+
+        $processedGroupIds = [];
+        $groupsRenamed     = [];
+        $groupsUnchanged   = [];
 
         $students = Student::where('status', StudentStatus::ACTIVE)->with(['course', 'group', 'specialty', 'academicDebts'])->get();
 
@@ -87,26 +93,55 @@ class SettingsController extends Controller
                 continue;
             }
 
-            $nextGroup = Group::where('specialty_id', $s->specialty_id)
-                ->where('course_id', $next->id)
-                ->first();
+            $group = $s->group;
 
-            if (!$nextGroup) {
+            if (!$group) {
                 $categories['needs_review_no_group'][] = [
                     'student' => $s,
-                    'reason' => 'No matching group for specialty + next course',
+                    'reason' => 'No group assigned',
                 ];
                 continue;
             }
 
+            if (!in_array($group->id, $processedGroupIds, true)) {
+                $oldCode = $group->code;
+                $newCode = null;
+
+                if ($oldCode !== '' && ctype_digit($oldCode) && $oldCode[0] === (string) $num) {
+                    $newCode = (string) ($num + 1) . substr($oldCode, 1);
+                }
+
+                $groupsRenamed[$group->id] = [
+                    'old_full_name' => $group->full_name,
+                    'new_full_name' => trim($group->name . ($newCode !== null ? ' ' . $newCode : '')),
+                    'old_code'  => $oldCode,
+                    'new_code'  => $newCode,
+                ];
+
+                if ($newCode === null) {
+                    $groupsUnchanged[$group->id] = $oldCode;
+                }
+
+                $processedGroupIds[] = $group->id;
+            }
+
             $categories['promoted'][] = [
-                'student' => $s,
-                'from_group' => $s->group,
-                'to_group' => $nextGroup,
+                'student'     => $s,
+                'from_group'  => $group,
+                'to_group'    => $group,
                 'from_course' => $s->course,
-                'to_course' => $next,
+                'to_course'   => $next,
+                'new_code'    => null,
             ];
+
+            if (in_array($group->id, array_keys($groupsRenamed), true)) {
+                $categories['promoted'][array_key_last($categories['promoted'])]['new_code'] = $groupsRenamed[$group->id]['new_code'];
+                $categories['promoted'][array_key_last($categories['promoted'])]['new_full_name'] = $groupsRenamed[$group->id]['new_full_name'];
+            }
         }
+
+        $categories['groups_renamed'] = $groupsRenamed;
+        $categories['groups_code_unchanged'] = $groupsUnchanged;
 
         return view('admin.settings.promote-preview', compact('categories'));
     }
@@ -124,10 +159,14 @@ class SettingsController extends Controller
             'needs_review_no_duration' => [],
             'skipped_no_course'      => [],
             'on_leave_excluded'      => [],
+            'groups_renamed'         => [],
+            'groups_code_unchanged'  => [],
         ];
 
-        Student::where('status', StudentStatus::ACTIVE)->with(['course', 'group', 'specialty', 'academicDebts'])->chunk(200, function ($students) use (&$results) {
-            DB::transaction(function () use ($students, &$results) {
+        $processedGroupIds = [];
+
+        Student::where('status', StudentStatus::ACTIVE)->with(['course', 'group', 'specialty', 'academicDebts'])->chunk(200, function ($students) use (&$results, &$processedGroupIds) {
+            DB::transaction(function () use ($students, &$results, &$processedGroupIds) {
                 foreach ($students as $s) {
                     $num = (int) ($s->course->number ?? preg_replace('/\D/', '', $s->course->name ?? '') ?: 0);
 
@@ -187,27 +226,49 @@ class SettingsController extends Controller
                         continue;
                     }
 
-                    $nextGroup = Group::where('specialty_id', $s->specialty_id)
-                        ->where('course_id', $next->id)
-                        ->first();
+                    $group = $s->group;
 
-                    if (!$nextGroup) {
+                    if (!$group) {
                         $results['needs_review_no_group'][] = $s->id;
                         continue;
+                    }
+
+                    if (!in_array($group->id, $processedGroupIds, true)) {
+                        $oldCode = $group->code;
+                        $newCode = null;
+
+                        if ($oldCode !== '' && ctype_digit($oldCode) && $oldCode[0] === (string) $num) {
+                            $newCode = (string) ($num + 1) . substr($oldCode, 1);
+                        }
+
+                        $group->update([
+                            'course_id' => $next->id,
+                            'code'      => $newCode ?? $oldCode,
+                        ]);
+
+                        if ($newCode === null) {
+                            $results['groups_code_unchanged'][$group->id] = $oldCode;
+                        } else {
+                            $results['groups_renamed'][$group->id] = [
+                                'old_code' => $oldCode,
+                                'new_code' => $newCode,
+                                'old_full_name' => trim($group->name . ' ' . $oldCode),
+                                'new_full_name' => trim($group->name . ' ' . $newCode),
+                            ];
+                        }
+
+                        $processedGroupIds[] = $group->id;
                     }
 
                     $oldGroupId = $s->group_id;
                     $oldCourseId = $s->course_id;
 
-                    $s->update([
-                        'course_id' => $next->id,
-                        'group_id' => $nextGroup->id,
-                    ]);
+                    $s->update(['course_id' => $next->id]);
 
                     StudentPromotion::create([
                         'student_id' => $s->id,
                         'from_group_id' => $oldGroupId,
-                        'to_group_id' => $nextGroup->id,
+                        'to_group_id' => $oldGroupId,
                         'from_course_id' => $oldCourseId,
                         'to_course_id' => $next->id,
                         'academic_year_id' => AcademicYear::current()?->id ?? 1,
@@ -221,7 +282,7 @@ class SettingsController extends Controller
                         Student::class,
                         $s->id,
                         ['group_id' => $oldGroupId, 'course_id' => $oldCourseId],
-                        ['group_id' => $nextGroup->id, 'course_id' => $next->id]
+                        ['course_id' => $next->id]
                     );
 
                     $results['promoted'][] = $s->id;

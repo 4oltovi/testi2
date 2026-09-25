@@ -104,7 +104,7 @@
                             <select class="form-select" name="group_id" required>
                                 @foreach($groups as $group)
                                     <option value="{{ $group->id }}" {{ old('group_id', $student->group_id) == $group->id ? 'selected' : '' }}>
-                                        {{ $group->name }}
+                                        {{ $group->full_name }}
                                     </option>
                                 @endforeach
                             </select>

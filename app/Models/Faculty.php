@@ -5,13 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Faculty extends Model
 {
-    use SoftDeletes;
-
     protected $fillable = [
         'name', 'short_name', 'code',
         'dean_id', 'phone', 'email', 'is_active', 'sort_order',
@@ -32,9 +28,9 @@ class Faculty extends Model
         return $this->hasMany(Department::class);
     }
 
-    public function specialties(): HasManyThrough
+    public function specialties(): HasMany
     {
-        return $this->hasManyThrough(Specialty::class, Department::class);
+        return $this->hasMany(Specialty::class);
     }
 
     public function scopeActive($query)
@@ -47,7 +43,7 @@ class Faculty extends Model
      */
     public function getStudentsCountAttribute(): int
     {
-        return Student::whereHas('specialty.department', fn($q) => $q->where('faculty_id', $this->id))
+        return Student::whereHas('specialty', fn($q) => $q->where('faculty_id', $this->id))
             ->active()
             ->count();
     }

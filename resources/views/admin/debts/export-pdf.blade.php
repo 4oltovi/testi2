@@ -177,7 +177,7 @@
                 <td>{{ $debt->student?->user?->short_name ?? '—' }}</td>
                 <td><small>{{ $debt->subject?->name ?? '—' }}</small></td>
                 <td><small>{{ $debt->reason_label ?? '—' }}</small></td>
-                <td>{{ $debt->original_grade ?? '—' }} ({{ $debt->original_score ?? '—' }}%)</td>
+                <td>{{ $debt->original_grade ?? '—' }} ({{ $debt->original_score ?? '—' }})</td>
                 <td><small>{{ $debt->debt_date?->format('d.m.Y') ?? '—' }}</small></td>
                 <td>{{ $debt->retake_attempts_used ?? 0 }}/{{ $debt->max_retake_attempts ?? 3 }}</td>
                 <td><span class="badge {{ $debt->status?->badgeClass() }}">{{ $debt->status?->label() }}</span></td>

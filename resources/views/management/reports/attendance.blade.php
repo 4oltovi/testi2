@@ -11,7 +11,7 @@
         <select name="group_id" class="form-select form-select-sm">
             <option value="">Интихоб кунед</option>
             @foreach($groups as $group)
-                <option value="{{ $group->id }}" {{ $groupId == $group->id ? 'selected' : '' }}>{{ $group->name }}</option>
+                <option value="{{ $group->id }}" {{ $groupId == $group->id ? 'selected' : '' }}>{{ $group->full_name }}</option>
             @endforeach
         </select>
     </div>

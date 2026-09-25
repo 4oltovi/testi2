@@ -75,25 +75,25 @@
                 @if($w > 0)
                 <img src="{{ public_path($logoPath) }}" style="width:{{ $w }}px; height:{{ $h }}px;">
                 @endif
-                <div><b>{{ $institutionName ?? 'Муассисаи ғайридавлатии коллеҷи тиббии "Даво" Маркази тестӣ' }}</b></div>
+                <div><b>{!! nl2br(e($institutionName ?? 'Муассисаи ғайридавлатии коллеҷи тиббии "Даво" Маркази тестӣ')) !!} </b></div>
             </div>
 
             {{-- Маълумотҳо аз ду тараф --}}
             <table style="width:100%; border:none; border-collapse:collapse;">
                 <tr>
-                    <td style="border:none; padding:2px 0;">Факултет: {{ optional(optional($group)->specialty)->department?->faculty?->name ?? '-' }}</td>
+                    <td style="border:none; padding:2px 0;">Факултет: {{ $v?->group?->specialty?->department?->faculty?->name ?? '-' }}</td>
                     <td style="border:none; padding:2px 0; text-align:right;"></td>
                 </tr>
                 <tr>
-                    <td style="border:none; padding:2px 0;">Ихтисос: {{ optional($group)->specialty?->name ?? '-' }}</td>
-                    <td style="border:none; padding:2px 0; text-align:right;">Миқдори кредит: <b>{{ $retakeExam->subject?->credits ?? '-' }}</b></td>
+                    <td style="border:none; padding:2px 0;">Ихтисос: {{ optional(optional($v)->group)->specialty?->name ?? '-' }}</td>
+                    <td style="border:none; padding:2px 0; text-align:right;">Миқдори кредит: <b>{{ $v?->subjectAssignment?->credits ?? $v?->subject?->credits ?? '-' }}</b></td>
                 </tr>
                 <tr>
                     <td style="border:none; padding:2px 0;">Гурӯҳ: <b>{{ optional($group)->name ?? '-' }}</b></td>
                     <td style="border:none; padding:2px 0; text-align:right;">Нимсола: <b>{{ optional($retakeExam->semester)->name ?? optional($retakeExam->semester)->number ?? $retakeExam->semester_id }}</b></td>
                 </tr>
                 <tr>
-                    <td style="border:none; padding:2px 0;">Соли хониш: <b>{{ optional($group?->academicYear)->name ?? (optional($group?->academicYear)->start_year ? optional($group->academicYear)->start_year . '-' . (optional($group->academicYear)->start_year + 1) : '-') }}</b></td>
+                    <td style="border:none; padding:2px 0;">Соли хониш: <b>{{ optional($v?->academicYear)->name ?? (optional($v?->academicYear)->start_year ? optional($v?->academicYear)->start_year . '-' . (optional($v?->academicYear)->start_year + 1) : '-') }}</b></td>
                     <td style="border:none; padding:2px 0; text-align:right;">санаи имтиҳон: <b>{{ $retakeExam->exam_date?->format('d.m.Y') ?? '__________' }}</b></td>
                 </tr>
                 <tr>

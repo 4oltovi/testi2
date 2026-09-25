@@ -25,9 +25,9 @@ class AttendanceReportController extends Controller
         $endDate = $request->get('end_date', $today);
         $trendDays = (int) $request->get('trend_days', 7);
 
-        $groupsQuery = Group::where('is_active', true)->with('specialty.department.faculty')->orderBy('name');
+        $groupsQuery = Group::where('is_active', true)->with('specialty.faculty')->orderBy('name');
         if ($facultyId) {
-            $groupsQuery->whereHas('specialty.department', fn($q) => $q->where('faculty_id', $facultyId));
+            $groupsQuery->whereHas('specialty', fn($q) => $q->where('faculty_id', $facultyId));
         }
         if ($specialtyId) {
             $groupsQuery->where('specialty_id', $specialtyId);
@@ -36,13 +36,13 @@ class AttendanceReportController extends Controller
 
         $groupIds = $groupId ? [$groupId] : $groups->pluck('id')->toArray();
 
-        $summary = Cache::remember("attendance_summary_{$today}_" . implode(',', $groupIds), 300, function () use ($groupIds, $today) {
+        $summary = Cache::remember("attendance_summary_{$startDate}_{$endDate}_" . implode(',', $groupIds), 300, function () use ($groupIds, $startDate, $endDate) {
             if (empty($groupIds)) {
                 return ['total' => 0, 'present' => 0, 'absent' => 0, 'percentage' => 0, 'groups_marked' => 0];
             }
 
             $stats = DB::table('daily_attendance')
-                ->where('attendance_date', $today)
+                ->whereBetween('attendance_date', [$startDate, $endDate])
                 ->whereIn('group_id', $groupIds)
                 ->selectRaw('
                     COUNT(*) as total,
@@ -66,11 +66,13 @@ class AttendanceReportController extends Controller
             ];
         });
 
-        $trendData = Cache::remember("attendance_trend_{$trendDays}_" . implode(',', $groupIds), 300, function () use ($groupIds, $trendDays, $today) {
+        $trendData = Cache::remember("attendance_trend_{$trendDays}_{$startDate}_{$endDate}_" . implode(',', $groupIds), 300, function () use ($groupIds, $trendDays, $startDate, $endDate) {
             if (empty($groupIds)) return collect();
 
+            $trendStart = now()->parse($endDate)->subDays($trendDays - 1)->format('Y-m-d');
+
             return DB::table('daily_attendance')
-                ->whereBetween('attendance_date', [now()->subDays($trendDays - 1)->format('Y-m-d'), $today])
+                ->whereBetween('attendance_date', [$trendStart, $endDate])
                 ->whereIn('group_id', $groupIds)
                 ->selectRaw('
                     attendance_date,
@@ -82,16 +84,18 @@ class AttendanceReportController extends Controller
                 ->get();
         });
 
-        $groupStats = Cache::remember("attendance_group_stats_30_{$today}_" . implode(',', $groupIds), 300, function () use ($groupIds, $today) {
+        $groupStats = Cache::remember("attendance_group_stats_30_{$startDate}_{$endDate}_" . implode(',', $groupIds), 300, function () use ($groupIds, $startDate, $endDate) {
             if (empty($groupIds)) return collect();
 
             return DB::table('daily_attendance')
                 ->join('groups', 'daily_attendance.group_id', '=', 'groups.id')
-                ->whereBetween('daily_attendance.attendance_date', [now()->subDays(30)->format('Y-m-d'), $today])
+                ->whereBetween('daily_attendance.attendance_date', [$startDate, $endDate])
                 ->whereIn('daily_attendance.group_id', $groupIds)
                 ->selectRaw('
                     groups.id,
                     groups.name,
+                    groups.code,
+                    CONCAT(groups.name, " ", groups.code) as full_name,
                     COUNT(*) as total,
                     SUM(CASE WHEN daily_attendance.status = "present" THEN 1 ELSE 0 END) as present
                 ')
@@ -108,7 +112,7 @@ class AttendanceReportController extends Controller
             ->join('students', 'daily_attendance.student_id', '=', 'students.id')
             ->join('users', 'students.user_id', '=', 'users.id')
             ->join('groups', 'daily_attendance.group_id', '=', 'groups.id')
-            ->whereBetween('daily_attendance.attendance_date', [now()->subDays(30)->format('Y-m-d'), $today])
+            ->whereBetween('daily_attendance.attendance_date', [$startDate, $endDate])
             ->whereIn('daily_attendance.group_id', $groupIds)
             ->selectRaw('
                 students.id,
@@ -133,7 +137,7 @@ class AttendanceReportController extends Controller
             ->when($specialtyId, fn($q) => $q->whereHas('group', fn($qq) => $qq->where('specialty_id', $specialtyId)))
             ->count();
 
-        $specialties = \App\Models\Specialty::with('department.faculty')->where('is_active', true)->orderBy('name')->get();
+        $specialties = \App\Models\Specialty::with('faculty')->where('is_active', true)->orderBy('name')->get();
         $faculties = \App\Models\Faculty::orderBy('name')->get();
 
         return view('admin.attendance.index', compact(

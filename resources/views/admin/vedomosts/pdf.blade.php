@@ -75,7 +75,7 @@
                 @if($w > 0)
                 <img src="{{ public_path($logoPath) }}" style="width:{{ $w }}px; height:{{ $h }}px;">
                 @endif
-                <div><b>{{ $institutionName ?? 'Муассисаи ғайридавлатии коллеҷи тиббии "Даво" Маркази тестӣ' }}</b></div>
+                <div><b>{!! nl2br(e($institutionName ?? 'Муассисаи ғайридавлатии коллеҷи тиббии "Даво" Маркази тестӣ')) !!}</b></div>
             </div>
 
             {{-- Маълумотҳо аз ду тараф --}}

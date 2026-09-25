@@ -10,13 +10,14 @@ use App\Models\Specialty;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class GroupController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Group::with(['specialty.department.faculty', 'course', 'academicYear', 'curator'])
+        $query = Group::with(['specialty.faculty', 'course', 'academicYear', 'curator'])
             ->withCount(['activeStudents']);
 
         if ($search = $request->get('search')) {
@@ -39,7 +40,7 @@ class GroupController extends Controller
         }
 
         $groups = $query->orderBy('name')->paginate(25)->withQueryString();
-        $specialties = Specialty::active()->with('department.faculty')->get();
+        $specialties = Specialty::active()->with('faculty')->get();
         $courses = Course::orderBy('number')->get();
         $academicYears = AcademicYear::orderByDesc('start_date')->get();
 
@@ -48,7 +49,7 @@ class GroupController extends Controller
 
     public function create(): View
     {
-        $specialties = Specialty::active()->with('department.faculty')->get();
+        $specialties = Specialty::active()->with('faculty')->get();
         $courses = Course::orderBy('number')->get();
         $academicYears = AcademicYear::orderByDesc('start_date')->get();
         $curators = User::whereHas('roles', fn($q) => $q->where('name', 'teacher'))
@@ -63,8 +64,13 @@ class GroupController extends Controller
             'specialty_id' => 'required|exists:specialties,id',
             'course_id' => 'required|exists:courses,id',
             'academic_year_id' => 'required|exists:academic_years,id',
-            'name' => 'required|string|max:30',
-            'code' => 'required|string|max:20|unique:groups,code',
+            'name' => 'required|string|max:100',
+            'code' => [
+                'required', 'string', 'regex:/^\d+$/', 'max:20',
+                Rule::unique('groups', 'code')
+                    ->where(fn ($q) => $q->where('specialty_id', $request->specialty_id)
+                                       ->where('course_id', $request->course_id)),
+            ],
             'curator_id' => 'nullable|exists:users,id',
             'max_students' => 'nullable|integer|min:5|max:50',
             'is_active' => 'boolean',
@@ -73,12 +79,18 @@ class GroupController extends Controller
             'course_id.required' => 'Курс ҳатмӣ аст.',
             'academic_year_id.required' => 'Соли таҳсилӣ ҳатмӣ аст.',
             'name.required' => 'Номи гурӯҳ ҳатмӣ аст.',
-            'code.required' => 'Рамзи гурӯҳ ҳатмӣ аст.',
+            'code.required' => 'Рақами гурӯҳ ҳатмӣ аст.',
+            'code.regex' => 'Рақами гурӯҳ танҳо ададдор бояд.',
             'code.unique' => 'Ин рамз аллакай мавҷуд аст.',
         ]);
 
         $validated['is_active'] = $request->boolean('is_active', true);
         $validated['max_students'] = $validated['max_students'] ?? 25;
+
+        $course = Course::find($validated['course_id']);
+        if ($course && $validated['code'] !== '' && $validated['code'][0] !== (string) $course->number) {
+            return back()->withInput($validated)->withWarning('Рақами гурӯҳи "'.$validated['code'].'" аввали رقمаш бо рақами курс "'.$course->number.'" мувофиқ надорад. Аъло набошед тағйир диҳед ё ба тасдиқ ояд.');
+        }
 
         $group = Group::create($validated);
 
@@ -89,7 +101,7 @@ class GroupController extends Controller
     public function show(Group $group): View
     {
         $group->load([
-            'specialty.department.faculty',
+            'specialty.faculty',
             'course',
             'academicYear',
             'curator',
@@ -103,7 +115,7 @@ class GroupController extends Controller
 
     public function edit(Group $group): View
     {
-        $specialties = Specialty::active()->with('department.faculty')->get();
+        $specialties = Specialty::active()->with('faculty')->get();
         $courses = Course::orderBy('number')->get();
         $academicYears = AcademicYear::orderByDesc('start_date')->get();
         $curators = User::whereHas('roles', fn($q) => $q->where('name', 'teacher'))
@@ -118,14 +130,31 @@ class GroupController extends Controller
             'specialty_id' => 'required|exists:specialties,id',
             'course_id' => 'required|exists:courses,id',
             'academic_year_id' => 'required|exists:academic_years,id',
-            'name' => 'required|string|max:30',
-            'code' => "required|string|max:20|unique:groups,code,{$group->id}",
+            'name' => 'required|string|max:100',
+            'code' => [
+                'required', 'string', 'regex:/^\d+$/', 'max:20',
+                Rule::unique('groups', 'code')
+                    ->where(fn ($q) => $q->where('specialty_id', $request->specialty_id)
+                                       ->where('course_id', $request->course_id))
+                    ->ignore($group->id),
+            ],
             'curator_id' => 'nullable|exists:users,id',
             'max_students' => 'nullable|integer|min:5|max:50',
             'is_active' => 'boolean',
+        ], [
+            'specialty_id.required' => 'Ихтисос ҳатмӣ аст.',
+            'course_id.required' => 'Курс ҳатмӣ аст.',
+            'academic_year_id.required' => 'Соли таҳсилӣ ҳатмӣ аст.',
+            'name.required' => 'Номи гурӯҳ ҳатмӣ аст.',
+            'code.required' => 'Рақами гурӯҳ ҳатмӣ аст.',
+            'code.regex' => 'Рақами гурӯҳ танҳо ададдор бояд.',
+            'code.unique' => 'Ин рамз аллакай мавҷуд аст.',
         ]);
 
-        $validated['is_active'] = $request->boolean('is_active', true);
+        $course = Course::find($validated['course_id']);
+        if ($course && $validated['code'] !== '' && $validated['code'][0] !== (string) $course->number) {
+            return back()->withInput($validated)->withWarning('Рақами гурӯҳи "'.$validated['code'].'" аввали рамзиаш бо рақами курс "'.$course->number.'" мувофиқ надорад. Аъло набошед тағйир диҳед ё ба тасдиқ ояд.');
+        }
 
         $group->update($validated);
 
@@ -137,6 +166,10 @@ class GroupController extends Controller
     {
         if ($group->students()->exists()) {
             return back()->with('error', 'Гурӯҳро нест кардан мумкин нест — донишҷӯён мавҷуданд.');
+        }
+
+        if ($group->subjectAssignments()->exists()) {
+            return back()->with('error', 'Гурӯҳро нест кардан мумкин нест — таъинотҳо мавҷуданд.');
         }
 
         $group->delete();

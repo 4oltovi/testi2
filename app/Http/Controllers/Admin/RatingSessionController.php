@@ -83,11 +83,9 @@ class RatingSessionController extends Controller
         // Гурӯҳҳо бо равзанаи вақт (режими by_group)
         if ($validated['schedule_mode'] === 'by_group' && $request->filled('group_windows')) {
             foreach ($request->group_windows as $groupId => $w) {
-                if (empty($w['start_at']) || empty($w['end_at'])) continue;
-
                 $session->groups()->attach($groupId, [
-                    'start_at' => $w['start_at'],
-                    'end_at' => $w['end_at'],
+                    'start_at' => $w['start_at'] ?: null,
+                    'end_at'   => $w['end_at'] ?: null,
                 ]);
             }
         }

@@ -50,16 +50,7 @@ class ExamController extends Controller
             ->get()
             ->groupBy('exam_id');
 
-        $retakeExams = \App\Models\RetakeExam::whereHas('retakeExamStudents', function ($query) use ($student) {
-            $query->where('student_id', $student->id)
-                ->whereIn('status', ['pending']);
-        })
-        ->whereIn('status', ['scheduled', 'active'])
-        ->with(['subject', 'semester'])
-        ->orderByDesc('exam_date')
-        ->get();
-
-        return view('student.exams.index', compact('exams', 'attempts', 'student', 'retakeExams'));
+        return view('student.exams.index', compact('exams', 'attempts', 'student'));
     }
 
     /**

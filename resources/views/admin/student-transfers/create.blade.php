@@ -45,7 +45,7 @@
                                 <option value="">Интихоб кунед...</option>
                                 @foreach($groups as $group)
                                 <option value="{{ $group->id }}" {{ old('from_group_id', $student?->group_id) == $group->id ? 'selected' : '' }}>
-                                    {{ $group->name }}
+                                    {{ $group->full_name }}
                                 </option>
                                 @endforeach
                             </select>
@@ -56,7 +56,7 @@
                                 <option value="">Интихоб кунед...</option>
                                 @foreach($groups as $group)
                                 <option value="{{ $group->id }}" {{ old('to_group_id') == $group->id ? 'selected' : '' }}>
-                                    {{ $group->name }}
+                                    {{ $group->full_name }}
                                 </option>
                                 @endforeach
                             </select>

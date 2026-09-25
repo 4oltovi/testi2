@@ -16,7 +16,7 @@ class SpecialtyController extends Controller
     {
         $facultyId = $this->facultyId();
 
-        $query = Specialty::with(['department.faculty'])
+        $query = Specialty::with(['faculty'])
             ->withCount(['groups', 'students'])
             ->whereHas('department', fn ($q) => $q->where('faculty_id', $facultyId));
 
@@ -37,7 +37,7 @@ class SpecialtyController extends Controller
         $this->abortIfFacultyMismatch($specialty);
 
         $specialty->load([
-            'department.faculty',
+            'faculty',
             'groups.course',
             'groups.academicYear',
             'subjectAssignments.subject',

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Department;
+use App\Models\Faculty;
 use App\Models\Specialty;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,7 +14,7 @@ class SpecialtyController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Specialty::with(['department.faculty'])
+        $query = Specialty::with(['faculty', 'department.faculty'])
             ->withCount(['groups', 'students']);
 
         if ($search = $request->get('search')) {
@@ -23,21 +24,27 @@ class SpecialtyController extends Controller
             });
         }
 
+        if ($facultyId = $request->get('faculty_id')) {
+            $query->where('faculty_id', $facultyId);
+        }
+
         if ($departmentId = $request->get('department_id')) {
             $query->where('department_id', $departmentId);
         }
 
         $specialties = $query->orderBy('name')->paginate(20)->withQueryString();
         $departments = Department::active()->with('faculty')->orderBy('name')->get();
+        $faculties = Faculty::active()->orderBy('name')->get();
 
-        return view('admin.structure.specialties.index', compact('specialties', 'departments'));
+        return view('admin.structure.specialties.index', compact('specialties', 'departments', 'faculties'));
     }
 
     public function create(): View
     {
         $departments = Department::active()->with('faculty')->orderBy('name')->get();
+        $faculties = Faculty::active()->orderBy('name')->get();
 
-        return view('admin.structure.specialties.create', compact('departments'));
+        return view('admin.structure.specialties.create', compact('departments', 'faculties'));
     }
 
     /**
@@ -56,6 +63,7 @@ class SpecialtyController extends Controller
             'is_active' => 'boolean',
         ], [
             'department_id.required' => 'Кафедра ҳатмӣ аст.',
+            'department_id.exists' => 'Кафедра топшуда натавонаст.',
             'name.required' => 'Номи ихтисос ҳатмӣ аст.',
             'code.required' => 'Рамзи ихтисос ҳатмӣ аст.',
             'code.unique' => 'Ин рамз аллакай мавҷуд аст.',
@@ -64,6 +72,7 @@ class SpecialtyController extends Controller
 
         $validated['is_active'] = $request->boolean('is_active', true);
         $validated['total_credits'] = (int) ($validated['total_credits'] ?? 0);
+        $validated['faculty_id'] = \App\Models\Department::findOrFail($validated['department_id'])->faculty_id;
 
         $specialty = Specialty::create($validated);
 
@@ -74,7 +83,7 @@ class SpecialtyController extends Controller
     public function show(Specialty $specialty): View
     {
         $specialty->load([
-            'department.faculty',
+            'faculty',
             'groups.course',
             'subjectAssignments.subject',
             'subjectAssignments.semester'
@@ -86,8 +95,9 @@ class SpecialtyController extends Controller
     public function edit(Specialty $specialty): View
     {
         $departments = Department::active()->with('faculty')->orderBy('name')->get();
+        $faculties = Faculty::active()->orderBy('name')->get();
 
-        return view('admin.structure.specialties.edit', compact('specialty', 'departments'));
+        return view('admin.structure.specialties.edit', compact('specialty', 'departments', 'faculties'));
     }
 
     public function update(Request $request, Specialty $specialty): RedirectResponse
@@ -101,9 +111,15 @@ class SpecialtyController extends Controller
             'total_credits' => 'nullable|integer|min:0|max:500',
             'study_form' => 'required|in:full_time,part_time,evening',
             'is_active' => 'boolean',
+        ], [
+            'department_id.required' => 'Кафедра ҳатмӣ аст.',
+            'department_id.exists' => 'Кафедра топшуда натавонаст.',
+            'name.required' => 'Номи ихтисос ҳатмӣ аст.',
+            'code.required' => 'Рамзи ихтисос ҳатмӣ аст.',
         ]);
 
         $validated['is_active'] = $request->boolean('is_active', true);
+        $validated['faculty_id'] = \App\Models\Department::findOrFail($validated['department_id'])->faculty_id;
         $validated['total_credits'] = (int) ($validated['total_credits'] ?? $specialty->total_credits ?? 0);
 
         $specialty->update($validated);

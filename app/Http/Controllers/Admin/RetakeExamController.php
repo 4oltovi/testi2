@@ -103,17 +103,34 @@ class RetakeExamController extends Controller
             'retake_type' => 'required|in:fx,f',
         ]);
 
-        $mainExam = Exam::where('subject_assignment_id', function ($query) use ($validated) {
-                $query->select('id')->from('subject_assignments')
-                    ->where('subject_id', $validated['subject_id'])
-                    ->where('semester_id', $validated['semester_id'])
-                    ->limit(1);
-            })
-            ->where('exam_type', 'main')
-            ->first();
+        $subjectAssignmentIds = \App\Models\SubjectAssignment::where('subject_id', $validated['subject_id'])
+            ->where('semester_id', $validated['semester_id'])
+            ->pluck('id');
 
-        if (!$mainExam) {
+        $mainExams = Exam::whereIn('subject_assignment_id', $subjectAssignmentIds)
+            ->where('exam_type', 'main')
+            ->get();
+
+        if ($mainExams->isEmpty()) {
             return back()->with('error', 'Барои ин фан ва семестр имтиҳони асосӣ ёфт нашуд. Аввал имтиҳони асосиро созед.');
+        }
+
+        $mainExam = $mainExams->first();
+
+        $groupsWithoutMainExam = [];
+        foreach ($subjectAssignmentIds as $saId) {
+            $hasExam = $mainExams->where('subject_assignment_id', $saId)->isNotEmpty();
+            if (!$hasExam) {
+                $sa = \App\Models\SubjectAssignment::find($saId);
+                if ($sa) {
+                    $groupsWithoutMainExam[] = $sa->group?->name ?? "ID {$sa->group_id}";
+                }
+            }
+        }
+
+        $coverageWarning = '';
+        if (!empty($groupsWithoutMainExam)) {
+            $coverageWarning = ' Гурӯҳҳои зерин имтиҳони асосӣ надоранд: ' . implode(', ', array_unique($groupsWithoutMainExam)) . '.';
         }
 
         $questionCount = $mainExam->examQuestions()->count();
@@ -129,12 +146,9 @@ class RetakeExamController extends Controller
             ->whereIn('status', ['active', 'retake_scheduled', 'escalated']);
 
         if ($retakeType === 'fx') {
-            $eligibleDebts = $eligibleDebts->where('debt_type', 'fx')
-                ->where('retake_allowed', true);
+            $eligibleDebts = $eligibleDebts->where('debt_type', 'fx');
         } else {
-            $eligibleDebts = $eligibleDebts->where('debt_type', 'f')
-                ->where('payment_status', 'verified')
-                ->where('retake_allowed', true);
+            $eligibleDebts = $eligibleDebts->where('debt_type', 'f');
         }
 
         $eligibleDebts = $eligibleDebts->get();
@@ -198,8 +212,13 @@ class RetakeExamController extends Controller
             return $retakeExam;
         });
 
+        $successMsg = "Имтиҳони такрорӣ бомуваффақият сохта шуд. {$questionCount} савол аз имтиҳони асосӣ копи карда шуд.";
+        if ($coverageWarning) {
+            $successMsg .= $coverageWarning;
+        }
+
         return redirect()->route('admin.retake-exams.show', $retakeExam)
-            ->with('success', "Имтиҳони такрорӣ бомуваффақият сохта шуд. {$questionCount} савол аз имтиҳони асосӣ копи карда шуд.");
+            ->with('success', $successMsg);
     }
 
     public function checkMainExam(Request $request): \Illuminate\Http\JsonResponse
@@ -210,16 +229,15 @@ class RetakeExamController extends Controller
             'retake_type' => 'required|in:fx,f',
         ]);
 
-        $mainExam = Exam::where('subject_assignment_id', function ($query) use ($request) {
-                $query->select('id')->from('subject_assignments')
-                    ->where('subject_id', $request->subject_id)
-                    ->where('semester_id', $request->semester_id)
-                    ->limit(1);
-            })
-            ->where('exam_type', 'main')
-            ->first();
+        $subjectAssignmentIds = \App\Models\SubjectAssignment::where('subject_id', $request->subject_id)
+            ->where('semester_id', $request->semester_id)
+            ->pluck('id');
 
-        if (!$mainExam) {
+        $mainExams = Exam::whereIn('subject_assignment_id', $subjectAssignmentIds)
+            ->where('exam_type', 'main')
+            ->get();
+
+        if ($mainExams->isEmpty()) {
             return response()->json([
                 'exists' => false,
                 'message' => 'Барои ин фан ва семестр имтиҳони асосӣ ёфт нашуд. Аввал имтиҳони асосиро созед.',
@@ -227,16 +245,16 @@ class RetakeExamController extends Controller
         }
 
         $retakeType = $request->retake_type;
-        $questionCount = $mainExam->examQuestions()->count();
+        $questionCount = $mainExams->first()->examQuestions()->count();
 
         $eligibleDebts = AcademicDebt::where('subject_id', $request->subject_id)
             ->where('semester_id', $request->semester_id)
             ->whereIn('status', ['active', 'retake_scheduled', 'escalated']);
 
         if ($retakeType === 'fx') {
-            $eligibleDebts = $eligibleDebts->where('debt_type', 'fx')->where('retake_allowed', true);
+            $eligibleDebts = $eligibleDebts->where('debt_type', 'fx');
         } else {
-            $eligibleDebts = $eligibleDebts->where('debt_type', 'f')->where('payment_status', 'verified')->where('retake_allowed', true);
+            $eligibleDebts = $eligibleDebts->where('debt_type', 'f');
         }
 
         $eligibleDebts = $eligibleDebts->count();
@@ -249,13 +267,37 @@ class RetakeExamController extends Controller
             ]);
         }
 
+        $groupsWithMainExam = [];
+        $groupsWithoutMainExam = [];
+        foreach ($subjectAssignmentIds as $saId) {
+            $sa = \App\Models\SubjectAssignment::find($saId);
+            if (!$sa) continue;
+            $hasExam = $mainExams->where('subject_assignment_id', $saId)->isNotEmpty();
+            $groupInfo = [
+                'subject_assignment_id' => $saId,
+                'group_id' => $sa->group_id,
+                'group_name' => $sa->group?->name ?? '—',
+                'has_main_exam' => $hasExam,
+            ];
+            if ($hasExam) {
+                $groupsWithMainExam[] = $groupInfo;
+            } else {
+                $groupsWithoutMainExam[] = $groupInfo;
+            }
+        }
+
         return response()->json([
             'exists' => true,
-            'format' => $mainExam->format,
-            'duration_minutes' => $mainExam->duration_minutes,
-            'passing_score' => $mainExam->passing_score,
+            'format' => $mainExams->first()->format,
+            'duration_minutes' => $mainExams->first()->duration_minutes,
+            'passing_score' => $mainExams->first()->passing_score,
             'questions_count' => $questionCount,
             'eligible_debtors' => $eligibleDebts,
+            'main_exam_id' => $mainExams->first()->id,
+            'groups' => [
+                'with_main_exam' => $groupsWithMainExam,
+                'without_main_exam' => $groupsWithoutMainExam,
+            ],
         ]);
     }
 

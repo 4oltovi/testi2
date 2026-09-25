@@ -42,7 +42,7 @@
                             <option value="">Ҳама гурӯҳҳо</option>
                             @foreach($groups as $group)
                                 <option value="{{ $group->id }}" {{ $groupId == $group->id ? 'selected' : '' }}>
-                                    {{ $group->name }}
+                                    {{ $group->full_name }}
                                 </option>
                             @endforeach
                         </select>
@@ -72,7 +72,7 @@
                             <tr>
                                 <td style="color: var(--text-muted);">{{ $index + 1 }}</td>
                                 <td>
-                                    <strong>{{ $rv->group->name ?? '-' }}</strong>
+                                    <strong>{{ $rv->group->full_name ?? '-' }}</strong>
                                 </td>
                                 <td>{{ $rv->retakeExam->subject->name ?? '-' }}</td>
                                 <td>{{ $rv->retakeExam->semester->name ?? '-' }}</td>

@@ -28,7 +28,7 @@ class StudentsExport implements FromCollection, WithHeadings, WithMapping
             $student->user?->full_name ?? '-',
             $student->group?->name ?? '-',
             $student->course?->number ?? $student->course?->name ?? '-',
-            $student->specialty?->department?->faculty?->name ?? $student->specialty?->name ?? '-',
+            $student->specialty?->faculty?->name ?? $student->specialty?->name ?? '-',
         ];
     }
 }

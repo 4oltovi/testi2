@@ -107,7 +107,7 @@ class ExamController extends Controller
                 'semester_id' => $semester?->id,
                 'teacher_id' => $request->user()->id,
                 'group_id' => $group->id,
-                'title' => $request->title ?: 'Имтиҳони ' . $group->name,
+                'title' => $request->title ?: 'Имтиҳони ' . $group->full_name,
                 'description' => $request->description ?? null,
                 'exam_type' => $request->exam_type,
                 'format' => $request->format,

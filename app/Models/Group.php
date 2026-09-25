@@ -5,12 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Group extends Model
 {
-    use SoftDeletes;
-
     protected $fillable = [
         'specialty_id', 'course_id', 'academic_year_id',
         'name', 'code', 'curator_id', 'max_students', 'is_active',
@@ -59,6 +56,11 @@ class Group extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    public function getFullNameAttribute(): string
+    {
+        return trim($this->name . ' ' . $this->code);
     }
 
     public function getStudentsCountAttribute(): int

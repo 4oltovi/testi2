@@ -42,7 +42,7 @@
                             <select name="group_id" class="form-select @error('group_id') is-invalid @enderror" required>
                                 @foreach($groups as $group)
                                 <option value="{{ $group->id }}" {{ $subjectAssignment->group_id == $group->id ? 'selected' : '' }}>
-                                    {{ $group->name }}
+                                    {{ $group->full_name }}
                                 </option>
                                 @endforeach
                             </select>

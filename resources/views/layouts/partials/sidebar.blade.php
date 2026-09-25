@@ -149,15 +149,15 @@
                 </div>
             </li>
             <li class="nav-item">
-                <a class="nav-link text-white {{ request()->is('admin/vedomosts*') || request()->is('admin/retake-exams*') ? 'active bg-primary rounded' : '' }}" href="/admin/vedomosts">
+                <a class="nav-link text-white {{ request()->is('admin/vedomosts*') || request()->is('admin/retake-exams/vedomost*') ? 'active bg-primary rounded' : '' }}" href="#collapseVedomosts" data-bs-toggle="collapse" aria-expanded="{{ request()->is('admin/vedomosts*') || request()->is('admin/retake-exams/vedomost*') ? 'true' : 'false' }}">
                     <i class="bi bi-file-earmark-spreadsheet me-2"></i> Ведомостҳо
                 </a>
-                @if(request()->is('admin/vedomosts*') || request()->is('admin/retake-exams*') || request()->is('admin/retake-exams/vedomost*'))
-                <ul class="list-unstyled ps-3 mt-1">
-                    <li><a class="nav-link text-white small" href="/admin/vedomosts">Ведомостҳои асосӣ</a></li>
-                    <li><a class="nav-link text-white small {{ request()->is('admin/retake-exams/vedomost*') ? 'active bg-primary rounded' : '' }}" href="{{ route('admin.retake-exams.vedomost.index') }}">Ведомостҳои такрорӣ</a></li>
-                </ul>
-                @endif
+                <div class="collapse {{ request()->is('admin/vedomosts*') || request()->is('admin/retake-exams/vedomost*') ? 'show' : '' }}" id="collapseVedomosts">
+                    <ul class="list-unstyled ps-3 mt-1">
+                        <li><a class="nav-link text-white small {{ request()->is('admin/vedomosts') && !request()->is('admin/retake-exams*') ? 'active bg-primary rounded' : '' }}" href="/admin/vedomosts">Ведомостҳои асосӣ</a></li>
+                        <li><a class="nav-link text-white small {{ request()->is('admin/retake-exams/vedomost*') ? 'active bg-primary rounded' : '' }}" href="{{ route('admin.retake-exams.vedomost.index') }}">Ведомостҳои такрорӣ</a></li>
+                    </ul>
+                </div>
             </li>
             <li class="nav-item">
                 <a class="nav-link text-white {{ request()->is('admin/exams/questions*') ? 'active bg-primary rounded' : '' }}" href="/admin/exams/questions">

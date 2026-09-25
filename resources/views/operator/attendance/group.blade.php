@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
-@section('title', 'Давомот — ' . $group->name)
+@section('title', 'Давомот — ' . $group->full_name)
 @section('page-header', 'ДАВОМОТИ ГУРӮҲ')
-@section('page-description', $group->name . ' — ' . ($group->specialty?->name ?? '') . ' — ' . $students->count() . ' донишҷӯ')
+@section('page-description', $group->full_name . ' — ' . ($group->specialty?->name ?? '') . ' — ' . $students->count() . ' донишҷӯ')
 
 @section('content')
     {{-- Breadcrumb --}}
@@ -13,7 +13,7 @@
                     <i class="bi bi-arrow-left me-1"></i>Гурӯҳҳо
                 </a>
             </li>
-            <li class="breadcrumb-item active" aria-current="page">{{ $group->name }}</li>
+            <li class="breadcrumb-item active" aria-current="page">{{ $group->full_name }}</li>
         </ol>
     </nav>
 

@@ -19,8 +19,8 @@ class StudentController extends Controller
     {
         $facultyId = $this->facultyId();
 
-        $query = Student::with(['user', 'group', 'specialty.department.faculty', 'course'])
-            ->whereHas('specialty.department', fn ($q) => $q->where('faculty_id', $facultyId));
+        $query = Student::with(['user', 'group', 'specialty.faculty', 'course'])
+            ->whereHas('specialty', fn ($q) => $q->where('faculty_id', $facultyId));
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
@@ -53,7 +53,7 @@ class StudentController extends Controller
         }
 
         $students = $query->orderBy('id', 'desc')->paginate(25)->withQueryString();
-        $groups = Group::whereHas('specialty.department', fn ($q) => $q->where('faculty_id', $facultyId))
+        $groups = Group::whereHas('specialty', fn ($q) => $q->where('faculty_id', $facultyId))
             ->active()->orderBy('name')->get();
         $specialties = Specialty::whereHas('department', fn ($q) => $q->where('faculty_id', $facultyId))
             ->active()->get();
@@ -68,7 +68,7 @@ class StudentController extends Controller
         $search = $request->get('search', '');
 
         $query = Student::with(['user', 'group'])
-            ->whereHas('specialty.department', fn ($q) => $q->where('faculty_id', $facultyId))
+            ->whereHas('specialty', fn ($q) => $q->where('faculty_id', $facultyId))
             ->limit(20);
 
         if (strlen($search) >= 2) {
@@ -102,7 +102,7 @@ class StudentController extends Controller
         $student->load([
             'user.roles',
             'group',
-            'specialty.department.faculty',
+            'specialty.faculty',
             'course',
             'semesterGrades.subjectAssignment.subject',
             'semesterGpas.semester',

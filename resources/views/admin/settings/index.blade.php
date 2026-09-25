@@ -139,8 +139,13 @@
                             <br><small class="text-muted">{{ $setting->key }}</small>
                         </td>
                         <td>
+                            @if($setting->key === 'institution_name')
+                            <textarea name="settings[institution_name]" class="form-control" rows="2">{{ $setting->value }}</textarea>
+                            <small class="text-muted">Барои сатри дуюм, Enter пахш кунед.</small>
+                            @else
                             <input type="text" name="settings[{{ $setting->key }}]"
                                 class="form-control" value="{{ $setting->value }}">
+                            @endif
                         </td>
                         <td><small>{{ $setting->description }}</small></td>
                     </tr>

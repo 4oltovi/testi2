@@ -19,9 +19,9 @@ class GroupController extends Controller
     {
         $facultyId = $this->facultyId();
 
-        $query = Group::with(['specialty.department.faculty', 'course', 'academicYear', 'curator'])
+        $query = Group::with(['specialty.faculty', 'course', 'academicYear', 'curator'])
             ->withCount(['activeStudents'])
-            ->whereHas('specialty.department', fn ($q) => $q->where('faculty_id', $facultyId));
+            ->whereHas('specialty', fn ($q) => $q->where('faculty_id', $facultyId));
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
@@ -54,7 +54,7 @@ class GroupController extends Controller
         $this->abortIfFacultyMismatch($group);
 
         $group->load([
-            'specialty.department.faculty',
+            'specialty.faculty',
             'course',
             'academicYear',
             'curator',

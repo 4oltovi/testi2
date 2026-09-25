@@ -25,11 +25,6 @@ class AutoGradeExpiredExams extends Command
             ->where('status', '!=', 'archived')
             ->get();
 
-        $retakeExams = RetakeExam::whereNotNull('ends_at')
-            ->where('ends_at', '<', $now)
-            ->get();
-        // TODO: Add ends_at to retake_exams table for auto-grading retake exams
-
         $processed = 0;
 
         foreach ($mainExams as $exam) {
@@ -57,6 +52,16 @@ class AutoGradeExpiredExams extends Command
         $this->info("Auto-graded {$processed} expired exam attempts.");
     }
 
+    private function questionWeight($question): float
+    {
+        return match ($question->type ?? '') {
+            'single_choice', 'multiple_choice', 'true_false' => 2.5,
+            'matching' => 10.0,
+            'open_text' => 0.0,
+            default => (float) ($question->points ?? 2.5),
+        };
+    }
+
     private function processMainExamAttempt(ExamAttempt $attempt, Exam $exam): void
     {
         DB::transaction(function () use ($attempt, $exam) {
@@ -71,7 +76,7 @@ class AutoGradeExpiredExams extends Command
 
             foreach ($examQuestions as $eq) {
                 $question = $eq->question;
-                $questionWeight = $question->points ?? 2.5;
+                $questionWeight = $this->questionWeight($question);
                 $maxPossible += $questionWeight;
 
                 $answer = $answers->where('exam_question_id', $eq->id)->first();

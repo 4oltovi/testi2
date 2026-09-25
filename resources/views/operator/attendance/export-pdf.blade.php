@@ -17,7 +17,7 @@
 <body>
     <h1>Давомоти рӯзона</h1>
     <div class="info">
-        <p><strong>Гурӯҳ:</strong> {{ $group->name }}</p>
+        <p><strong>Гурӯҳ:</strong> {{ $group->full_name }}</p>
         <p><strong>Сана:</strong> {{ $date }}</p>
         <p><strong>Сол/курс:</strong> {{ $group->course->name ?? '—' }} / {{ $group->specialty->name ?? '—' }}</p>
     </div>

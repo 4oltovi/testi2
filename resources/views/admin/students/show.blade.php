@@ -166,7 +166,7 @@
                         <tbody>
                             @forelse($student->semesterGrades->sortByDesc('semester_id')->take(15) as $grade)
                                 <tr>
-                                    <td><small>{{ $grade->curriculum?->subject?->name }}</small></td>
+                                    <td><small>{{ $grade->subject?->name }}</small></td>
                                     <td><small>{{ $grade->semester?->name }}</small></td>
                                     <td>{{ $grade->rating1_score ?? '—' }}</td>
                                     <td>{{ $grade->rating2_score ?? '—' }}</td>

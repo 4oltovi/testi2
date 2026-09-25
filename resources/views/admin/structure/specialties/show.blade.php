@@ -89,7 +89,7 @@
                         <tbody>
                             @foreach($specialty->groups as $group)
                                 <tr>
-                                    <td>{{ $group->name }}</td>
+                                    <td>{{ $group->full_name }}</td>
                                     <td>{{ $group->course->name }}</td>
                                 </tr>
                             @endforeach

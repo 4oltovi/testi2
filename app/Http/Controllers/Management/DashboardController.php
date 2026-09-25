@@ -49,13 +49,13 @@ class DashboardController extends Controller
 
         try {
             $studentQuery = Student::where('status', 'active')
-                ->whereHas('specialty.department', fn ($q) => $q->where('faculty_id', $facultyId));
+                ->whereHas('specialty', fn ($q) => $q->where('faculty_id', $facultyId));
             $teacherQuery = Teacher::where('status', 'active')
                 ->whereHas('department', fn ($q) => $q->where('faculty_id', $facultyId));
             $groupQuery = Group::where('is_active', true)
-                ->whereHas('specialty.department', fn ($q) => $q->where('faculty_id', $facultyId));
+                ->whereHas('specialty', fn ($q) => $q->where('faculty_id', $facultyId));
             $debtQuery = AcademicDebt::whereIn('status', ['active', 'retake_scheduled', 'escalated'])
-                ->whereHas('student', fn ($q) => $q->whereHas('specialty.department', fn ($q2) => $q2->where('faculty_id', $facultyId))
+                ->whereHas('student', fn ($q) => $q->whereHas('specialty', fn ($q2) => $q2->where('faculty_id', $facultyId))
                 );
 
             $stats['total_students'] = $studentQuery->count();
@@ -105,7 +105,7 @@ class DashboardController extends Controller
             if ($currentSemester) {
                 $semesterGradeQuery = SemesterGrade::where('semester_id', $currentSemester->id)
                     ->where('is_finalized', true)
-                    ->whereHas('subjectAssignment.group.specialty.department', fn ($q) => $q->where('faculty_id', $facultyId));
+                    ->whereHas('subjectAssignment.group.specialty', fn ($q) => $q->where('faculty_id', $facultyId));
 
                 $stats['semester_grades_summary'] = $semesterGradeQuery
                     ->selectRaw('letter_grade, COUNT(*) as count')
@@ -114,7 +114,7 @@ class DashboardController extends Controller
                     ->get();
             }
 
-            $attendanceQuery = Attendance::whereHas('student', fn ($q) => $q->whereHas('specialty.department', fn ($q2) => $q2->where('faculty_id', $facultyId))
+            $attendanceQuery = Attendance::whereHas('student', fn ($q) => $q->whereHas('specialty', fn ($q2) => $q2->where('faculty_id', $facultyId))
             );
 
             $stats['attendance_summary'] = $attendanceQuery

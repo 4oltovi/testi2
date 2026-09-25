@@ -41,8 +41,8 @@
                             <label class="form-label">Навъи имтиҳон <span class="text-danger">*</span></label>
                             <select name="retake_type" class="form-select" required id="retakeTypeSelect">
                                 <option value="">Интихоб кунед...</option>
-                                <option value="fx" {{ ($retakeType ?? '') === 'fx' ? 'selected' : '' }}>Такрорсупорӣ барои Fx (45-49%)</option>
-                                <option value="f" {{ ($retakeType ?? '') === 'f' ? 'selected' : '' }}>Такрорсупорӣ барои F (0-44%) — пасандози пардохт</option>
+                                <option value="fx" {{ ($retakeType ?? '') === 'fx' ? 'selected' : '' }}>Такрорсупорӣ барои Fx </option>
+                                <option value="f" {{ ($retakeType ?? '') === 'f' ? 'selected' : '' }}>Такрорсупорӣ барои F </option>
                             </select>
                             <small class="text-muted d-block mt-1">Fx: олӣ имконият. F: танҳо донишҷӯёни пардохттасдиқшуда.</small>
                         </div>

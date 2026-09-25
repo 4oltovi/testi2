@@ -94,7 +94,7 @@
                                 <tr>
                                     <td>
                                         <a href="{{ route('management.groups.show', $group) }}" class="text-decoration-none">
-                                            {{ $group->name }}
+                                            {{ $group->full_name }}
                                         </a>
                                     </td>
                                     <td>{{ $group->course->name }}</td>

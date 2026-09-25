@@ -28,6 +28,8 @@ class DebtController extends Controller
         // Филтр
         if ($status = $request->get('status')) {
             $query->where('status', $status);
+        } else {
+            $query->open();
         }
 
         if ($debtType = $request->get('debt_type')) {
@@ -76,6 +78,8 @@ class DebtController extends Controller
 
         if ($status = $request->get('status')) {
             $query->where('status', $status);
+        } else {
+            $query->open();
         }
 
         if ($groupId = $request->get('group_id')) {

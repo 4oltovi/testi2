@@ -6,14 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Specialty extends Model
 {
-    use SoftDeletes;
-
     protected $fillable = [
         'department_id',
+        'faculty_id',
         'name',
         'code',
         'education_level',
@@ -32,7 +30,15 @@ class Specialty extends Model
 
     public function department(): BelongsTo
     {
+        /**
+         * @deprecated - kept for backward-compatibility/rollback only; use faculty() instead. Do not use department_id for new Specialty logic.
+         */
         return $this->belongsTo(Department::class);
+    }
+
+    public function faculty(): BelongsTo
+    {
+        return $this->belongsTo(Faculty::class);
     }
 
     public function groups(): HasMany

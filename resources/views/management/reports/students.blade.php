@@ -13,7 +13,7 @@
                 <select name="group_id" class="form-select form-select-sm" onchange="this.form.submit()">
                     <option value="">Ҳамаи гурӯҳҳо</option>
                     @foreach($groups as $group)
-                        <option value="{{ $group->id }}" {{ request('group_id') == $group->id ? 'selected' : '' }}>{{ $group->name }}</option>
+                        <option value="{{ $group->id }}" {{ request('group_id') == $group->id ? 'selected' : '' }}>{{ $group->full_name }}</option>
                     @endforeach
                 </select>
             </form>

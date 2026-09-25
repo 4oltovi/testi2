@@ -25,9 +25,9 @@ class JournalController extends Controller
         $currentSemester = Semester::current();
         $semesterId = $request->get('semester_id', $currentSemester?->id);
 
-        $query = SubjectAssignment::with(['subject', 'teacher', 'group.specialty.department.faculty', 'semester'])
+        $query = SubjectAssignment::with(['subject', 'teacher', 'group.specialty.faculty', 'semester'])
             ->where('is_active', true)
-            ->whereHas('group.specialty.department', fn ($q) => $q->where('faculty_id', $facultyId));
+            ->whereHas('group.specialty', fn ($q) => $q->where('faculty_id', $facultyId));
 
         if ($semesterId) {
             $query->where('semester_id', $semesterId);
@@ -46,7 +46,7 @@ class JournalController extends Controller
             ->when($currentYear, fn ($q) => $q->where('academic_year_id', $currentYear->id))
             ->orderBy('number')
             ->get();
-        $groups = Group::whereHas('specialty.department', fn ($q) => $q->where('faculty_id', $facultyId))
+        $groups = Group::whereHas('specialty', fn ($q) => $q->where('faculty_id', $facultyId))
             ->active()->orderBy('name')->get();
 
         return view('management.journal.index', compact('assignments', 'semesters', 'groups', 'currentSemester', 'semesterId'));
@@ -56,7 +56,7 @@ class JournalController extends Controller
     {
         $facultyId = $this->facultyId();
 
-        if ($subjectAssignment->group?->specialty?->department?->faculty?->id !== $facultyId) {
+        if ($subjectAssignment->group?->specialty?->faculty?->id !== $facultyId) {
             abort(403, 'Шумо ба ин саҳифа дастрасӣ надоред.');
         }
 
@@ -77,7 +77,7 @@ class JournalController extends Controller
     {
         $facultyId = $this->facultyId();
 
-        if ($subjectAssignment->group?->specialty?->department?->faculty?->id !== $facultyId) {
+        if ($subjectAssignment->group?->specialty?->faculty?->id !== $facultyId) {
             abort(403, 'Шумо ба ин саҳифа дастрасӣ надоред.');
         }
 
@@ -104,7 +104,7 @@ class JournalController extends Controller
     {
         $facultyId = $this->facultyId();
 
-        if ($subjectAssignment->group?->specialty?->department?->faculty?->id !== $facultyId) {
+        if ($subjectAssignment->group?->specialty?->faculty?->id !== $facultyId) {
             abort(403, 'Шумо ба ин саҳифа дастрасӣ надоред.');
         }
 

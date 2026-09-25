@@ -25,6 +25,7 @@ Route::middleware(['web', 'auth', 'role:student'])->prefix('student')->name('stu
     // Баҳоҳо ва рейтингҳо
     Route::prefix('grades')->name('grades.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Student\GradeController::class, 'index'])->name('index');
+        Route::get('/year/{academicYear}', [\App\Http\Controllers\Student\GradeController::class, 'year'])->name('year');
         Route::get('/semester/{semester}', [\App\Http\Controllers\Student\GradeController::class, 'semester'])->name('semester');
     });
 

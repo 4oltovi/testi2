@@ -17,9 +17,10 @@ class GradeController extends Controller
     {
         $student = $request->user()->student;
         $currentSemester = Semester::current();
+        $currentYearId = $currentSemester?->academic_year_id;
 
         if (!$student || !$student->group_id) {
-            return view('student.grades.index', compact('grades', 'currentSemester', 'student'));
+            return view('student.grades.index', compact('grades', 'currentSemester', 'student', 'currentYearId'));
         }
 
         $group = Group::find($student->group_id);
@@ -95,9 +96,18 @@ class GradeController extends Controller
                     'status' => $status,
                 ];
             });
+        })->groupBy(function ($semGrades, $semesterId) {
+            $sem = $semGrades->first()['semester'] ?? null;
+            return $sem?->academic_year_id ?? $semesterId;
+        })->map(function ($yearGroup) {
+            return $yearGroup->mapWithKeys(function ($semGrades) {
+                $sem = $semGrades->first()['semester'] ?? null;
+                $semesterId = $sem?->id ?? 'unknown';
+                return [$semesterId => $semGrades];
+            });
         });
 
-        return view('student.grades.index', compact('grades', 'currentSemester', 'student'));
+        return view('student.grades.index', compact('grades', 'currentSemester', 'student', 'currentYearId'));
     }
 
     public function semester(Semester $semester, Request $request)

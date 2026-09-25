@@ -53,7 +53,7 @@
 
 <body>
     <div class="head">
-        <div>{{ \App\Models\Setting::get('institution_name', 'Муассисаи таълимӣ') }}</div>
+        <div>{!! nl2br(e(\App\Models\Setting::get('institution_name', 'Муассисаи таълимӣ'))) !!}</div>
         <h3>ПРОТОКОЛИ натиҷаҳои рейтинги онлайн</h3>
         <div>{{ $session->name }} ({{ $session->period === 'rating1' ? 'Рейтинги 1' : 'Рейтинги 2' }})</div>
     </div>

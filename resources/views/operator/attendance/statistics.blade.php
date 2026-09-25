@@ -91,7 +91,9 @@
                     @forelse($groupStats->take(8) as $group)
                         <div class="mb-3">
                             <div class="d-flex justify-content-between mb-1">
-                                <span class="fw-semibold small">{{ $group->name }}</span>
+                                <a href="{{ route('operator.attendance.group', ['group' => $group->id, 'date' => now()->format('Y-m-d')]) }}" class="fw-semibold small text-decoration-none" style="color: inherit;">
+                                    {{ $group->full_name }}
+                                </a>
                                 <span class="small fw-semibold {{ $group->percentage >= 80 ? 'text-success' : ($group->percentage >= 60 ? 'text-warning' : 'text-danger') }}">
                                     {{ $group->percentage }}%
                                 </span>

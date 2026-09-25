@@ -72,10 +72,10 @@ class RatingService
     public function getGroupsRating(int $semesterId, ?int $facultyId = null, ?int $courseId = null): Collection
     {
         $query = Group::active()
-            ->with(['specialty.department.faculty', 'course', 'activeStudents.semesterGpas' => fn($q) => $q->where('semester_id', $semesterId)]);
+            ->with(['specialty.faculty', 'course', 'activeStudents.semesterGpas' => fn($q) => $q->where('semester_id', $semesterId)]);
 
         if ($facultyId) {
-            $query->whereHas('specialty.department', fn($q) => $q->where('faculty_id', $facultyId));
+            $query->whereHas('specialty', fn($q) => $q->where('faculty_id', $facultyId));
         }
 
         if ($courseId) {
@@ -94,9 +94,9 @@ class RatingService
 
             return [
                 'group_id' => $group->id,
-                'group_name' => $group->name,
+                'group_name' => $group->full_name,
                 'specialty' => $group->specialty?->name,
-                'faculty' => $group->specialty?->department?->faculty?->short_name,
+                'faculty' => $group->specialty?->faculty?->short_name,
                 'course' => $group->course?->number,
                 'avg_gpa' => round($avgGpa, 2),
                 'total_students' => $totalStudents,
@@ -152,7 +152,7 @@ class RatingService
             ->with(['user', 'group', 'specialty', 'semesterGpas' => fn($q) => $q->where('semester_id', $semesterId)]);
 
         if ($facultyId) {
-            $query->whereHas('specialty.department', fn($q) => $q->where('faculty_id', $facultyId));
+            $query->whereHas('specialty', fn($q) => $q->where('faculty_id', $facultyId));
         }
 
         return $query->get()

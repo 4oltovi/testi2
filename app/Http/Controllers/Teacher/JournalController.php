@@ -223,72 +223,15 @@ class JournalController extends Controller
         $semester = $subjectAssignment->semester;
         $subject = $subjectAssignment->subject;
 
-        $semesterGrades = SemesterGrade::where('subject_assignment_id', $subjectAssignment->id)
-            ->where('semester_id', $semester->id)
-            ->get()
-            ->keyBy('student_id');
-
-        $retakeExamIds = RetakeExam::where('subject_id', $subject->id)
-            ->where('semester_id', $semester->id)
-            ->pluck('id');
-
-        $retakeExamStudents = RetakeExamStudent::whereIn('retake_exam_id', $retakeExamIds)
-            ->get()
-            ->keyBy('student_id');
-
         $calculatedGrades = [];
         foreach ($students as $student) {
             $rating1 = $this->gradeCalculator->calculateRating1($student->id, $subjectAssignment->id, $semester->id);
             $rating2 = $this->gradeCalculator->calculateRating2($student->id, $subjectAssignment->id, $semester->id);
-            $exam = $this->gradeCalculator->calculateExamPercentage($student->id, $subjectAssignment->id, $semester->id, 'main');
-
-            $retakeScore = null;
-            $retakeGrade = null;
-            $retakeGradePoint = null;
-
-            $retakeExamStudent = $retakeExamStudents[$student->id] ?? null;
-            if ($retakeExamStudent && $retakeExamStudent->score !== null) {
-                $retakeScore = (float) $retakeExamStudent->score;
-                $retakeGrade = $retakeExamStudent->letter_grade;
-                $retakeGradePoint = $retakeExamStudent->grade_point;
-            }
-
-            $effectiveExamScore = $retakeScore !== null ? $retakeScore : ($this->gradeCalculator->calculateExamScore($student->id, $subjectAssignment->id, $semester->id) ?? 0);
-
-            $totalScore = null;
-            $letterGrade = null;
-            $gradePoint = null;
-            $status = null;
-
-            $hasRating = $rating1 > 0 || $rating2 > 0;
-            $hasExam = $effectiveExamScore > 0;
-
-            if ($hasRating || $hasExam) {
-                $r1 = (float) $rating1;
-                $r2 = (float) $rating2;
-
-                $totalScore = round(($r1 + $r2) / 4 + ($effectiveExamScore * 0.5), 2);
-
-                $gradeEnum = \App\Enums\GradeScale::fromPercentage($totalScore);
-                $letterGrade = $gradeEnum->value;
-                $gradePoint = $gradeEnum->gradePoint();
-                $status = $gradeEnum->isPassing() ? 'passed' : ($gradeEnum->canRetake() ? 'retake' : 'failed');
-            }
 
             $calculatedGrades[$student->id] = [
                 'rating1' => $rating1,
                 'rating2' => $rating2,
-                'exam' => $exam,
-                'retake_score' => $retakeScore,
-                'retake_letter_grade' => $retakeGrade,
-                'retake_grade_point' => $retakeGradePoint,
-                'total_score' => $totalScore,
-                'letter_grade' => $letterGrade,
-                'grade_point' => $gradePoint,
-                'status' => $status,
             ];
-
-            $this->gradeCalculator->recalculateAndPersist($student->id, $subjectAssignment->id, $semester->id);
         }
 
         return view('teacher.journal.semester-grades', compact(
@@ -296,7 +239,6 @@ class JournalController extends Controller
             'students',
             'semester',
             'subject',
-            'semesterGrades',
             'calculatedGrades'
         ));
     }

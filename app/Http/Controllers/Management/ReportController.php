@@ -33,16 +33,16 @@ class ReportController extends Controller
 
         $stats = [
             'total_students' => Student::where('status', 'active')
-                ->whereHas('specialty.department', fn ($q) => $q->where('faculty_id', $facultyId))->count(),
+                ->whereHas('specialty', fn ($q) => $q->where('faculty_id', $facultyId))->count(),
             'total_teachers' => Teacher::where('status', 'active')
                 ->whereHas('department', fn ($q) => $q->where('faculty_id', $facultyId))->count(),
             'total_groups' => Group::where('is_active', true)
-                ->whereHas('specialty.department', fn ($q) => $q->where('faculty_id', $facultyId))->count(),
+                ->whereHas('specialty', fn ($q) => $q->where('faculty_id', $facultyId))->count(),
             'total_faculties' => $facultyId ? 1 : 0,
             'total_debtors' => Student::where('has_debts', true)
-                ->whereHas('specialty.department', fn ($q) => $q->where('faculty_id', $facultyId))->count(),
+                ->whereHas('specialty', fn ($q) => $q->where('faculty_id', $facultyId))->count(),
             'active_debts' => AcademicDebt::whereIn('status', ['active', 'retake_scheduled', 'escalated'])
-                ->whereHas('student', fn ($q) => $q->whereHas('specialty.department', fn ($q2) => $q2->where('faculty_id', $facultyId))
+                ->whereHas('student', fn ($q) => $q->whereHas('specialty', fn ($q2) => $q2->where('faculty_id', $facultyId))
                 )->count(),
         ];
 
@@ -53,8 +53,8 @@ class ReportController extends Controller
     {
         $facultyId = $this->facultyId();
 
-        $query = Student::with(['user', 'group', 'specialty.department.faculty', 'course'])->active()
-            ->whereHas('specialty.department', fn ($q) => $q->where('faculty_id', $facultyId));
+        $query = Student::with(['user', 'group', 'specialty.faculty', 'course'])->active()
+            ->whereHas('specialty', fn ($q) => $q->where('faculty_id', $facultyId));
 
         if ($groupId = $request->get('group_id')) {
             $query->where('group_id', $groupId);
@@ -64,7 +64,7 @@ class ReportController extends Controller
         }
 
         $students = $query->orderBy('id')->paginate(50)->withQueryString();
-        $groups = Group::whereHas('specialty.department', fn ($q) => $q->where('faculty_id', $facultyId))
+        $groups = Group::whereHas('specialty', fn ($q) => $q->where('faculty_id', $facultyId))
             ->active()->orderBy('name')->get();
 
         return view('management.reports.students', compact('students', 'groups'));
@@ -75,7 +75,7 @@ class ReportController extends Controller
         $facultyId = $this->facultyId();
 
         $query = AcademicDebt::with(['student.user', 'student.group', 'subject', 'semester'])
-            ->whereHas('student', fn ($q) => $q->whereHas('specialty.department', fn ($q2) => $q2->where('faculty_id', $facultyId))
+            ->whereHas('student', fn ($q) => $q->whereHas('specialty', fn ($q2) => $q2->where('faculty_id', $facultyId))
             );
 
         if ($groupId = $request->get('group_id')) {
@@ -83,12 +83,12 @@ class ReportController extends Controller
         }
 
         $debts = $query->orderByDesc('debt_date')->paginate(30)->withQueryString();
-        $groups = Group::whereHas('specialty.department', fn ($q) => $q->where('faculty_id', $facultyId))
+        $groups = Group::whereHas('specialty', fn ($q) => $q->where('faculty_id', $facultyId))
             ->active()->orderBy('name')->get();
 
         $debtorsByGroup = AcademicDebt::whereIn('status', ['active', 'retake_scheduled', 'escalated'])
             ->whereNull('deleted_at')
-            ->whereHas('student', fn ($q) => $q->whereHas('specialty.department', fn ($q2) => $q2->where('faculty_id', $facultyId))
+            ->whereHas('student', fn ($q) => $q->whereHas('specialty', fn ($q2) => $q2->where('faculty_id', $facultyId))
             )
             ->join('students', 'academic_debts.student_id', '=', 'students.id')
             ->join('groups', 'students.group_id', '=', 'groups.id')
@@ -111,7 +111,7 @@ class ReportController extends Controller
 
         if ($groupId && $semesterId) {
             $studentIds = Student::where('group_id', $groupId)
-                ->whereHas('specialty.department', fn ($q) => $q->where('faculty_id', $facultyId))
+                ->whereHas('specialty', fn ($q) => $q->where('faculty_id', $facultyId))
                 ->active()->pluck('id');
 
             $attendanceStats = Attendance::whereIn('student_id', $studentIds)
@@ -140,7 +140,7 @@ class ReportController extends Controller
             })->sortBy('percentage');
         }
 
-        $groups = Group::whereHas('specialty.department', fn ($q) => $q->where('faculty_id', $facultyId))
+        $groups = Group::whereHas('specialty', fn ($q) => $q->where('faculty_id', $facultyId))
             ->active()->orderBy('name')->get();
         $semesters = Semester::with('academicYear')->orderByDesc('start_date')->get();
 
@@ -154,7 +154,7 @@ class ReportController extends Controller
         $semesterId = $request->get('semester_id', $currentSemester?->id);
 
         $gpaData = Student::where('status', 'active')
-            ->whereHas('specialty.department', fn ($q) => $q->where('faculty_id', $facultyId))
+            ->whereHas('specialty', fn ($q) => $q->where('faculty_id', $facultyId))
             ->with(['user', 'group'])
             ->orderByDesc('cumulative_gpa')
             ->paginate(50)
@@ -185,7 +185,7 @@ class ReportController extends Controller
         if ($semesterId) {
             $query = SemesterGrade::where('semester_id', $semesterId)
                 ->where('is_finalized', true)
-                ->whereHas('subjectAssignment.group.specialty.department', fn ($q) => $q->where('faculty_id', $facultyId))
+                ->whereHas('subjectAssignment.group.specialty', fn ($q) => $q->where('faculty_id', $facultyId))
                 ->with(['student.user', 'student.group', 'subjectAssignment.subject']);
 
             if ($groupId) {
@@ -195,7 +195,7 @@ class ReportController extends Controller
             $results = $query->orderBy('student_id')->paginate(50)->withQueryString();
         }
 
-        $groups = Group::whereHas('specialty.department', fn ($q) => $q->where('faculty_id', $facultyId))
+        $groups = Group::whereHas('specialty', fn ($q) => $q->where('faculty_id', $facultyId))
             ->active()->orderBy('name')->get();
 
         return view('management.reports.exam-results', compact('results', 'groups', 'semesters', 'semesterId', 'groupId', 'academicYears', 'academicYearId'));
@@ -208,7 +208,7 @@ class ReportController extends Controller
         $semesterId = $request->get('semester_id', $currentSemester?->id);
         $groupId = $request->get('group_id');
 
-        $facultyScope = fn ($q) => $q->whereHas('specialty.department', fn ($q2) => $q2->where('faculty_id', $facultyId));
+        $facultyScope = fn ($q) => $q->whereHas('specialty', fn ($q2) => $q2->where('faculty_id', $facultyId));
 
         return match ($type) {
             'students' => $this->exportStudentsExcel($facultyId, $groupId),
@@ -223,8 +223,8 @@ class ReportController extends Controller
 
     private function exportStudentsExcel(?int $facultyId, ?int $groupId)
     {
-        $query = Student::with(['user', 'group', 'specialty.department.faculty', 'course'])->active()
-            ->whereHas('specialty.department', fn ($q) => $q->where('faculty_id', $facultyId));
+        $query = Student::with(['user', 'group', 'specialty.faculty', 'course'])->active()
+            ->whereHas('specialty', fn ($q) => $q->where('faculty_id', $facultyId));
         if ($groupId) {
             $query->where('group_id', $groupId);
         }
@@ -236,7 +236,7 @@ class ReportController extends Controller
     private function exportDebtorsExcel(?int $facultyId, ?int $groupId)
     {
         $query = AcademicDebt::with(['student.user', 'student.group', 'subject', 'semester'])->open()
-            ->whereHas('student', fn ($q) => $q->whereHas('specialty.department', fn ($q2) => $q2->where('faculty_id', $facultyId)));
+            ->whereHas('student', fn ($q) => $q->whereHas('specialty', fn ($q2) => $q2->where('faculty_id', $facultyId)));
         if ($groupId) {
             $query->whereHas('student', fn ($q) => $q->where('group_id', $groupId));
         }
@@ -252,7 +252,7 @@ class ReportController extends Controller
         }
 
         $studentIds = Student::where('group_id', $groupId)
-            ->whereHas('specialty.department', fn ($q) => $q->where('faculty_id', $facultyId))
+            ->whereHas('specialty', fn ($q) => $q->where('faculty_id', $facultyId))
             ->active()->pluck('id');
         $attendanceStats = Attendance::whereIn('student_id', $studentIds)
             ->whereHas('subjectAssignment', fn ($q) => $q->where('semester_id', $semesterId))
@@ -287,7 +287,7 @@ class ReportController extends Controller
     private function exportGpaExcel(?int $facultyId)
     {
         $gpaData = Student::where('status', 'active')
-            ->whereHas('specialty.department', fn ($q) => $q->where('faculty_id', $facultyId))
+            ->whereHas('specialty', fn ($q) => $q->where('faculty_id', $facultyId))
             ->with(['user', 'group'])
             ->orderByDesc('cumulative_gpa')
             ->get();
@@ -307,7 +307,7 @@ class ReportController extends Controller
     {
         $query = SemesterGrade::where('semester_id', $semesterId)
             ->where('is_finalized', true)
-            ->whereHas('subjectAssignment.group.specialty.department', fn ($q) => $q->where('faculty_id', $facultyId))
+            ->whereHas('subjectAssignment.group.specialty', fn ($q) => $q->where('faculty_id', $facultyId))
             ->with(['student.user', 'student.group', 'subjectAssignment.subject']);
 
         if ($groupId) {
@@ -332,7 +332,7 @@ class ReportController extends Controller
     private function exportDebtorsPdf(?int $facultyId, ?int $groupId)
     {
         $query = AcademicDebt::with(['student.user', 'student.group', 'subject', 'semester'])
-            ->whereHas('student', fn ($q) => $q->whereHas('specialty.department', fn ($q2) => $q2->where('faculty_id', $facultyId)));
+            ->whereHas('student', fn ($q) => $q->whereHas('specialty', fn ($q2) => $q2->where('faculty_id', $facultyId)));
         if ($groupId) {
             $query->whereHas('student', fn ($q) => $q->where('group_id', $groupId));
         }

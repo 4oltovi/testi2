@@ -66,7 +66,7 @@ class RatingController extends Controller
         [$semesters, $academicYears, $semesterId, $academicYearId] = $this->resolveSemesterFilters($request);
 
         $groupRating = $semesterId ? $this->ratingService->getGroupRating($group->id, $semesterId) : collect();
-        $group->load(['specialty.department.faculty', 'course']);
+        $group->load(['specialty.faculty', 'course']);
 
         return view('admin.ratings.group', compact('group', 'groupRating', 'semesters', 'semesterId', 'academicYears', 'academicYearId'));
     }
@@ -153,7 +153,7 @@ class RatingController extends Controller
                 'institutionName' => \App\Models\Setting::get('institution_name', 'Номи муассиса'),
                 'logo' => \App\Models\Setting::get('logo') ? asset('storage/' . \App\Models\Setting::get('logo')) : null,
             ]);
-            return $pdf->download('vedomost-rating-' . $group->name . '.pdf');
+            return $pdf->download('vedomost-rating-' . $group->full_name . '.pdf');
         }
 
         $institutionName = \App\Models\Setting::get('institution_name', 'Номи муассиса');

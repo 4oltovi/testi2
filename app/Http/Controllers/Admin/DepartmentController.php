@@ -111,6 +111,10 @@ class DepartmentController extends Controller
             return back()->with('error', 'Кафедраро нест кардан мумкин нест — ихтисосҳо мавҷуданд.');
         }
 
+        if ($department->teachers()->exists()) {
+            return back()->with('error', 'Кафедраро нест кардан мумкин нест — омӯзгорон мавҷуданд.');
+        }
+
         $department->delete();
 
         return redirect()->route('admin.structure.departments.index')

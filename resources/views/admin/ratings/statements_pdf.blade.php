@@ -90,7 +90,7 @@
             @if($logo)
             <img src="{{ $logo }}" alt="Логотип" style="max-height: 80px;">
             @endif
-            <h5>{{ $institutionName }}</h5>
+            <h5>{!! nl2br(e($institutionName)) !!} </h5>
         </div>
         <div style="margin-bottom: 10px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">

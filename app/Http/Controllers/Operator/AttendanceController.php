@@ -317,6 +317,8 @@ class AttendanceController extends Controller
             ->selectRaw('
                 groups.id,
                 groups.name,
+                groups.code,
+                CONCAT(groups.name, " ", groups.code) as full_name,
                 COUNT(*) as total,
                 SUM(CASE WHEN daily_attendance.status = "present" THEN 1 ELSE 0 END) as present
             ')

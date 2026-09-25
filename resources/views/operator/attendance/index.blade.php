@@ -19,7 +19,7 @@
                         <div class="mb-3">
                             <i class="bi bi-people-fill text-primary fs-2"></i>
                         </div>
-                        <h5 class="fw-bold mb-1">{{ $group->name }}</h5>
+                        <h5 class="fw-bold mb-1">{{ $group->full_name }}</h5>
                         <p class="text-muted small mb-3" style="font-size: 0.85rem;">
                             {{ $group->specialty?->name ?? '—' }}
                         </p>

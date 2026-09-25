@@ -147,8 +147,13 @@ class CategoryScoreController extends Controller
                     ->where('semester_id', $semester->id)
                     ->first();
 
-                if ($semesterGrade && !$semesterGrade->is_finalized) {
+                if ($semesterGrade) {
                     $gradeCalc->recalculateAndPersist($student->id, $subjectAssignment->id, $semester->id);
+
+                    $semesterGrade = \App\Models\SemesterGrade::where('student_id', $student->id)
+                        ->where('subject_assignment_id', $subjectAssignment->id)
+                        ->where('semester_id', $semester->id)
+                        ->first();
 
                     if (!$semesterGrade->isPassed()) {
                         app(\App\Services\DebtDetector::class)->checkAndCreateDebt($semesterGrade);

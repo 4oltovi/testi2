@@ -95,7 +95,7 @@
                                 <option value="">— Интихоб —</option>
                                 @foreach($groups as $group)
                                     <option value="{{ $group->id }}" {{ old('group_id') == $group->id ? 'selected' : '' }}>
-                                        {{ $group->name }} ({{ $group->specialty?->name }})
+                                        {{ $group->full_name }} ({{ $group->specialty?->name }})
                                     </option>
                                 @endforeach
                             </select>

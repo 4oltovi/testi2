@@ -106,7 +106,7 @@
                 <tr>
                     <th>Фан</th>
                     <th class="text-center">Кредит</th>
-                    <th class="text-center">Ниҳоӣ (%)</th>
+                    <th class="text-center">Ниҳоӣ</th>
                     <th class="text-center">Баҳо</th>
                     <th class="text-center">GP</th>
                     <th class="text-center">Анъанавӣ</th>

@@ -247,24 +247,6 @@
             </div>
         </div>
         <div class="col-sm-6 col-lg-2">
-            <div class="card stat-card accent-warning">
-                <div class="card-body">
-                    <i class="bi bi-arrow-repeat stat-icon text-warning"></i>
-                    <div class="stat-value text-warning">{{ $stats['retake_scheduled'] }}</div>
-                    <span class="stat-label">Такрорсупорӣ таъин</span>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-lg-2">
-            <div class="card stat-card accent-success">
-                <div class="card-body">
-                    <i class="bi bi-check-circle-fill stat-icon text-success"></i>
-                    <div class="stat-value text-success">{{ $stats['resolved_this_month'] }}</div>
-                    <span class="stat-label">Ҳалшуда (ин моҳ)</span>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-lg-2">
             <div class="card stat-card gradient-fx">
                 <div class="card-body py-3">
                     <i class="bi bi-exclamation-octagon-fill stat-icon"></i>
@@ -317,7 +299,7 @@
                     <select name="group_id" class="form-select">
                         <option value="">Ҳама гурӯҳҳо</option>
                         @foreach($groups as $group)
-                        <option value="{{ $group->id }}" {{ request('group_id') == $group->id ? 'selected' : '' }}>{{ $group->name }}</option>
+                        <option value="{{ $group->id }}" {{ request('group_id') == $group->id ? 'selected' : '' }}>{{ $group->full_name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -347,7 +329,7 @@
                         <th>Сабаб</th>
                         <th>Баҳо</th>
                         <th>Санаи қарз</th>
-                        <th>Кӯшиш</th>
+                        <th>Кредит</th>
                         <th>Ҳолат</th>
                         <th class="text-end">Амалҳо</th>
                     </tr>
@@ -359,9 +341,9 @@
                         <td><span class="badge-soft-info">{{ $debt->student?->group?->name }}</span></td>
                         <td><small>{{ $debt->subject?->name }}</small></td>
                         <td><small class="text-muted">{{ $debt->reason_label }}</small></td>
-                        <td><span class="badge-grade">{{ $debt->original_grade }}</span> <small class="text-muted">({{ $debt->original_score }}%)</small></td>
+                        <td><span class="badge-grade">{{ $debt->original_grade }}</span> <small class="text-muted">({{ $debt->original_score }})</small></td>
                         <td><small class="text-muted">{{ $debt->debt_date?->format('d.m.Y') }}</small></td>
-                        <td><span class="attempts-pill"><i class="bi bi-arrow-repeat"></i> {{ $debt->retake_attempts_used }}/{{ $debt->max_retake_attempts }}</span></td>
+                        <td><span class="attempts-pill"><i class="bi bi-award"></i> {{ $debt->subject?->credits ?? '—' }} кредит</span></td>
                         <td><span class="badge {{ $debt->status->badgeClass() }} rounded-pill px-3 py-2">{{ $debt->status->label() }}</span></td>
                         <td class="text-end">
                             <a href="{{ route('admin.debts.show', $debt) }}" class="btn btn-sm btn-outline-info action-btn" title="Дидан"><i class="bi bi-eye"></i></a>

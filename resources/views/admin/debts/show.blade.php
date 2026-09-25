@@ -22,7 +22,7 @@
                         </tr>
                         <tr>
                             <th class="text-muted">Гурӯҳ</th>
-                            <td>{{ $debt->student->group->name ?? '—' }}</td>
+                            <td>{{ $debt->student->group->full_name ?? '—' }}</td>
                         </tr>
                         <tr>
                             <th class="text-muted">Фан</th>
@@ -40,7 +40,7 @@
                             <th class="text-muted">Баҳои аслӣ</th>
                             <td>
                                 @if($debt->semesterGrade)
-                                    <span class="badge bg-danger">{{ $debt->semesterGrade->total_score }}%</span>
+                                    <span class="badge bg-danger">{{ $debt->semesterGrade->total_score }}</span>
                                 @else
                                     <span class="text-muted">—</span>
                                 @endif
@@ -50,9 +50,9 @@
                             <th class="text-muted">Тавсеаи қарз</th>
                             <td>
                                 @if($debt->isFx())
-                                    <span class="badge bg-danger">Fx (45-49%)</span>
+                                    <span class="badge bg-danger">Fx </span>
                                 @elseif($debt->isF())
-                                    <span class="badge bg-dark">F (0-44%)</span>
+                                    <span class="badge bg-dark">F </span>
                                 @else
                                     <span class="badge bg-secondary">—</span>
                                 @endif

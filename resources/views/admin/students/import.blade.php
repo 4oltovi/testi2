@@ -32,7 +32,7 @@
                                 <option value="">— Гурӯҳро интихоб кунед —</option>
                                 @foreach($groups as $group)
                                     <option value="{{ $group->id }}">
-                                        {{ $group->name }}
+                                        {{ $group->full_name }}
                                         @if($group->specialty) — {{ $group->specialty->name }} @endif
                                     </option>
                                 @endforeach

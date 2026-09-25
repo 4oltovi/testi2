@@ -2,7 +2,7 @@
 
 @section('title', 'Таҳрири гурӯҳ')
 @section('page-header', 'Таҳрири гурӯҳ')
-@section('page-description', $group->name)
+@section('page-description', $group->full_name)
 
 @section('content')
 <div class="row justify-content-center">
@@ -19,7 +19,7 @@
                             @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                         <div class="col-md-6">
-                            <label for="code" class="form-label">Рамз <span class="text-danger">*</span></label>
+                            <label for="code" class="form-label">Рақами гурӯҳ <span class="text-danger">*</span></label>
                             <input type="text" class="form-control @error('code') is-invalid @enderror"
                                    id="code" name="code" value="{{ old('code', $group->code) }}" required>
                             @error('code') <div class="invalid-feedback">{{ $message }}</div> @enderror

@@ -95,7 +95,7 @@
         @if($w > 0)
         <img src="{{ public_path($logoPath) }}" style="width:{{ $w }}px; height:{{ $h }}px;">
         @endif
-        <div><b>{{ $institutionName }}</b></div>
+        <div><b>{!! nl2br(e($institutionName)) !!} </b></div>
         <div style="margin-top:6px;"><b>Т Р А Н С К Р И П Т</b> (Маълумотномаи академӣ)</div>
         <div>№ {{ $transcriptNumber ?? '________' }} аз "{{ $date->format('d.m.Y') }}"</div>
     </div>
