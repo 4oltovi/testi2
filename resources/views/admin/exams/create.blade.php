@@ -78,7 +78,7 @@
                     <input type="number" name="duration_minutes" class="form-control" value="{{ old('duration_minutes', 25) }}" min="5" max="180">
                 </div>
                 <div class="col-6 col-md-3">
-                    <label class="form-label">Ҳадди гузариш (%)</label>
+                    <label class="form-label">Ҳадди гузариш (Бал)</label>
                     <input type="number" name="passing_score" class="form-control" value="{{ old('passing_score', 50) }}" min="0" max="100">
                 </div>
                 <div class="col-6 col-md-3">

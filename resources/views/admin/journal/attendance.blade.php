@@ -45,7 +45,7 @@
                 <table class="table table-hover mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th width="5%">#</th>
+                            <th width="5%">№</th>
                             <th width="35%">Донишҷӯ</th>
                             <th width="35%">Ҳолат</th>
                             <th width="25%">Давомот (умумӣ)</th>

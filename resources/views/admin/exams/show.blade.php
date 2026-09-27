@@ -57,7 +57,7 @@
                         </tr>
                         <tr>
                             <th class="text-muted">Ҳадди гузариш</th>
-                            <td>{{ $exam->passing_score }}%</td>
+                            <td>{{ $exam->passing_score }}</td>
                         </tr>
                         <tr>
                             <th class="text-muted">Кӯшишҳо</th>

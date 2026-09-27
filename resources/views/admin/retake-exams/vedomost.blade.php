@@ -9,7 +9,10 @@
     <div class="col-12">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <h6 class="mb-0">Ведомости такрорӣ</h6>
+                <div class="d-flex align-items-center gap-2">
+                    <h6 class="mb-0">Ведомости такрорӣ</h6>
+                    <span class="badge bg-warning text-dark" style="font-size: 0.75rem;">Имтиҳони такрорӣ (Триместр)</span>
+                </div>
                 <div>
                     <a href="{{ route('admin.retake-exams.print-vedomost', $retakeExam) }}" class="btn btn-sm btn-primary" target="_blank">
                         <i class="bi bi-printer me-1"></i> Чоп кардан

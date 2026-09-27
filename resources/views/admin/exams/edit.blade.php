@@ -61,7 +61,7 @@
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label">Ҳадди гузариш (%)</label>
+                    <label class="form-label">Ҳадди гузариш (Бал)</label>
                     <input type="number" name="passing_score" class="form-control" value="{{ old('passing_score', $exam->passing_score) }}" min="0" max="100" step="0.01" required>
                 </div>
 

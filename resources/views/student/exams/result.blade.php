@@ -9,7 +9,13 @@
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-body text-center py-4 py-md-5">
                 @php
-                $passed = $attempt->percentage >= $exam->passing_score;
+                if ($semesterGrade && $semesterGrade->status === 'passed') {
+                    $passed = true;
+                } elseif ($semesterGrade && in_array($semesterGrade->status, ['failed', 'retake', 'debt'])) {
+                    $passed = false;
+                } else {
+                    $passed = null;
+                }
                 $statusLabel = match($attempt->status) {
                 'submitted' => 'Супорида шуд',
                 'auto_submitted' => 'Автоматикӣ супорида шуд',
@@ -21,25 +27,35 @@
                 @endphp
 
                 <div class="mb-3">
-                    @if($passed)
+                    @if($passed === true)
                     <div class="d-inline-flex align-items-center justify-content-center bg-success bg-opacity-10 rounded-circle" style="width:80px;height:80px;">
                         <i class="bi bi-check-lg text-success" style="font-size: 2.5rem;"></i>
                     </div>
-                    @else
+                    @elseif($passed === false)
                     <div class="d-inline-flex align-items-center justify-content-center bg-danger bg-opacity-10 rounded-circle" style="width:80px;height:80px;">
                         <i class="bi bi-x-lg text-danger" style="font-size: 2.5rem;"></i>
+                    </div>
+                    @else
+                    <div class="d-inline-flex align-items-center justify-content-center bg-secondary bg-opacity-10 rounded-circle" style="width:80px;height:80px;">
+                        <i class="bi bi-hourglass-split text-secondary" style="font-size: 2.5rem;"></i>
                     </div>
                     @endif
                 </div>
 
-                <h4 class="{{ $passed ? 'text-success' : 'text-danger' }}">
-                    {{ $passed ? 'Табрик! Шумо гузаштед!' : 'Мутаассифона, шумо нагузаштед.' }}
+                <h4 class="{{ $passed === true ? 'text-success' : ($passed === false ? 'text-danger' : 'text-secondary') }}">
+                    @if($passed === true)
+                        Табрик! Шумо гузаштед!
+                    @elseif($passed === false)
+                        Мутаассифона, шумо нагузаштед.
+                    @else
+                        Натиҷаи ниҳоӣ ҳанўз тайёр нест
+                    @endif
                 </h4>
 
                 <div class="row mt-4 g-2 justify-content-center">
                     <div class="col-6 col-md-3">
                         <div class="border rounded p-3">
-                            <h3 class="mb-0 {{ $passed ? 'text-success' : 'text-danger' }}">
+                            <h3 class="mb-0 {{ $passed === true ? 'text-success' : ($passed === false ? 'text-danger' : 'text-secondary') }}">
                                 {{ number_format($attempt->percentage, 0) }}%
                             </h3>
                             <small class="text-muted">Фоиз</small>
@@ -47,7 +63,7 @@
                     </div>
                     <div class="col-6 col-md-3">
                         <div class="border rounded p-3">
-                            <h3 class="mb-0">
+                            <h3 class="mb-0 {{ $passed === true ? 'text-success' : ($passed === false ? 'text-danger' : 'text-secondary') }}">
                                 {{ number_format($attempt->total_score, 0) }}/{{ number_format($attempt->max_possible_score, 0) }}
                             </h3>
                             <small class="text-muted">Баллҳо</small>
@@ -57,7 +73,7 @@
 
                 <div class="mt-3 small text-muted">
                     <small>
-                        Ҳадди гузариш: {{ $exam->passing_score }}% |
+                        Ҳадди гузариш: {{ $exam->passing_score }} |
                         Ҳолат: <strong>{{ $statusLabel }}</strong> |
                         Вақт: {{ ($attempt->submitted_at ?? $attempt->auto_submitted_at)?->format('d.m.Y H:i') }}
                     </small>

@@ -264,7 +264,12 @@ class ExamController extends Controller
 
         $showDetails = $exam->show_results_immediately;
 
-        return view('student.exams.result', compact('exam', 'attempt', 'showDetails'));
+        $semesterGrade = SemesterGrade::where('student_id', $student->id)
+            ->where('subject_id', $exam->subjectAssignment?->subject_id)
+            ->where('semester_id', $exam->semester_id)
+            ->first();
+
+        return view('student.exams.result', compact('exam', 'attempt', 'showDetails', 'semesterGrade'));
     }
 
     /**

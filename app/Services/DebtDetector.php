@@ -6,6 +6,7 @@ use App\Enums\DebtStatus;
 use App\Enums\GradeScale;
 use App\Models\AcademicDebt;
 use App\Models\AcademicDebtHistory;
+use App\Models\ExamAttempt;
 use App\Models\SemesterGrade;
 use App\Models\Student;
 use Illuminate\Support\Facades\Auth;
@@ -34,6 +35,22 @@ class DebtDetector
 
         // Агар баҳо гузашта бошад, қарздорӣ нест
         if ($semesterGrade->isPassed()) {
+            return null;
+        }
+
+        // НАВ: агар донишҷӣ ҳанўз имтиҳони асосиро воқеан насупорида бошад
+        // (submitted/auto_submitted/graded), қарздорӣ эҷод намекунем — то
+        // вақти имтиҳон нагузарад ё донишҷӣ воқеан супорад, ин бақия ба
+        // баҳои муваққатии рейтинг аст, на нокомии воқеӣ.
+        $hasSubmittedAttempt = ExamAttempt::whereHas('exam', function ($q) use ($semesterGrade) {
+                $q->where('subject_assignment_id', $semesterGrade->subject_assignment_id)
+                  ->where('semester_id', $semesterGrade->semester_id);
+            })
+            ->where('student_id', $semesterGrade->student_id)
+            ->whereIn('status', ['submitted', 'auto_submitted', 'graded'])
+            ->exists();
+
+        if (!$hasSubmittedAttempt) {
             return null;
         }
 

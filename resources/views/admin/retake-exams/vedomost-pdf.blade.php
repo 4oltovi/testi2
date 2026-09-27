@@ -16,9 +16,10 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <h2>ВЕДОМОСТИ ТАКРОРӢ</h2>
+<div class="header">
+        <h2>ВЕДОМОСТИ ТАКРОРҲ</h2>
         <p>{{ $retakeExam->subject->name ?? 'Фан' }} | {{ $retakeExam->exam_date?->format('d.m.Y') ?? '' }}</p>
+        <p style="margin: 6px 0 0; font-size: 11px; font-weight: bold;">Имтиҳони такрорӣ (Триместр)</p>
     </div>
 
     <table class="info">

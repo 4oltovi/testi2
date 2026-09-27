@@ -49,7 +49,7 @@
                                     <ul class="list-unstyled small text-muted">
                                         <li><i class="bi bi-clock me-1"></i> {{ $exam->duration_minutes }} дақиқа</li>
                                         <li><i class="bi bi-list-ol me-1"></i> {{ $exam->total_questions_count }} савол</li>
-                                        <li><i class="bi bi-bullseye me-1"></i> Ҳадди гузариш: {{ $exam->passing_score }}%</li>
+                                        <li><i class="bi bi-bullseye me-1"></i> Ҳадди гузариш: {{ $exam->passing_score }}</li>
                                         <li><i class="bi bi-arrow-repeat me-1"></i> Кӯшиш: {{ $examAttempts->count() }}/{{ $exam->max_attempts }}</li>
                                     </ul>
 
@@ -57,7 +57,7 @@
                                         @php $best = $completedAttempts->sortByDesc('percentage')->first(); @endphp
                                         <div class="alert alert-{{ $best->percentage >= $exam->passing_score ? 'success' : 'danger' }} py-1 px-2 small mb-2">
                                             Беҳтарин натиҷа: <strong>{{ number_format($best->percentage, 1) }}%</strong>
-                                            ({{ $best->letter_grade }})
+                                            
                                         </div>
                                     @endif
                                 </div>

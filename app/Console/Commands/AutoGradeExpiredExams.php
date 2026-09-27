@@ -6,6 +6,7 @@ use App\Models\Exam;
 use App\Models\ExamAttempt;
 use App\Models\RetakeExam;
 use App\Models\RetakeExamAttempt;
+use App\Services\DebtDetector;
 use App\Services\GradeCalculator;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -221,11 +222,44 @@ class AutoGradeExpiredExams extends Command
                     'examined_at' => now(),
                 ]);
 
-                app(GradeCalculator::class)->recalculateAndPersist(
-                    $attempt->student_id,
-                    $retakeExam->mainExam->subject_assignment_id,
-                    $retakeExam->semester_id
-                );
+                $semesterGrade = \App\Models\SemesterGrade::where('student_id', $attempt->student_id)
+                    ->where('subject_assignment_id', $retakeExam->mainExam->subject_assignment_id)
+                    ->where('semester_id', $retakeExam->semester_id)
+                    ->first();
+
+                if ($semesterGrade) {
+                    $semesterGrade->update([
+                        'retake_score' => $totalScore,
+                        'retake_date' => now(),
+                    ]);
+
+                    app(GradeCalculator::class)->recalculateAndPersist(
+                        $attempt->student_id,
+                        $retakeExam->mainExam->subject_assignment_id,
+                        $retakeExam->semester_id
+                    );
+
+                    $semesterGrade->refresh();
+                }
+
+                $finalIsPassing = $semesterGrade && $semesterGrade->status === 'passed';
+
+                if ($finalIsPassing) {
+                    $retakeExamStudent->update(['status' => 'passed']);
+                    $debt = $retakeExamStudent->academicDebt;
+                    if ($debt) {
+                        $debt->resolve($semesterGrade->total_score, $semesterGrade->letter_grade, auth()->id());
+                    }
+                    app(\App\Services\DebtDetector::class)->resolveDebtAfterRetake(
+                        $attempt->student_id,
+                        $retakeExam->subject_id,
+                        $retakeExam->semester_id,
+                        $semesterGrade->total_score,
+                        $semesterGrade->letter_grade
+                    );
+                } else {
+                    $retakeExamStudent->update(['status' => 'failed']);
+                }
             }
         });
     }

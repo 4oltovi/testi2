@@ -400,11 +400,33 @@ class RetakeExamController extends Controller
                     'saved_letter_grade' => $gradeInfo['letter_grade'],
                 ]);
 
+                $semesterGrade = SemesterGrade::where('student_id', $attempt->student_id)
+                    ->where('subject_assignment_id', $retakeExam->mainExam->subject_assignment_id)
+                    ->where('semester_id', $retakeExam->semester_id)
+                    ->first();
+
+                if ($semesterGrade) {
+                    $semesterGrade->update([
+                        'retake_score' => $totalScore,
+                        'retake_date' => now(),
+                    ]);
+
+                    $gradeCalc = app(\App\Services\GradeCalculator::class);
+                    $gradeCalc->recalculateAndPersist(
+                        $attempt->student_id,
+                        $retakeExam->mainExam->subject_assignment_id,
+                        $retakeExam->semester_id
+                    );
+
+                    $semesterGrade->refresh();
+                }
+
+                $finalIsPassing = $semesterGrade && $semesterGrade->status === 'passed';
+
                 $debt = $retakeExamStudent->academicDebt;
                 if ($debt) {
-                    if ($gradeInfo['is_passing']) {
+                    if ($finalIsPassing) {
                         $retakeExamStudent->update(['status' => 'passed']);
-                        $debt->resolve($percentage, $gradeInfo['letter_grade'], auth()->id());
                     } else {
                         $debt->update([
                             'retake_attempts_used' => DB::raw('retake_attempts_used + 1'),
@@ -424,36 +446,17 @@ class RetakeExamController extends Controller
                     }
                 } else {
                     $retakeExamStudent->update([
-                        'status' => $gradeInfo['is_passing'] ? 'passed' : 'failed',
+                        'status' => $finalIsPassing ? 'passed' : 'failed',
                     ]);
                 }
 
-                $semesterGrade = SemesterGrade::where('student_id', $attempt->student_id)
-                    ->where('subject_assignment_id', $retakeExam->mainExam->subject_assignment_id)
-                    ->where('semester_id', $retakeExam->semester_id)
-                    ->first();
-
-                if ($semesterGrade) {
-                    $semesterGrade->update([
-                        'retake_score' => $totalScore,
-                        'retake_date' => now(),
-                    ]);
-
-                    $gradeCalc = app(\App\Services\GradeCalculator::class);
-                    $gradeCalc->recalculateAndPersist(
-                        $attempt->student_id,
-                        $retakeExam->mainExam->subject_assignment_id,
-                        $retakeExam->semester_id
-                    );
-                }
-
-                if ($gradeInfo['is_passing']) {
+                if ($finalIsPassing) {
                     $this->debtDetector->resolveDebtAfterRetake(
                         $attempt->student_id,
                         $retakeExam->subject_id,
                         $retakeExam->semester_id,
-                        $totalScore,
-                        $gradeInfo['letter_grade']
+                        $semesterGrade->total_score,
+                        $semesterGrade->letter_grade
                     );
                 }
 
