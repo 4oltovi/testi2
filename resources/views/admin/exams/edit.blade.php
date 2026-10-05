@@ -7,7 +7,7 @@
 @section('content')
 <div class="card border-0 shadow-sm">
     <div class="card-body">
-        <form method="POST" action="{{ route('admin.exams.update', $exam) }}">
+        <form id="exam-edit-form" method="POST" action="{{ route('admin.exams.update', $exam) }}">
             @csrf
             @method('PUT')
 
@@ -108,8 +108,9 @@
                     <input type="datetime-local" name="ends_at" class="form-control" value="{{ old('ends_at', optional($exam->ends_at)->format('Y-m-d\TH:i')) }}">
                 </div>
             </div>
+        </form>
 
-            {{-- Саволҳои имтиҳон --}}
+        {{-- Саволҳои имтиҳон --}}
             <div class="card border-0 shadow-sm mt-4">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center">
                     <h6 class="mb-0"><i class="bi bi-question-circle me-2"></i> Саволҳои имтиҳон</h6>
@@ -197,10 +198,9 @@
             </div>
 
             <div class="d-flex justify-content-between mt-4">
-                <a href="{{ route('admin.exams.show', $exam) }}" class="btn btn-outline-secondary">Бозгашт</a>
-                <button type="submit" class="btn btn-primary">Сабти тағйирот</button>
-            </div>
-        </form>
+            <a href="{{ route('admin.exams.show', $exam) }}" class="btn btn-outline-secondary">Бозгашт</a>
+            <button type="submit" form="exam-edit-form" class="btn btn-primary">Сабти тағйирот</button>
+        </div>
     </div>
 </div>
 @endsection

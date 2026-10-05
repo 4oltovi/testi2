@@ -7,7 +7,9 @@
             $dashboardUrl = match(true) {
                 $user?->hasRole('admin') || $user?->hasRole('super_admin') => '/admin/dashboard',
                 $user?->hasRole('teacher') => '/teacher/dashboard',
-                $user?->hasAnyRole(['dean', 'vice_dean', 'department_head', 'registrar', 'accountant']) => route('management.dashboard'),
+                $user?->hasAnyRole(['dean', 'vice_dean', 'department_head']) => route('management.dashboard'),
+                $user?->hasRole('hr') => route('hr.dashboard'),
+                $user?->hasRole('accountant') => route('accountant.dashboard'),
                 default => '/student/dashboard',
             };
         @endphp
@@ -194,6 +196,11 @@
                     <i class="bi bi-shield-check me-2"></i> Аудит
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {{ request()->is('accountant*') ? 'active bg-primary rounded' : '' }}" href="{{ route('accountant.dashboard') }}">
+                    <i class="bi bi-cash-coin me-2"></i> Муҳосиб
+                </a>
+            </li>
 
             @elseif(auth()->user()?->hasRole('teacher'))
             {{-- ===== SIDEBAR ОМӮЗГОР ===== --}}
@@ -230,7 +237,52 @@
                 </a>
             </li>
 
-            @elseif(auth()->user()?->hasAnyRole(['dean', 'vice_dean', 'department_head', 'registrar', 'accountant']))
+            @elseif(auth()->user()?->hasRole('accountant'))
+            {{-- ===== SIDEBAR МУҲОСИБ ===== --}}
+            <li class="nav-item">
+                <a class="nav-link text-white {{ request()->is('accountant/dashboard') ? 'active bg-primary rounded' : '' }}" href="{{ route('accountant.dashboard') }}">
+                    <i class="bi bi-speedometer2 me-2"></i> Панели асосӣ
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {{ request()->is('accountant/students*') ? 'active bg-primary rounded' : '' }}" href="{{ route('accountant.students') }}">
+                    <i class="bi bi-people-fill me-2"></i> Донишҷӯён
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {{ request()->is('accountant/reports*') ? 'active bg-primary rounded' : '' }}" href="{{ route('accountant.reports.groups') }}">
+                    <i class="bi bi-file-earmark-bar-graph me-2"></i> Ҳисобот
+                </a>
+            </li>
+
+            @elseif(auth()->user()?->hasRole('hr'))
+            {{-- ===== SIDEBAR КАДР ===== --}}
+            <li class="nav-item">
+                <a class="nav-link text-white {{ request()->is('hr/dashboard') ? 'active bg-primary rounded' : '' }}" href="{{ route('hr.dashboard') }}">
+                    <i class="bi bi-speedometer2 me-2"></i> Панели асосӣ
+                </a>
+            </li>
+
+            <li class="nav-item mt-2">
+                <small class="nav-link text-uppercase fw-bold px-3" style="color:#8a94ff;">Идоракунии кадр</small>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {{ request()->is('hr/employees*') && !request()->query('role') ? 'active bg-primary rounded' : '' }}" href="{{ route('hr.employees.index') }}">
+                    <i class="bi bi-people-fill me-2"></i> Корманд
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {{ request()->query('role') === 'teacher' ? 'active bg-primary rounded' : '' }}" href="{{ route('hr.employees.index', ['role' => 'teacher']) }}">
+                    <i class="bi bi-person-workspace me-2"></i> Омӯзгорон
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {{ request()->is('hr/students*') ? 'active bg-primary rounded' : '' }}" href="{{ route('hr.students.index') }}">
+                    <i class="bi bi-person-badge me-2"></i> Донишҷӯён
+                </a>
+            </li>
+
+            @elseif(auth()->user()?->hasAnyRole(['dean', 'vice_dean', 'department_head']))
             {{-- ===== SIDEBAR ДЕКАН/ВИСЕ-ДЕКАН ===== --}}
             <li class="nav-item">
                 <a class="nav-link text-white {{ request()->is('management/dashboard') ? 'active bg-primary rounded' : '' }}" href="{{ route('management.dashboard') }}">
@@ -287,11 +339,6 @@
             <li class="nav-item">
                 <a class="nav-link text-white {{ request()->is('student/dashboard') ? 'active bg-primary rounded' : '' }}" href="/student/dashboard">
                     <i class="bi bi-speedometer2 me-2"></i> Панели асосӣ
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link text-white {{ request()->is('student/profile*') ? 'active bg-primary rounded' : '' }}" href="{{ route('student.profile') }}">
-                    <i class="bi bi-person me-2"></i> Профил
                 </a>
             </li>
             <li class="nav-item">

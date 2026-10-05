@@ -68,6 +68,7 @@ class VedomostController extends Controller
 
             $vedomosts = Vedomost::with([
                 'subject:id,name,credits',
+                'subjectAssignment:id,subject_id,credits',
                 'group:id,name',
                 'teacher:id,first_name,last_name,middle_name',
                 'semester:id,number',

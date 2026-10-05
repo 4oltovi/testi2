@@ -51,9 +51,19 @@
   - Models kept soft-delete: Teacher, Exam, Question, RetakeExam, RetakeExamStudent, StudentTransfer, AcademicDebt
 - Admin\SpecialtyController fixed: `departments` variable passed to all 3 views (index, create, edit); `department_id` filter added to index query; `department` eager-loaded with `faculty` sub-load; store/update validate `department_id` and auto-resolve `faculty_id`
 - Route cache rebuilt and verified; all 14 unit tests pass; all PHP syntax checks pass
+- **HR module completed**: `HrAccessTest` 30/30 green (MySQL); registrar→hr migration, HrPolicy, routes/hr.php, 8 views, DenyHrAdminAccess all verified
+- **Имтиҳони такрорӣ (retake score) column on /student/grades**:
+  - `app/Http/Controllers/Student/GradeController.php` — both `index()` and `semester()` now compute `$retakeScore` via `RetakeExamStudent::...->max('score')` (best attempt) and pass `'retake_score' => $retakeScore` in the row payload
+  - `resources/views/student/grades/index.blade.php` + `semester.blade.php` — new column «Имтиҳони такрорӣ» after «Имтиҳон», shows `—` when null
+  - `tests/Feature/StudentGradesRetakeColumnTest.php` — 6 tests green (score shown, dash when no exam / not examined, max across attempts, semester page, subject/semester isolation)
+  - Fixed pre-existing Blade syntax error: `semester.blade.php:4` had `@section('page-description', {{ $semester->name }})` → now `$semester->name` (page was 500 before)
+- **MR footer**: `resources/views/layouts/app.blade.php` — `<footer class="footer mt-auto py-2 bg-body-tertiary text-center border-top"><small>© {{ date('Y') }} MR</small></footer>` after `@endauth`, before scripts; body is `d-flex flex-column min-vh-100` so footer sticks to bottom; no fixed bottom bar exists (only fixed sidebar/overlay/loading) so no 375px overlap
+- **Report cards tests**: `tests/Feature/ReportCardsTest.php` — 4 tests green (active-only counts for students/teachers/groups/faculties; debtors card uses open debts, not stale `has_debts` flag; active_debts counts all 3 open statuses; cards update immediately after debt resolution — regression test for removed `Cache::remember('report_stats')`)
+- **Full suite (MySQL `donishor_test`)**: 189 tests, 50642 assertions, 0 errors, 0 failures — fully green. Fixed the pre-existing `RatingQuestionImportTest` errors (missing `use App\Models\Department;` import at tests/Feature/RatingQuestionImportTest.php:10 — 3 tests now pass). 2 PHPUnit deprecations are pre-existing (0 from new files)
 
 ### Active
 - No active incomplete work — all tasks completed and verified
+- Optional (pending user confirmation): delete debug files `debug_*.php`, `copy_grades.php`, `tmp_grades.blade.php`
 
 ### Blocked
 - Nothing blocked

@@ -134,40 +134,45 @@
     {{-- Right column: Actions --}}
     <div class="col-lg-4">
         <div class="card">
-            <div class="card-header">
+            <button class="card-header w-100 border-0 d-flex justify-content-between align-items-center"
+                    type="button" data-bs-toggle="collapse" data-bs-target="#debtActionsPanel"
+                    style="cursor: pointer;" aria-expanded="false" aria-controls="debtActionsPanel">
                 <h5 class="card-title mb-0"><i class="bi bi-gear"></i> Амалҳо</h5>
-            </div>
-            <div class="card-body">
-                @if($debt->canRetake())
-                    <form action="{{ route('admin.debts.schedule-retake', $debt) }}" method="POST" class="mb-3">
+                <i class="bi bi-chevron-down"></i>
+            </button>
+            <div id="debtActionsPanel" class="collapse">
+                <div class="card-body">
+                    @if($debt->canRetake())
+                        <form action="{{ route('admin.debts.schedule-retake', $debt) }}" method="POST" class="mb-3">
+                            @csrf
+                            <button type="submit" class="btn btn-warning w-100">
+                                <i class="bi bi-arrow-repeat"></i> Таъини такрорсупорӣ
+                            </button>
+                        </form>
+                    @endif
+
+                    <form action="{{ route('admin.debts.resolve', $debt) }}" method="POST" class="mb-3">
                         @csrf
-                        <button type="submit" class="btn btn-warning w-100">
-                            <i class="bi bi-arrow-repeat"></i> Таъини такрорсупорӣ
+                        <div class="mb-3">
+                            <label for="score" class="form-label">Баҳо (0-100)</label>
+                            <input type="number" name="score" id="score" class="form-control" min="0" max="100" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="note" class="form-label">Тавзеҳ</label>
+                            <textarea name="note" id="note" class="form-control" rows="2"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-check-circle"></i> Ҳал кардан
                         </button>
                     </form>
-                @endif
 
-                <form action="{{ route('admin.debts.resolve', $debt) }}" method="POST" class="mb-3">
-                    @csrf
-                    <div class="mb-3">
-                        <label for="score" class="form-label">Баҳо (0-100)</label>
-                        <input type="number" name="score" id="score" class="form-control" min="0" max="100" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="note" class="form-label">Тавзеҳ</label>
-                        <textarea name="note" id="note" class="form-control" rows="2"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-success w-100">
-                        <i class="bi bi-check-circle"></i> Ҳал кардан
-                    </button>
-                </form>
-
-                <form action="{{ route('admin.debts.escalate', $debt) }}" method="POST">
-                    @csrf
-                    <button type="submit" class="btn btn-danger w-100">
-                        <i class="bi bi-exclamation-triangle"></i> Ба комиссия
-                    </button>
-                </form>
+                    <form action="{{ route('admin.debts.escalate', $debt) }}" method="POST">
+                        @csrf
+                        <button type="submit" class="btn btn-danger w-100">
+                            <i class="bi bi-exclamation-triangle"></i> Ба комиссия
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

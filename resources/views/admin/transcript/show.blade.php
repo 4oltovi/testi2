@@ -134,7 +134,10 @@
                     <td class="text-center">
                         {{ $grade->grade_point !== null ? number_format($grade->grade_point, 2) : '—' }}
                     </td>
-                    <td class="text-center">{{ $grade->traditional_grade ?? (\App\Enums\GradeScale::tryFrom($grade->letter_grade)?->traditionalFivePoint() ?? '—') }}</td>
+                    @php
+                        $letterEnum = \App\Enums\GradeScale::tryFrom($grade->letter_grade);
+                    @endphp
+                    <td class="text-center">{{ $letterEnum?->traditionalFivePoint() ?? '—' }}</td>
                     <td class="text-center">
                         @if(method_exists($grade, 'isPassed') && $grade->isPassed())
                         <i class="bi bi-check-circle-fill text-success"></i>

@@ -111,6 +111,30 @@ class SemesterGrade extends Model
         return $this->subjectAssignment?->subject?->name ?? '';
     }
 
+    /**
+     * Кредити фан барои намоиш (Transcript).
+     *
+     * Ин атрибут танҳо барои намоиш аст ва ба сутуни `credits_earned` дастгирӣ
+     * намекунад — он барои ҳисоби GPA истифода мешавад ва фақат барои
+     * баҳои гузашта пур мешавад (ки ин дуруст аст).
+     *
+     * Манбаъ: `SubjectAssignment::credits` — яъне кредити дар журнал, ва агар
+     * дар журнал набошад, кредити асосии фан. Ҳамин манбаъ дар ведомост ва
+     * баҳоҳои семестр истифода мешавад, бинобар ин Transcript бо онҳо
+     * мувофиқ мешавад.
+     */
+    public function getSubjectCreditsAttribute(): int
+    {
+        $assignment = $this->subjectAssignment;
+
+        if ($assignment) {
+            return $assignment->credits;
+        }
+
+        // Ҳолатӣ, ки журнал нест — аз худи фан гирифта мешавад
+        return (int) ($this->subject?->credits ?? 0);
+    }
+
     // ==================== SCOPES ====================
 
     public function scopePassed($query)

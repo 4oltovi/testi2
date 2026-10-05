@@ -10,9 +10,13 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 | Ҳамаи route-ҳо дар middleware('web') — барои session/cookie
 | Auth дар контроллерҳо чек мешавад
+|
+| Кадр (`hr`) ба ин гурӯҳ ворид шуда наметавонад — паҳлаш ба панели худ дар
+| routes/hr.php аст. Бо ин ҳамаи модулҳои админ (донишҷӯён, баҳо, гурӯҳҳо,
+| ҳисоботҳо, танзимот, аудит, ҳисобобар) ба ӯ 403 медиҳад.
 */
 
-Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['web', 'deny.hr.admin'])->prefix('admin')->name('admin.')->group(function () {
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -52,6 +56,7 @@ Route::middleware(['web'])->prefix('admin')->name('admin.')->group(function () {
         Route::put('/{student}', [\App\Http\Controllers\Admin\StudentController::class, 'update'])->name('update');
         Route::post('/{student}/change-status', [\App\Http\Controllers\Admin\StudentController::class, 'changeStatus'])->name('change-status');
         Route::post('/{student}/promote', [\App\Http\Controllers\Admin\StudentController::class, 'promote'])->name('promote');
+        Route::delete('/{student}/avatar', [\App\Http\Controllers\Admin\StudentController::class, 'removeAvatar'])->name('avatar.destroy');
     });
 
     // Гузариши донишҷӯён

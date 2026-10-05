@@ -16,15 +16,46 @@
 @endsection
 
 @section('content')
+<style>
+    /* Қадами дора-и акс дар кӯтоҳ: 144px (аз partial) + 2×3px кадри сафед = 150px */
+    .admin-student-photo {
+        width: 150px;
+        height: 150px;
+        border: 3px solid #fff;
+        box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .15);
+        overflow: hidden;
+    }
+
+    .admin-student-photo img,
+    .admin-student-photo .rounded-circle {
+        border-radius: 50%;
+        object-fit: cover;
+    }
+</style>
 <div class="row g-4">
     {{-- Колонкаи чап: Маълумоти шахсӣ --}}
     <div class="col-lg-4">
         {{-- Профил --}}
         <div class="card border-0 shadow-sm mb-3">
             <div class="card-body text-center">
-                <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center mb-3"
-                     style="width: 80px; height: 80px; font-size: 2rem; font-weight: 600;">
-                    {{ mb_substr($student->user?->first_name, 0, 1) }}{{ mb_substr($student->user?->last_name, 0, 1) }}
+                {{-- Акс: 150px дора бо кадри сафед 3px ва сояи нарм.
+                     Partial аксро 144px медиҳад, то бо кадр ҷамъ 150px шавад.
+                     Шуҳраи inline-style-и partial аз CSS сурфет хок мекунад,
+                     аз ин рӯ мӯҳқи достӣ (мас. .admin-student-photo) истифода мебарем. --}}
+                <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-white admin-student-photo mb-3">
+                    @include('partials.avatar', ['user' => $student->user, 'size' => 144])
+                </div>
+                <div class="mt-2">
+                    @if($student->user?->avatar)
+                    <form method="POST" action="{{ route('admin.students.avatar.destroy', $student) }}"
+                          onsubmit="return confirm('Акси ин донишҷӯро нест кардан мехоҳед? Донишҷӯ бояд акси нав бор кунад.')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash me-1"></i> Нест кардани акс
+                        </button>
+                    </form>
+                    @endif
                 </div>
                 <h5 class="mb-1">{{ $student->user?->full_name }}</h5>
                 <p class="text-muted mb-2">{{ $student->student_id_number }}</p>
@@ -47,10 +78,10 @@
                 </div>
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Кредитҳои гирифташуда:</span>
-                    <strong>{{ $student->total_credits_earned }} / {{ $student->specialty?->total_credits ?? '—' }}</strong>
+                    <strong>{{ $student->earned_credits }}</strong>
                 </div>
                 @if($student->specialty?->total_credits)
-                    @php $progress = min(100, round(($student->total_credits_earned / $student->specialty->total_credits) * 100)); @endphp
+                    @php $progress = min(100, round(($student->earned_credits / $student->specialty->total_credits) * 100)); @endphp
                     <div class="progress" style="height: 8px;">
                         <div class="progress-bar bg-success" style="width: {{ $progress }}%"></div>
                     </div>

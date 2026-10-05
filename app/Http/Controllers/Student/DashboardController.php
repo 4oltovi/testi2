@@ -22,7 +22,8 @@ class DashboardController extends Controller
             'gpa' => $student?->cumulative_gpa ?? 0,
             'debts_count' => 0,
             'grades' => collect(),
-            'attendance_percentage' => 100,
+            // Сабти давомот нест -> null, то ки «—» нишон дода шавад (на 100%)
+            'attendance_percentage' => null,
             'recent_exams' => collect(),
         ];
 

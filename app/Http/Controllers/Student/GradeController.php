@@ -52,12 +52,13 @@ class GradeController extends Controller
                     ->first();
 
                 if ($retakeExam) {
-                    $retakeStudent = \App\Models\RetakeExamStudent::where('retake_exam_id', $retakeExam->id)
+                    // Кӯшишҳои гуногун — беҳтарин (калонтарин) натиҷа
+                    $bestScore = \App\Models\RetakeExamStudent::where('retake_exam_id', $retakeExam->id)
                         ->where('student_id', $student->id)
-                        ->first();
+                        ->max('score');
 
-                    if ($retakeStudent && $retakeStudent->score !== null) {
-                        $retakeScore = (float) $retakeStudent->score;
+                    if ($bestScore !== null) {
+                        $retakeScore = (float) $bestScore;
                     }
                 }
 
@@ -83,6 +84,8 @@ class GradeController extends Controller
                 return [
                     'subject_assignment' => $assignment,
                     'subject' => $assignment->subject,
+                    // Манбаъи ягонаи кредит — монанди ведомост ва баҳоҳои семестр
+                    'credits' => $assignment->credits,
                     'semester' => $assignment->semester,
                     'semester_grade' => $semesterGrade,
                     'rating1' => $rating1,
@@ -90,6 +93,8 @@ class GradeController extends Controller
                     'computer_rating1' => $computerRating1,
                     'computer_rating2' => $computerRating2,
                     'exam' => $exam,
+                    // Баҳои имтиҳони такрорӣ (агар гузашта бошад)
+                    'retake_score' => $retakeScore,
                     'total_score' => $totalScore,
                     'letter_grade' => $letterGrade,
                     'grade_point' => $gradePoint,
@@ -144,12 +149,13 @@ class GradeController extends Controller
                 ->first();
 
             if ($retakeExam) {
-                $retakeStudent = \App\Models\RetakeExamStudent::where('retake_exam_id', $retakeExam->id)
+                // Кӯшишҳои гуногун — беҳтарин (калонтарин) натиҷа
+                $bestScore = \App\Models\RetakeExamStudent::where('retake_exam_id', $retakeExam->id)
                     ->where('student_id', $student->id)
-                    ->first();
+                    ->max('score');
 
-                if ($retakeStudent && $retakeStudent->score !== null) {
-                    $retakeScore = (float) $retakeStudent->score;
+                if ($bestScore !== null) {
+                    $retakeScore = (float) $bestScore;
                 }
             }
 
@@ -182,6 +188,8 @@ class GradeController extends Controller
                 'computer_rating1' => $computerRating1,
                 'computer_rating2' => $computerRating2,
                 'exam' => $exam,
+                // Баҳои имтиҳони такрорӣ (агар гузашта бошад)
+                'retake_score' => $retakeScore,
                 'total_score' => $totalScore,
                 'letter_grade' => $letterGrade,
                 'grade_point' => $gradePoint,

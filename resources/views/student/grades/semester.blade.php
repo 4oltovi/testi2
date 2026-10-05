@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Баҳоҳои семестрӣ')
 @section('page-header', 'Баҳоҳои семестрӣ')
-@section('page-description', {{ $semester->name }})
+@section('page-description', $semester->name)
 
 @section('content')
 <div class="card border-0 shadow-sm">
@@ -17,6 +17,7 @@
                         <th class="text-center">R1 </th>
                         <th class="text-center">R2 </th>
                         <th class="text-center">Имтиҳон</th>
+                        <th class="text-center">Имтиҳони такрорӣ</th>
                         <th class="text-center">Ниҳоӣ</th>
                         <th class="text-center">Баҳо</th>
                         <th class="text-center">Ҳолат</th>
@@ -37,7 +38,7 @@
                                     $ej1 = max(0, $r1 - $cr1);
                                 @endphp
                                 @if($calc['rating1'] !== null)
-                                    {{ number_format($r1, 0) }}
+                                    {{ number_format($r1, 1) }}
                                     <br><small class="text-muted">ЭЖ {{ number_format($ej1, 0) }}/60 + ТК {{ number_format($cr1, 0) }}/40</small>
                                 @else
                                     —
@@ -50,13 +51,14 @@
                                     $ej2 = max(0, $r2 - $cr2);
                                 @endphp
                                 @if($calc['rating2'] !== null)
-                                    {{ number_format($r2, 0) }}
+                                    {{ number_format($r2, 1) }}
                                     <br><small class="text-muted">ЭЖ {{ number_format($ej2, 0) }}/60 + ТК {{ number_format($cr2, 0) }}/40</small>
                                 @else
                                     —
                                 @endif
                             </td>
                         <td class="text-center">{{ $calc['exam'] !== null ? number_format($calc['exam'], 0) : '—' }}</td>
+                        <td class="text-center">{{ $calc['retake_score'] !== null ? number_format($calc['retake_score'], 0) : '—' }}</td>
                         <td class="text-center"><strong>{{ $calc['total_score'] !== null ? number_format($calc['total_score'], 1) : '—' }}</strong></td>
                         <td class="text-center">
                             @if($calc['letter_grade'])

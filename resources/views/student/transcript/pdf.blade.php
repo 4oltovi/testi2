@@ -15,7 +15,7 @@
 <body>
     <h1>Transcript</h1>
     <p><strong>Донишҷӯ:</strong> {{ $student?->user?->full_name ?? '-' }}</p>
-    <p><strong>Гурӯҳ:</strong> {{ $student?->group?->name ?? '-' }}</p>
+    <p><strong>Гурӯҳ:</strong> {{ $student?->group?->code ?? '—' }}</p>
 
     <table>
         <thead>
@@ -23,6 +23,7 @@
                 <th>#</th>
                 <th>Фан</th>
                 <th>Семестр</th>
+                <th>Гурӯҳ</th>
                 <th>Кредит</th>
                 <th>Фоиз</th>
                 <th>Баҳо</th>
@@ -35,7 +36,8 @@
                 <td>{{ $index + 1 }}</td>
                 <td>{{ $grade->subject?->name ?? '—' }}</td>
                 <td>{{ $grade->semester?->name ?? '—' }}</td>
-                <td class="text-center">{{ $grade->credits_earned }}</td>
+                <td class="text-center">{{ $grade->subjectAssignment?->group?->code ?? '—' }}</td>
+                <td class="text-center">{{ $grade->subject_credits }}</td>
                 <td class="text-center">{{ $grade->total_score ? number_format($grade->total_score, 0) . '%' : '—' }}</td>
                 <td class="text-center">
                     @if($grade->letter_grade)
@@ -49,8 +51,8 @@
         </tbody>
         <tfoot>
             <tr>
-                <td colspan="3"><strong>Маҷмӯъ:</strong></td>
-                <td class="text-center"><strong>{{ $grades->sum('credits_earned') }}</strong></td>
+                <td colspan="4"><strong>Маҷмӯъ:</strong></td>
+                <td class="text-center"><strong>{{ $grades->sum('subject_credits') }}</strong></td>
                 <td class="text-center"><strong>{{ number_format($grades->avg('total_score'), 0) }}</strong></td>
                 <td></td>
                 <td class="text-center"><strong>{{ number_format($grades->avg('grade_point'), 2) }}</strong></td>

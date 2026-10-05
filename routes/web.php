@@ -16,8 +16,12 @@ Route::get('/', function () {
             return redirect('/student/dashboard');
         } elseif ($user->hasRole('operator')) {
             return redirect('/operator/attendance');
-        } elseif ($user->hasRole('dean') || $user->hasRole('vice_dean') || $user->hasRole('department_head') || $user->hasRole('registrar') || $user->hasRole('accountant')) {
+        } elseif ($user->hasRole('accountant')) {
+            return redirect('/accountant/dashboard');
+        } elseif ($user->hasRole('dean') || $user->hasRole('vice_dean') || $user->hasRole('department_head')) {
             return redirect('/management/dashboard');
+        } elseif ($user->hasRole('hr')) {
+            return redirect('/hr/dashboard');
         }
         return redirect('/login');
     }

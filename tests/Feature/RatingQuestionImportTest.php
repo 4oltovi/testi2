@@ -7,6 +7,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\Subject;
+use App\Models\Department;
 use App\Models\Faculty;
 use App\Models\QuestionBank;
 use App\Models\Question;

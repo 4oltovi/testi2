@@ -13,8 +13,6 @@ use App\Models\Student;
 use App\Models\Teacher;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -24,16 +22,17 @@ class ReportController extends Controller
     {
         $currentSemester = Semester::current();
 
-        $stats = Cache::remember('report_stats', 300, function () {
-            return [
-                'total_students' => Student::active()->count(),
-                'total_teachers' => Teacher::active()->count(),
-                'total_groups' => Group::active()->count(),
-                'total_faculties' => Faculty::active()->count(),
-                'total_debtors' => Student::withDebts()->count(),
-                'active_debts' => AcademicDebt::open()->count(),
-            ];
-        });
+        // Ҳисоботҳо бонусӣ нестанд — онҳо бояд ҳамон дам ба рӯй навиштан
+        // ҳамон бушанд (мисоли пас аз ҳал кардани қарздорӣ). Бо ин ҳуҷуди кеш
+        // ин рақамҳо то 5 дақиқа кӯҳна мемонданд.
+        $stats = [
+            'total_students' => Student::active()->count(),
+            'total_teachers' => Teacher::active()->count(),
+            'total_groups' => Group::active()->count(),
+            'total_faculties' => Faculty::active()->count(),
+            'total_debtors' => Student::withDebts()->count(),
+            'active_debts' => AcademicDebt::open()->count(),
+        ];
 
         return view('admin.reports.index', compact('stats', 'currentSemester'));
     }

@@ -41,7 +41,7 @@
                 <small class="text-muted d-block">Формулаи баҳо:</small>
                 <strong>(R1 + R2) ÷ 4 + (Имтиҳон × 0,5)</strong>
                 <br><small class="text-muted">Имтиҳон аз тести онлайн автоматӣ гирифта мешавад</small>
-                <br><small class="text-muted">Ҳадди ақали гузариш: 50% (баҳои D)</small>
+                <br><small class="text-muted">Ҳадди ақали гузариш: 50 (баҳои D)</small>
             </div>
         </div>
     </div>
@@ -57,7 +57,7 @@
                 <table class="table table-sm table-bordered journal-table mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th style="width: 50px;">#</th>
+                        <th style="width: 50px;">№</th>
                         <th style="width: 110px;">ID</th>
                         <th class="student-name">Донишҷӯ</th>
                         <th title="Рейтинги 1 (ҳафтаи 1-8)">
@@ -68,7 +68,7 @@
                         </th>
                         <th title="Имтиҳони асосӣ">Имт.</th>
                         <th title="Такрорсупорӣ">Такр.</th>
-                        <th title="Баҳои ниҳоӣ (%)">Ниҳоӣ</th>
+                        <th title="Баҳои ниҳоӣ">Ниҳоӣ</th>
                         <th title="Баҳои ҳарфӣ">Баҳо</th>
                         <th title="Grade Point">GP</th>
                         <th>Ҳолат</th>
@@ -95,7 +95,7 @@
                                 $ej1 = max(0, $r1 - $cr1);
                             @endphp
                             <span title="ЭЖ: {{ number_format($ej1, 0) }}/60 | ТК: {{ number_format($cr1, 0) }}/40">
-                                {{ $calc['rating1'] !== null ? number_format($r1, 0) : '—' }}
+                                {{ $calc['rating1'] !== null ? number_format($r1, 1) : '—' }}
                             </span>
                         </td>
                         <td>
@@ -105,7 +105,7 @@
                                 $ej2 = max(0, $r2 - $cr2);
                             @endphp
                             <span title="ЭЖ: {{ number_format($ej2, 0) }}/60 | ТК: {{ number_format($cr2, 0) }}/40">
-                                {{ $calc['rating2'] !== null ? number_format($r2, 0) : '—' }}
+                                {{ $calc['rating2'] !== null ? number_format($r2, 1) : '—' }}
                             </span>
                         </td>
                         <td>{{ $calc['exam'] !== null ? number_format($calc['exam'], 0) : '—' }}</td>
@@ -190,107 +190,41 @@
         <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i> Шкалаи баҳогузорӣ (Низоми кредитии Тоҷикистон)</h6>
     </div>
     <div class="card-body">
+        @php
+            // Ҷадвали шкала аз GradeScale хонда мешавад — як манбаъи ҳақиқат
+            // бо transcript, то ҳар ду ҳамин ҳуқуқро нишон диҳанд.
+            $scaleRows = \App\Enums\GradeScale::cases();
+            // `90` на 90.00 шавад, `0` бо «-» нашавад
+            $fmtNum = fn (float $n) => $n == floor($n)
+                ? (string) (int) $n
+                : rtrim(rtrim(number_format($n, 2, '.', ''), '0'), '.');
+            $fmtRange = fn ($r) => $fmtNum((float) $r['min']) . '-' . $fmtNum((float) $r['max']);
+        @endphp
         <div class="row">
-            <div class="col-md-6">
-                <table class="table table-sm table-bordered mb-0">
-                    <thead class="table-success">
-                        <tr>
-                            <th>Баҳо</th>
-                            <th>GPA</th>
-                            <th>%</th>
-                            <th>Анъанавӣ</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><span class="badge bg-success">A</span></td>
-                            <td>4.00</td>
-                            <td>95-100</td>
-                            <td>Аъло</td>
-                        </tr>
-                        <tr>
-                            <td><span class="badge bg-success">A-</span></td>
-                            <td>3.67</td>
-                            <td>90-94</td>
-                            <td>Аъло</td>
-                        </tr>
-                        <tr>
-                            <td><span class="badge bg-primary">B+</span></td>
-                            <td>3.33</td>
-                            <td>85-89</td>
-                            <td>Хуб</td>
-                        </tr>
-                        <tr>
-                            <td><span class="badge bg-primary">B</span></td>
-                            <td>3.00</td>
-                            <td>80-84</td>
-                            <td>Хуб</td>
-                        </tr>
-                        <tr>
-                            <td><span class="badge bg-primary">B-</span></td>
-                            <td>2.67</td>
-                            <td>75-79</td>
-                            <td>Хуб</td>
-                        </tr>
-                        <tr>
-                            <td><span class="badge bg-warning">C+</span></td>
-                            <td>2.33</td>
-                            <td>70-74</td>
-                            <td>Қаноатбахш</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="col-md-6">
-                <table class="table table-sm table-bordered mb-0">
-                    <thead class="table-warning">
-                        <tr>
-                            <th>Баҳо</th>
-                            <th>GPA</th>
-                            <th>%</th>
-                            <th>Анъанавӣ</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><span class="badge bg-warning">C</span></td>
-                            <td>2.00</td>
-                            <td>65-69</td>
-                            <td>Қаноатбахш</td>
-                        </tr>
-                        <tr>
-                            <td><span class="badge bg-warning">C-</span></td>
-                            <td>1.67</td>
-                            <td>60-64</td>
-                            <td>Қаноатбахш</td>
-                        </tr>
-                        <tr>
-                            <td><span class="badge bg-warning">D+</span></td>
-                            <td>1.33</td>
-                            <td>55-59</td>
-                            <td>Қаноатбахш</td>
-                        </tr>
-                        <tr>
-                            <td><span class="badge bg-warning">D</span></td>
-                            <td>1.00</td>
-                            <td>50-54</td>
-                            <td>Қаноатбахш</td>
-                        </tr>
-                        <tr class="table-danger">
-                            <td><span class="badge bg-danger">Fx</span></td>
-                            <td>0</td>
-                            <td>45-49</td>
-                            <td>Ғайриқ. (такрор.)</td>
-                        </tr>
-                        <tr class="table-dark">
-                            <td><span class="badge bg-dark">F</span></td>
-                            <td>0</td>
-                            <td>0-44</td>
-                            <td>Ғайриқ. (дубора)</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            @foreach(array_chunk($scaleRows, 6) as $half)
+                <div class="col-md-6">
+                    <table class="table table-sm table-bordered mb-0">
+                        <thead class="{{ $half[0]->isPassing() ? 'table-success' : 'table-warning' }}">
+                            <tr>
+                                <th>Баҳо</th>
+                                <th>GPA</th>
+                                <th>%</th>
+                                <th class="text-center">Анъанавӣ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($half as $s)
+                                <tr @unless($s->isPassing()) class="{{ $s->badgeClass() === 'bg-dark' ? 'table-dark' : 'table-danger' }}" @endunless>
+                                    <td><span class="badge {{ $s->badgeClass() }}">{{ $s->value }}</span></td>
+                                    <td>{{ number_format($s->gradePoint(), 2) }}</td>
+                                    <td>{{ $fmtRange($s->percentageRange()) }}</td>
+                                    <td class="text-center fw-bold">{{ $s->traditionalFivePoint() }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endforeach
         </div>
     </div>
 </div>

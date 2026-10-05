@@ -18,7 +18,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ['name' => 'dean', 'display_name' => 'Декан', 'level' => 80, 'is_system' => true],
             ['name' => 'vice_dean', 'display_name' => 'Муовини декан', 'level' => 75, 'is_system' => true],
             ['name' => 'department_head', 'display_name' => 'Мудири кафедра', 'level' => 70, 'is_system' => true],
-            ['name' => 'registrar', 'display_name' => 'Бақайдгир', 'level' => 60, 'is_system' => true],
+            ['name' => 'hr', 'display_name' => 'Кадр', 'level' => 60, 'is_system' => true],
             ['name' => 'teacher', 'display_name' => 'Омӯзгор', 'level' => 50, 'is_system' => true],
             ['name' => 'accountant', 'display_name' => 'Муҳосиб', 'level' => 40, 'is_system' => true],
             ['name' => 'operator', 'display_name' => 'Оператор', 'level' => 30, 'is_system' => true],
@@ -122,8 +122,17 @@ class RolesAndPermissionsSeeder extends Seeder
             'department_head' => Permission::whereIn('module', ['teachers', 'journal', 'ratings', 'exams', 'reports'])
                 ->pluck('id')->toArray(),
 
-            'registrar' => Permission::whereIn('module', ['structure', 'students', 'teachers', 'debts', 'transcript', 'reports'])
-                ->pluck('id')->toArray(),
+            // Кадр: идоракунии корманд (корбарони корӣ) + дидани identity-и донишҷӯён.
+//
+// Акнун вaqт аз худи панели Кадр истифода мешавад: users.* барои корманд,
+// students.view танҳо барои тасдиқи шахсият (маълумотнома).
+// `users.delete` қатъи назар аст — ғамбарони бехатартар ин фаъол/ғайрифаъол
+// кардани корбар аст. Ҳеҷ модули дигаре (structure, debts, transcript,
+// reports, audit, settings) дод нашудааст.
+'hr' => Permission::whereIn('name', [
+    'users.view', 'users.create', 'users.edit', 'users.roles',
+    'students.view',
+])->pluck('id')->toArray(),
 
             'teacher' => Permission::whereIn('name', [
                 'journal.view', 'journal.attendance', 'journal.grades', 'journal.ratings',

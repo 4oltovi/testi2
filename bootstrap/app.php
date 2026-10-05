@@ -15,6 +15,8 @@ return Application::configure(basePath: dirname(__DIR__))
             require base_path('routes/student.php');
             require base_path('routes/operator.php');
             require base_path('routes/management.php');
+            require base_path('routes/accountant.php');
+            require base_path('routes/hr.php');
         },
     )
     ->withMiddleware(function (Middleware $middleware) {
@@ -26,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
         'single.session'   => \App\Http\Middleware\SingleSession::class,
         'restrict.offline' => \App\Http\Middleware\RestrictOfflineAccess::class,
         'dean.readonly'    => \App\Http\Middleware\DeanReadOnly::class,
+        'deny.hr.admin'   => \App\Http\Middleware\DenyHrAdminAccess::class,
     ]);
 
     $middleware->web(append: [

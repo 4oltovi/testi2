@@ -144,7 +144,7 @@
             <tr>
                 <th>Бахш</th>
                 <th>Сем</th>
-                <th>Гуруҳ</th>
+                <th style="width: 7%;">Гуруҳ</th>
                 <th>Фан</th>
                 <th>Р1</th>
                 <th>Р2</th>

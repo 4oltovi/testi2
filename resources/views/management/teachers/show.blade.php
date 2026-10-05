@@ -90,7 +90,7 @@
                     <tbody>
                         @forelse($currentAssignments as $assignment)
                             <tr>
-                                <td>{{ $assignment->curriculum?->subject?->name }}</td>
+                                <td>{{ $assignment->subject?->name }}</td>
                                 <td><span class="badge bg-primary">{{ $assignment->group?->name }}</span></td>
                                 <td>
                                     @php
@@ -115,7 +115,7 @@
                 <div class="card-footer bg-white">
                     <strong>Маҷмӯи ҳафтаина: {{ $currentAssignments->sum('hours_per_week') }} соат</strong>
                     | Гурӯҳҳо: {{ $currentAssignments->pluck('group_id')->unique()->count() }}
-                    | Фанҳо: {{ $currentAssignments->pluck('curriculum.subject.name')->unique()->count() }}
+                    | Фанҳо: {{ $currentAssignments->pluck('subject.name')->unique()->count() }}
                 </div>
             @endif
         </div>

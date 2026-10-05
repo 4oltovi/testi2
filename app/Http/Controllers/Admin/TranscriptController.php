@@ -136,6 +136,36 @@ class TranscriptController extends Controller
     }
 
     /**
+     * Рақами гурӯҳ барои як сатри транскрипт.
+     *
+     * Нишон дода мешавад РАҚАМИ гурӯҳ (101), на номи он — чунок сарлавҳаи
+     * «Бахш - Гурӯҳ» ҳамон рақамро медиҳад.
+     *
+     * Гурӯҳ-и ҳар сатр аз `subject_assignment.group` гирифта мешавад, на аз
+     * `students.group_id`. Аз сабаби он ки таъйёти фан ба як гурӯҳ ва як
+     * семестр вобаста аст, ин гурӯҳи аниқ дар ҳамон семестр аст — яъне
+     * таърихи воқеӣ. `students.group_id` танҳо гурӯҳи ҷОЙИЯВӣ аст ва
+     * баъди гузаронидан ба курси нав дигар мешавад.
+     *
+     * Агар гурӯҳ ё рақами он нест — «—».
+     */
+    private function groupNumberFor(SemesterGrade $grade, Student $student): string
+    {
+        $group = $grade->subjectAssignment?->group;
+
+        $number = trim((string) ($group?->code ?? ''));
+
+        if ($number !== '') {
+            return $number;
+        }
+
+        // Захира: гурӯҳи ҷойиявӣ, агар ба сатр таъйёт набошад
+        $fallback = trim((string) ($student->group?->code ?? ''));
+
+        return $fallback !== '' ? $fallback : '—';
+    }
+
+    /**
      * Ҷамъоварии ҳамаи маълумот барои транскрипт (як дархост ба БД, бе N+1)
      */
     protected function buildTranscriptData(Student $student, ?string $number): array
@@ -165,14 +195,18 @@ class TranscriptController extends Controller
             return [
                 'course'  => $student->course?->number ?? $student->course?->name ?? '',
                 'sem'     => (($semNumber - 1) % 2) + 1,
-                'group'   => $assignment?->group?->name ?? $student->group?->name ?? '',
+                'group'   => $this->groupNumberFor($g, $student),
                 'subject' => $subj?->name ?? '-',
                 'r1'      => $g->rating1_score !== null ? number_format((float) $g->rating1_score, 2) : '',
                 'r2'      => $g->rating2_score !== null ? number_format((float) $g->rating2_score, 2) : '',
                 'exam'    => $g->exam_score !== null ? number_format((float) $g->exam_score, 2) : '',
                 'total'   => ($isPE || !$hasGrade) ? 'Комёб' : ($g->total_score ?? ''),
                 'letter'  => $hasGrade ? $g->letter_grade : '',
-                'trad'    => $hasGrade ? ($g->traditional_grade ?? '') : '',
+                // Ҳама вақт аз рӯйи ҳарфи баҳо ҳисоб карда мешавад, на аз
+                // сутуни матнии `traditional_grade`: он метавонад кӯҳна
+                // бо қоидаи дигар навишта шуда бошад (52.13/D дар кӯҳна
+                // «Ғайриқаноатбахш» буд). Батут = як манбаъи ҳақиқат.
+                'trad'    => $hasGrade ? (\App\Enums\GradeScale::tryFrom($g->letter_grade)?->traditionalFivePoint() ?? '') : '',
                 'point'   => $hasGrade ? number_format($point, 2) : '',
                 'credits' => (int) ($g->subjectAssignment?->credits ?? 0),
                 'earned'  => $credEarned,

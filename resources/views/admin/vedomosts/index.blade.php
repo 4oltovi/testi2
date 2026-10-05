@@ -81,7 +81,7 @@
                         <td>{{ $loop->iteration }}</td>
                         <td>{{ $v->subject->name ?? '-' }}</td>
                         <td>{{ $v->teacher?->full_name ?? $v->teacher?->short_name ?? '-' }}</td>
-                        <td>{{ $v->subject?->credits ?? '-' }}</td>
+                        <td>{{ $v->subjectAssignment?->credits ?? $v->subject?->credits ?? '-' }}</td>
                         <td>{{ $v->examRecord?->starts_at?->format('d.m.Y') ?? $v->exam_date?->format('d.m.Y') ?? '—' }}</td>
                         <td>
                             <a href="{{ url('admin/vedomosts/' . $v->id . '/preview') }}" target="_blank"

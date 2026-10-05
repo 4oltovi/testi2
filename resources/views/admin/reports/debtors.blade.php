@@ -79,7 +79,7 @@
                                 <td><span class="badge bg-info">{{ $debt->student?->group?->name }}</span></td>
                                 <td>{{ $debt->subject?->name }}</td>
                                 <td><small>{{ $debt->reason_label }}</small></td>
-                                <td><span class="badge bg-danger">{{ $debt->original_grade }}</span> {{ $debt->original_score }}%</td>
+                                <td><span class="badge bg-danger">{{ $debt->original_grade }}</span> {{ $debt->original_score }}</td>
                                 <td>{{ $debt->debt_date?->format('d.m.Y') }}</td>
                                 <td>{{ $debt->retake_attempts_used }}/{{ $debt->max_retake_attempts }}</td>
                                 <td><span class="badge {{ $debt->status->badgeClass() }}">{{ $debt->status->label() }}</span></td>

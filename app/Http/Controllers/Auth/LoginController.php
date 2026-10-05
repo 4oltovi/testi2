@@ -69,7 +69,9 @@ class LoginController extends Controller
             'super_admin', 'admin' => '/admin/dashboard',
             'teacher' => '/teacher/dashboard',
             'operator' => '/operator/attendance',
-            'dean', 'vice_dean', 'department_head', 'registrar', 'accountant' => '/management/dashboard',
+            'accountant' => '/accountant/dashboard',
+            'dean', 'vice_dean', 'department_head' => '/management/dashboard',
+            'hr' => '/hr/dashboard',
             default => '/student/dashboard',
         };
     }

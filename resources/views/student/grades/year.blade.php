@@ -42,12 +42,12 @@
                                     <td>{{ $item['subject']?->name ?? '—' }}</td>
                                     <td class="text-center">
                                         @if($calc['rating1'] !== null)
-                                            {{ number_format($calc['rating1'], 0) }}
+                                            {{ number_format($calc['rating1'], 1) }}
                                         @else — @endif
                                     </td>
                                     <td class="text-center">
                                         @if($calc['rating2'] !== null)
-                                            {{ number_format($calc['rating2'], 0) }}
+                                            {{ number_format($calc['rating2'], 1) }}
                                         @else — @endif
                                     </td>
                                     <td class="text-center">{{ $calc['exam'] !== null ? number_format($calc['exam'], 0) : '—' }}</td>

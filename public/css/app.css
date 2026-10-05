@@ -242,6 +242,20 @@ body {
     font-size: 0.85rem;
 }
 
+/* ====== Линк ба профил дар навори панели донишҷӯ ====== */
+.student-profile-link {
+    border-radius: .375rem;
+    padding: .125rem .375rem;
+    transition: background-color .15s ease-in-out, color .15s ease-in-out;
+}
+
+.student-profile-link:hover,
+.student-profile-link:focus {
+    background-color: rgba(13, 110, 253, .08);
+    color: #0d6efd;
+    text-decoration: underline;
+}
+
 /* ====== Print Styles ====== */
 @media print {
     .sidebar, .navbar, .btn, .alert {

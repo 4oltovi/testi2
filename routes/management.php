@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['web', 'auth', 'role:dean,vice_dean,department_head,registrar,accountant', 'dean.readonly'])
+Route::middleware(['web', 'auth', 'role:dean,vice_dean,department_head', 'dean.readonly'])
     ->prefix('management')
     ->name('management.')
     ->group(function () {

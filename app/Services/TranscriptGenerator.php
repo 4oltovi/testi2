@@ -75,7 +75,9 @@ class TranscriptGenerator
                     'total_score' => $grade->total_score,
                     'letter_grade' => $grade->letter_grade ?? 'F',
                     'grade_point' => $grade->grade_point ?? 0,
-                    'traditional_grade' => $grade->traditional_grade,
+                    'traditional_grade' => $letter = GradeScale::tryFrom($grade->letter_grade ?? 'F')
+                            ? $letter->traditionalFivePoint()
+                            : GradeScale::F->traditionalFivePoint(),
                     'status' => $grade->status === 'passed' ? 'passed' : 'failed',
                     'sort_order' => $sortOrder,
                 ]);
@@ -127,7 +129,9 @@ class TranscriptGenerator
                         'score' => $line->total_score,
                         'letter_grade' => $line->letter_grade,
                         'grade_point' => $line->grade_point,
-                        'traditional' => $line->traditional_grade,
+                        // Рақми 5-баллӣ аз ҳарф, на аз сутуни матнии кӯҳна
+                        'traditional' => GradeScale::tryFrom((string) $line->letter_grade)
+                            ?->traditionalFivePoint(),
                         'status' => $line->status,
                     ]),
                 ];

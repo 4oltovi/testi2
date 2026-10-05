@@ -157,8 +157,8 @@
                     @foreach($students as $index => $student)
                     @php
                     $calc = $calculatedGrades[$student->id] ?? ['rating1' => 0, 'rating2' => 0];
-                    $r1 = $calc['rating1'] !== null ? number_format($calc['rating1'], 0) : '—';
-                    $r2 = $calc['rating2'] !== null ? number_format($calc['rating2'], 0) : '—';
+                    $r1 = $calc['rating1'] !== null ? number_format($calc['rating1'], 1) : '—';
+                    $r2 = $calc['rating2'] !== null ? number_format($calc['rating2'], 1) : '—';
 
                     // Ранги баҳоҳо барои хонотар шудан
                     $r1Class = is_numeric($r1) ? (intval($r1) >= 80 ? 'text-success' : (intval($r1) >= 50 ? 'text-warning' : 'text-danger')) : 'text-muted';

@@ -13,6 +13,7 @@ use App\Models\Student;
 use App\Models\StudentPromotion;
 use App\Models\StudentStatusHistory;
 use App\Models\User;
+use App\Services\AvatarService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -31,10 +32,10 @@ class StudentController extends Controller
     {
         // Оптимизатсияи Eager Loading бо муносибатҳои лозимӣ
         $query = Student::with([
-            'user:id,first_name,last_name,middle_name,login,status', 
-            'group:id,name,specialty_id,course_id', 
+            'user:id,first_name,last_name,middle_name,login,status',
+            'group:id,name,specialty_id,course_id',
             'group.specialty:id,name',
-            'specialty:id,name', 
+            'specialty:id,name',
             'course:id,number'
         ]);
 
@@ -84,9 +85,9 @@ class StudentController extends Controller
         $status = $request->get('status');
 
         $query = Student::with([
-            'user:id,first_name,last_name,middle_name', 
-            'group:id,name', 
-            'course:id,number'
+            'user:id,first_name,last_name,middle_name',
+            'group:id,name',
+            'course:id,number,name'
         ])->limit(20);
 
         if ($search) {
@@ -159,7 +160,8 @@ class StudentController extends Controller
             'address_current' => 'nullable|string|max:500',
             'parent_phone' => 'nullable|string|max:20',
             'parent_name' => 'nullable|string|max:200',
-            'education_form' => 'required|in:budget,contract',
+'education_form' => 'required|in:budget,contract',
+            'contract_amount' => 'nullable|numeric|min:0',
             'study_form' => 'required|in:full_time,part_time,evening',
             'enrollment_date' => 'required|date',
             'enrollment_order' => 'nullable|string|max:50',
@@ -216,6 +218,7 @@ class StudentController extends Controller
                 'parent_phone' => $validated['parent_phone'] ?? null,
                 'parent_name' => $validated['parent_name'] ?? null,
                 'education_form' => $validated['education_form'],
+                'contract_amount' => $validated['contract_amount'] ?? null,
                 'study_form' => $validated['study_form'],
                 'enrollment_date' => $validated['enrollment_date'],
                 'enrollment_order' => $validated['enrollment_order'] ?? null,
@@ -245,6 +248,33 @@ class StudentController extends Controller
         ]);
 
         return view('admin.students.show', compact('student'));
+    }
+
+    /**
+     * Акси нодурусти донишҷӯро аз даст мебарад (модератсия).
+     *
+     * Файл танҳо баъди хафзи дуруст аз базаи додаҳо нест карда мешавад
+     * ва танҳо аксои хуи донишҷӯ — аксои муҳсим (логотип ва ғ.) дастнохӣ мемонанд.
+     * Донишҷӣ баъд аз ин метавонад аз роҳи муқаррарии худ акс нав бор кунад.
+     */
+    public function removeAvatar(Request $request, Student $student, AvatarService $avatars): RedirectResponse
+    {
+        $user = $request->user();
+
+        // Ситоди админӣ — супер админ ба таври автоматӣ ҳама иҷозат дорад
+        if (! $user?->isSuperAdmin() && ! $user?->hasPermission('students.edit')) {
+            abort(403, 'Шумо ҳуқуқи нест кардани акси донишҷӯро надоред.');
+        }
+
+        $oldAvatar = $student->user?->avatar;
+
+        $student->user?->update(['avatar' => null]);
+
+        if ($oldAvatar) {
+            $avatars->delete($oldAvatar);
+        }
+
+        return back()->with('success', 'Акси донишҷӯ нест карда шуд. Донишҷӯ метавонад акси нав бор кунад.');
     }
 
     public function edit(Student $student): View
@@ -282,6 +312,7 @@ class StudentController extends Controller
             'parent_phone' => 'nullable|string|max:20',
             'parent_name' => 'nullable|string|max:200',
             'education_form' => 'required|in:budget,contract',
+            'contract_amount' => 'nullable|numeric|min:0',
             'study_form' => 'required|in:full_time,part_time,evening',
             'enrollment_date' => 'required|date',
             'enrollment_order' => 'nullable|string|max:50',
@@ -331,6 +362,7 @@ class StudentController extends Controller
                 'parent_phone' => $validated['parent_phone'] ?? null,
                 'parent_name' => $validated['parent_name'] ?? null,
                 'education_form' => $validated['education_form'],
+                'contract_amount' => $validated['contract_amount'] ?? null,
                 'study_form' => $validated['study_form'],
                 'enrollment_date' => $validated['enrollment_date'],
                 'enrollment_order' => $validated['enrollment_order'] ?? null,

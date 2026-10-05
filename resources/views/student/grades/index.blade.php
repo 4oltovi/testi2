@@ -49,9 +49,11 @@
                     <thead class="table-light">
                         <tr>
                             <th>Фан</th>
+                            <th class="text-center">Кредит</th>
                             <th class="text-center">R1</th>
                             <th class="text-center">R2</th>
                             <th class="text-center">Имтиҳон</th>
+                            <th class="text-center">Имтиҳони такрорӣ</th>
                             <th class="text-center">Ниҳоии</th>
                             <th class="text-center">Баҳо</th>
                             <th class="text-center">Ҳолат</th>
@@ -65,9 +67,11 @@
                         @endphp
                         <tr>
                             <td>{{ $item['subject']?->name ?? '—' }}</td>
-                            <td class="text-center">{{ $calc['rating1'] !== null ? number_format($calc['rating1'], 0) : '—' }}</td>
-                            <td class="text-center">{{ $calc['rating2'] !== null ? number_format($calc['rating2'], 0) : '—' }}</td>
+                            <td class="text-center">{{ $calc['credits'] ?? '—' }}</td>
+                            <td class="text-center">{{ $calc['rating1'] !== null ? number_format($calc['rating1'], 1) : '—' }}</td>
+                            <td class="text-center">{{ $calc['rating2'] !== null ? number_format($calc['rating2'], 1) : '—' }}</td>
                             <td class="text-center">{{ $calc['exam'] !== null ? number_format($calc['exam'], 0) : '—' }}</td>
+                            <td class="text-center">{{ $calc['retake_score'] !== null ? number_format($calc['retake_score'], 0) : '—' }}</td>
                             <td class="text-center"><strong>{{ $calc['total_score'] !== null ? number_format($calc['total_score'], 1) : '—' }}</strong></td>
                             <td class="text-center">
                                 @if($calc['letter_grade'])

@@ -14,6 +14,24 @@
     Профили донишҷӯ ёфт нашуд. Бо администратор тамос гиред.
 </div>
 @else
+{{-- Профили донишҷӯ --}}
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body d-flex flex-column flex-sm-row align-items-center gap-3">
+        @include('partials.avatar', ['user' => auth()->user(), 'size' => 96])
+        <div class="text-center text-sm-start">
+            <h5 class="mb-1">{{ $student->full_name }}</h5>
+            <p class="text-muted mb-2">
+                {{ $student->student_id_number ?? '—' }}
+                @if($student->group) | {{ $student->group->full_name }} @endif
+                @if($student->specialty) | {{ $student->specialty->name }} @endif
+            </p>
+            <a href="{{ route('student.profile') }}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-person-circle me-1"></i> Профили ман
+            </a>
+        </div>
+    </div>
+</div>
+
 {{-- Карточкаҳо --}}
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-lg-3">
@@ -38,8 +56,8 @@
                     <i class="bi bi-mortarboard fs-4 text-success"></i>
                 </div>
                 <div>
-                    <h3 class="mb-0">{{ $student->total_credits_earned }}</h3>
-                    <small class="text-muted">Кредитҳо / {{ $student->specialty?->total_credits ?? '—' }}</small>
+                    <h3 class="mb-0">{{ $student->earned_credits }}</h3>
+                    <small class="text-muted">Кредитҳо</small>
                 </div>
             </div>
         </div>
@@ -51,7 +69,7 @@
                     <i class="bi bi-check2-square fs-4 text-info"></i>
                 </div>
                 <div>
-                    <h3 class="mb-0">{{ number_format($attendance_percentage, 0) }}%</h3>
+                    <h3 class="mb-0">{{ $attendance_percentage === null ? '—' : number_format($attendance_percentage, 0) . '%' }}</h3>
                     <small class="text-muted">Давомот</small>
                 </div>
             </div>
@@ -74,7 +92,7 @@
 
 {{-- Баҳоҳо дар ин семестр --}}
 <div class="row g-3">
-    <div class="col-12 col-lg-7">
+    <div class="col-12 col-12">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white">
                 <h6 class="mb-0"><i class="bi bi-journal-text me-2"></i> Баҳоҳо дар {{ $semester?->name ?? 'семестри ҷорӣ' }}</h6>
@@ -115,43 +133,6 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- Натиҷаҳои тестҳо --}}
-    <div class="col-12 col-lg-5">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white">
-                <h6 class="mb-0"><i class="bi bi-pencil-square me-2"></i> Тестҳои охирин</h6>
-            </div>
-            <div class="card-body p-0">
-                @if($recent_exams->isEmpty())
-                <div class="text-center text-muted py-4">
-                    <i class="bi bi-inbox fs-3 d-block mb-2"></i>
-                    <small>Тест ҳоло супорида нашудааст.</small>
-                </div>
-                @else
-                <div class="list-group list-group-flush">
-                    @foreach($recent_exams as $ea)
-                    @php $passed = $ea->percentage >= ($ea->exam?->passing_score ?? 50); @endphp
-                    <div class="list-group-item">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong class="d-block">{{ $ea->exam?->subjectAssignment?->subject?->name ?? 'Тест' }}</strong>
-                                <small class="text-muted">{{ $ea->submitted_at?->format('d.m.Y H:i') }}</small>
-                            </div>
-                            <div class="text-end">
-                                <span class="badge bg-{{ $passed ? 'success' : 'danger' }} fs-6">
-                                    {{ number_format($ea->percentage, 0) }}%
-                                </span>
-                                <br><small>{{ $ea->letter_grade }}</small>
-                            </div>
-                        </div>
-                    </div>
-                    @endforeach
-                </div>
-                @endif
             </div>
         </div>
     </div>

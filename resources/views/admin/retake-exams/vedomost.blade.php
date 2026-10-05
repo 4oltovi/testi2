@@ -19,6 +19,9 @@
                     </a>
                 </div>
             </div>
+            <div class="text-center py-2 border-bottom">
+                <h6 class="mb-0 text-primary" style="font-size: 1rem;">Имтиҳони такрорӣ (Триместр)</h6>
+            </div>
             <div class="card-body">
                 <div class="mb-3">
                     <strong>Фан:</strong> {{ $retakeExam->subject->name ?? '-' }} |

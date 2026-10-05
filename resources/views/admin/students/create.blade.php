@@ -64,12 +64,19 @@
                             <label class="form-label">Рақами зачётка</label>
                             <input type="text" class="form-control" name="record_book_number" value="{{ old('record_book_number') }}">
                         </div>
-                        <div class="col-md-3">
+<div class="col-md-3">
                             <label class="form-label">Шакли таъмин <span class="text-danger">*</span></label>
-                            <select class="form-select @error('education_form') is-invalid @enderror" name="education_form" required>
+                            <select class="form-select @error('education_form') is-invalid @endif" name="education_form" required id="education_form">
                                 <option value="budget" {{ old('education_form') == 'budget' ? 'selected' : '' }}>Буҷетӣ</option>
                                 <option value="contract" {{ old('education_form') == 'contract' ? 'selected' : '' }}>Шартномавӣ</option>
                             </select>
+                            @error('education_form') <div class="invalid-feedback">{{ $message }}</div> @endif
+                        </div>
+                        <div class="col-md-3" id="contract_amount_wrap" style="display: {{ old('education_form') == 'contract' ? 'block' : 'none' }};">
+                            <label class="form-label">Маблағи шартнома</label>
+                            <input type="number" class="form-control @error('contract_amount') is-invalid @endif" name="contract_amount" value="{{ old('contract_amount') }}" step="0.01" min="0">
+                            @error('contract_amount') <div class="invalid-feedback">{{ $message }}</div> @endif
+                            <small class="text-muted">Фақат барои шартнома</small>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Шакли таҳсил <span class="text-danger">*</span></label>
@@ -186,3 +193,18 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var select = document.getElementById('education_form');
+    var wrap = document.getElementById('contract_amount_wrap');
+    if (!select || !wrap) return;
+    function toggle() {
+        wrap.style.display = select.value === 'contract' ? 'block' : 'none';
+    }
+    select.addEventListener('change', toggle);
+    toggle();
+});
+</script>
+@endpush

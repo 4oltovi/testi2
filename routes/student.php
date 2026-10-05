@@ -21,6 +21,8 @@ Route::middleware(['web', 'auth', 'role:student'])->prefix('student')->name('stu
     // Профил
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
     Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/photo', [ProfileController::class, 'updatePhoto'])->name('profile.photo.update');
+    Route::delete('/profile/photo', [ProfileController::class, 'removePhoto'])->name('profile.photo.destroy');
 
     // Баҳоҳо ва рейтингҳо
     Route::prefix('grades')->name('grades.')->group(function () {

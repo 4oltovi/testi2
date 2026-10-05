@@ -54,29 +54,30 @@
 
 <body>
 
-    <div class="header">
-        <div class="header">
-            {{-- Логотип дар мобайн + номи муассиса зераш --}}
-            <div style="text-align:center; margin-bottom:8px;">
-                @php
-                $logoPath = \App\Models\Setting::get('institution_logo', 'images/logo.png');
-                $w = 0; $h = 0;
-                if ($logoPath && file_exists(public_path($logoPath))) {
-                $size = @getimagesize(public_path($logoPath));
-                if ($size && $size[0] > 0 && $size[1] > 0) {
-                $maxW = 100;
-                $maxH = 100;
-                $k = min($maxW / $size[0], $maxH / $size[1], 1);
-                $w = (int) round($size[0] * $k);
-                $h = (int) round($size[1] * $k);
-                }
-                }
-                @endphp
-                @if($w > 0)
-                <img src="{{ public_path($logoPath) }}" style="width:{{ $w }}px; height:{{ $h }}px;">
-                @endif
-                <div><b>{!! nl2br(e($institutionName ?? 'Муассисаи ғайридавлатии коллеҷи тиббии "Даво" Маркази тестӣ')) !!} </b></div>
-            </div>
+<div class="header">
+            <div class="header">
+                {{-- Логотип дар мобайн + номи муассиса зераш --}}
+                <div style="text-align:center; margin-bottom:8px;">
+                    @php
+                    $logoPath = \App\Models\Setting::get('institution_logo', 'images/logo.png');
+                    $w = 0; $h = 0;
+                    if ($logoPath && file_exists(public_path($logoPath))) {
+                    $size = @getimagesize(public_path($logoPath));
+                    if ($size && $size[0] > 0 && $size[1] > 0) {
+                    $maxW = 100;
+                    $maxH = 100;
+                    $k = min($maxW / $size[0], $maxH / $size[1], 1);
+                    $w = (int) round($size[0] * $k);
+                    $h = (int) round($size[1] * $k);
+                    }
+                    }
+                    @endphp
+                    @if($w > 0)
+                    <img src="{{ public_path($logoPath) }}" style="width:{{ $w }}px; height:{{ $h }}px;">
+                    @endif
+                    <div><b>{!! nl2br(e($institutionName ?? 'Муассисаи ғайридавлатии коллеҷи тиббии "Даво" Маркази тестӣ')) !!} </b></div>
+                    <div style="text-align:center; margin:6px 0 4px; font-size:12px; font-weight:bold;">Имтиҳони такрорӣ (Триместр)</div>
+                </div>
 
             {{-- Маълумотҳо аз ду тараф --}}
             <table style="width:100%; border:none; border-collapse:collapse;">

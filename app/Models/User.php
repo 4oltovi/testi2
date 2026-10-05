@@ -207,9 +207,15 @@ class User extends Authenticatable
             UserRole::DEAN,
             UserRole::VICE_DEAN,
             UserRole::DEPARTMENT_HEAD,
-            UserRole::REGISTRAR,
-            UserRole::ACCOUNTANT,
         ]);
+    }
+
+    /**
+     * Оё Кадр аст?
+     */
+    public function isHr(): bool
+    {
+        return $this->hasRole(UserRole::HR);
     }
 
     /**

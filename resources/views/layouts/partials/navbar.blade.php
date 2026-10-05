@@ -37,11 +37,25 @@
         <!-- Right Side -->
         <div class="ms-auto d-flex align-items-center">
             <!-- Профил -->
-            <span class="me-3 d-none d-sm-inline">
-                <i class="bi bi-person-circle me-1"></i>
-                <strong>{{ auth()->user()->first_name ?? '' }} {{ auth()->user()->last_name ?? '' }}</strong>
-                <small class="text-muted">({{ auth()->user()->login ?? '' }})</small>
-            </span>
+            @php
+                $isStudentPanel = auth()->user()?->hasRole('student') && Route::has('student.profile');
+            @endphp
+            @if($isStudentPanel)
+                {{-- Барои донишҷӯ: ном кушодани профил --}}
+                <a href="{{ route('student.profile') }}"
+                   class="me-3 d-none d-sm-inline text-decoration-none text-dark student-profile-link"
+                   style="cursor: pointer;" title="Профил" aria-label="Профил">
+                    <i class="bi bi-person-circle me-1"></i>
+                    <strong>{{ auth()->user()->first_name ?? '' }} {{ auth()->user()->last_name ?? '' }}</strong>
+                    <small class="text-muted">({{ auth()->user()->login ?? '' }})</small>
+                </a>
+            @else
+                <span class="me-3 d-none d-sm-inline">
+                    <i class="bi bi-person-circle me-1"></i>
+                    <strong>{{ auth()->user()->first_name ?? '' }} {{ auth()->user()->last_name ?? '' }}</strong>
+                    <small class="text-muted">({{ auth()->user()->login ?? '' }})</small>
+                </span>
+            @endif
             <form action="/logout" method="POST" class="d-inline">
                 @csrf
                 <button type="submit" class="btn btn-outline-danger btn-sm">

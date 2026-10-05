@@ -57,6 +57,11 @@
         @yield('content')
     @endauth
 
+    <!-- Футер -->
+    <footer class="footer mt-auto py-2 bg-body-tertiary text-center border-top">
+        <small>© {{ date('Y') }} MR</small>
+    </footer>
+
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Alpine.js -->
