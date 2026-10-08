@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Accountant;
 
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
+use App\Models\AuditLog;
 use App\Models\ContractPayment;
 use App\Models\Course;
 use App\Models\Faculty;
@@ -88,20 +89,48 @@ class AccountantDashboardController extends Controller
             'payment_date' => 'required|date',
             'payment_method' => 'nullable|string|max:50',
             'note' => 'nullable|string|max:500',
+            'receipt_number' => 'nullable|string|max:50',
             'academic_year_id' => 'nullable|exists:academic_years,id',
+        ], [
+            'receipt_number.max' => 'Рақами расид бояд ҳадди ақал 50 арафа бошад.',
         ]);
+
+        $receiptNumber = $validated['receipt_number'] ?? null;
+        if ($receiptNumber !== null && $receiptNumber !== '') {
+            $receiptNumber = trim($receiptNumber);
+
+            $existing = ContractPayment::where('receipt_number', $receiptNumber)->first();
+
+            if ($existing && $existing->student_id !== $student->id) {
+                return back()
+                    ->withInput()
+                    ->withErrors([
+                        'receipt_number' => "Рақами расид «{$receiptNumber}» қабул шудааст. Дар як вақт танҳо як пардохт барои як расид имконпазир аст.",
+                    ]);
+            }
+        }
 
         $overpaid = ($student->contract_paid + $validated['amount']) > (float) ($student->contract_amount ?? 0);
 
-        ContractPayment::create([
+        $payment = ContractPayment::create([
             'student_id' => $student->id,
             'academic_year_id' => $validated['academic_year_id'] ?? null,
             'amount' => $validated['amount'],
             'payment_date' => $validated['payment_date'],
             'payment_method' => $validated['payment_method'] ?? null,
             'note' => $validated['note'] ?? null,
+            'receipt_number' => $receiptNumber,
             'recorded_by' => auth()->id(),
         ]);
+
+        AuditLog::log(
+            'create',
+            "Пардохти {$validated['amount']} барои {$student->user->full_name} сабт шуд" . ($receiptNumber ? " (расид: {$receiptNumber})" : ''),
+            ContractPayment::class,
+            $payment->id,
+            null,
+            $payment->toArray()
+        );
 
         $msg = "Пардохти {$validated['amount']} барои {$student->user->full_name} сабт шуд.";
         if ($overpaid) {

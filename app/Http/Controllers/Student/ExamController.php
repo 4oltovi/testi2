@@ -408,4 +408,27 @@ class ExamController extends Controller
             abort(403, 'Ин тест барои гурӯҳи шумо нест.');
         }
     }
+
+    /**
+     * Keep-alive + CSRF token refresh
+     */
+    public function keepAlive(Exam $exam, ExamAttempt $attempt, Request $request)
+    {
+        $student = $this->getStudent($request);
+
+        if ($attempt->student_id !== $student->id || $attempt->exam_id !== $exam->id) {
+            abort(403);
+        }
+
+        if ($attempt->status !== 'in_progress') {
+            return response()->json(['status' => 'finished']);
+        }
+
+        $attempt->update(['last_activity_at' => now()]);
+
+        return response()->json([
+            'status' => 'ok',
+            'token' => csrf_token(),
+        ]);
+    }
 }

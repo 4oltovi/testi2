@@ -33,6 +33,11 @@ Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.attempt');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
+Route::get('/csrf-refresh', function (Request $request) {
+    $request->session()->regenerateToken();
+    return response()->json(['token' => csrf_token()]);
+})->name('csrf.refresh');
+
 // Парол
 Route::middleware('auth')->group(function () {
     Route::get('/password/change', [PasswordController::class, 'showChangeForm'])->name('password.change');

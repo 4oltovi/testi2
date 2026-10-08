@@ -284,4 +284,22 @@ class RatingController extends Controller
             app(\App\Services\DebtDetector::class)->checkAndCreateDebt($semesterGrade);
         }
     }
+
+    /**
+     * Keep-alive + CSRF token refresh
+     */
+    public function keepAlive(RatingAttempt $ratingAttempt)
+    {
+        $student = auth()->user()?->student;
+        abort_unless($student && $ratingAttempt->student_id === $student->id, 403);
+
+        if ($ratingAttempt->status !== 'in_progress') {
+            return response()->json(['status' => 'finished']);
+        }
+
+        return response()->json([
+            'status' => 'ok',
+            'token' => csrf_token(),
+        ]);
+    }
 }

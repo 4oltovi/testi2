@@ -14,6 +14,7 @@ class ContractPayment extends Model
         'payment_date',
         'payment_method',
         'note',
+        'receipt_number',
         'recorded_by',
     ];
 
@@ -21,6 +22,19 @@ class ContractPayment extends Model
         'amount' => 'decimal:2',
         'payment_date' => 'date',
     ];
+
+    /**
+     * Ҳамаи receipt_number-ҳо дар ҷадвали пардохт якхеланд.
+     * NULL-ҳо (пардохт-е бе рақами расид) иҷозатанд.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (ContractPayment $payment) {
+            if (!empty($payment->receipt_number)) {
+                $payment->receipt_number = trim($payment->receipt_number);
+            }
+        });
+    }
 
     public function student(): BelongsTo
     {

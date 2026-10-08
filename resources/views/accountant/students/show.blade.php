@@ -79,12 +79,12 @@
                         <tbody>
                             @forelse($student->contractPayments->sortByDesc('payment_date') as $p)
                             <tr>
-                                <td>{{ $p->payment_date?->format('d.m.Y') }}</td>
+                                <td>{{ $p->payment_date?->format('d.m.Y') }}</td><td>{{ $p->receipt_number ?? '\u2014' }}</td>
                                 <td class="text-success">{{ number_format($p->amount, 0) }}</td>
                                 <td>{{ $p->payment_method ?? '—' }}</td>
                             </tr>
                             @empty
-                            <tr><td colspan="3" class="text-center text-muted py-3">Пардохт-е мавҷуд нест.</td></tr>
+                            <tr><td colspan="4" class="text-center text-muted py-3">Пардохт-е мавҷуд нест.</td></tr>
                             @endforelse
                         </tbody>
                     </table>

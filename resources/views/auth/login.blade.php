@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta http-equiv="Cache-Control" content="no-store, private">
+    <meta http-equiv="Pragma" content="no-cache">
     <title>Воридшавӣ — Донишёр</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -91,6 +93,12 @@
                 </div>
             @endif
 
+            @if(session('csrf_error'))
+                <div class="alert alert-warning alert-sm py-2 px-3 mb-3">
+                    <small><i class="bi bi-exclamation-triangle me-1"></i> {{ session('csrf_error') }}</small>
+                </div>
+            @endif
+
             @if($errors->any())
                 <div class="alert alert-danger alert-sm py-2 px-3 mb-3">
                     @foreach($errors->all() as $error)
@@ -101,6 +109,7 @@
 
             <form method="POST" action="{{ route('login.attempt') }}">
                 @csrf
+                <input type="hidden" name="_token" value="{{ csrf_token() }}">
 
                 <div class="mb-3">
                     <label for="login" class="form-label fw-semibold">
@@ -168,6 +177,31 @@
                 icon.className = 'bi bi-eye';
             }
         });
+
+        // Refresh CSRF token from server when page is restored from bfcache
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                refreshCsrfToken();
+            }
+        });
+
+        function refreshCsrfToken() {
+            fetch('{{ route('csrf.refresh') }}', {
+                headers: { 'Accept': 'application/json' }
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.token) {
+                    document.querySelector('meta[name="csrf-token"]').setAttribute('content', data.token);
+                    document.querySelectorAll('input[name="_token"]').forEach(function(el) {
+                        el.value = data.token;
+                    });
+                }
+            })
+            .catch(function() {});
+        }
+
+        setInterval(refreshCsrfToken, 180000);
     </script>
 </body>
 </html>

@@ -73,7 +73,7 @@
                         <th>Гурӯҳ</th>
                         <th>Маблағ</th>
                         <th>Сана</th>
-                        <th>Тарзи пардохт</th>
+                        <th>Рақами расид</th><th>Тарзи пардохт</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -82,11 +82,11 @@
                         <td>{{ $p->student?->user?->full_name ?? '—' }}</td>
                         <td>{{ $p->student?->group?->full_name ?? '—' }}</td>
                         <td>{{ number_format($p->amount, 0) }}</td>
-                        <td>{{ $p->payment_date?->format('d.m.Y') }}</td>
+                        <td>{{ $p->payment_date?->format('d.m.Y') }}</td><td>{{ $p->receipt_number ?? '—' }}</td>
                         <td>{{ $p->payment_method ?? '—' }}</td>
                     </tr>
                     @empty
-                    <tr><td colspan="5" class="text-center text-muted py-4">Пардохт-е мавҷуд нест.</td></tr>
+                    <tr><td colspan="6" class="text-center text-muted py-4">Пардохт-е мавҷуд нест.</td></tr>
                     @endforelse
                 </tbody>
             </table>

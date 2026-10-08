@@ -768,6 +768,195 @@
             }, 2000);
         }
 
+        // Refresh CSRF token from server
+        function refreshCsrfToken() {
+            const keepAliveUrl = "{{ route('student.exams.keep-alive', [$exam, $attempt]) }}";
+            fetch(keepAliveUrl, {
+                headers: { 'Accept': 'application/json' }
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.token) {
+                    csrfToken = data.token;
+                    document.querySelector('meta[name="csrf-token"]').setAttribute('content', data.token);
+                    document.querySelectorAll('input[name="_token"]').forEach(function(el) {
+                        el.value = data.token;
+                    });
+                }
+                if (data.status === 'finished') {
+                    showSessionExpiredModal();
+                }
+            })
+            .catch(function() {});
+        }
+
+        // Keep-alive every 4 minutes
+        setInterval(refreshCsrfToken, 240000);
+
+        // Save answers to localStorage periodically
+        function saveToLocalStorage() {
+            const answers = {};
+            document.querySelectorAll('.question-card').forEach(function(card, idx) {
+                const eqId = card.dataset.eq || @json($examQuestions->pluck('id')->values())[idx];
+                if (!eqId) return;
+
+                const textarea = card.querySelector('textarea[data-eq="' + eqId + '"]');
+                if (textarea && textarea.value.trim()) {
+                    answers[eqId] = { text: textarea.value };
+                    return;
+                }
+
+                const selected = card.querySelectorAll('.option-card.selected[data-eq="' + eqId + '"]');
+                if (selected.length) {
+                    answers[eqId] = Array.from(selected).map(function(c) { return parseInt(c.dataset.option); });
+                }
+
+                const container = card.querySelector('.matching-container[data-eq="' + eqId + '"]');
+                if (container) {
+                    const pairs = [];
+                    container.querySelectorAll('.matching-select').forEach(function(sel) {
+                        if (sel.value) pairs.push(sel.dataset.sub + ':' + sel.value);
+                    });
+                    if (pairs.length) answers[eqId] = { matching: pairs.join('||') };
+                }
+            });
+
+            try {
+                localStorage.setItem('exam_backup_{{ $attempt->id }}', JSON.stringify(answers));
+                localStorage.setItem('exam_backup_ts_{{ $attempt->id }}', Date.now().toString());
+            } catch (e) {}
+        }
+
+        function restoreFromLocalStorage() {
+            try {
+                const raw = localStorage.getItem('exam_backup_{{ $attempt->id }}');
+                if (!raw) return;
+                const answers = JSON.parse(raw);
+                Object.entries(answers).forEach(function([eqId, value]) {
+                    const card = document.querySelector('.question-card[data-eq="' + eqId + '"]');
+                    if (!card) return;
+
+                    if (typeof value === 'object' && value.matching) {
+                        const container = card.querySelector('.matching-container[data-eq="' + eqId + '"]');
+                        if (container) {
+                            const pairs = value.matching.split('||');
+                            pairs.forEach(function(pair) {
+                                const parts = pair.split(':', 2);
+                                const subId = parts[0];
+                                const answer = parts[1];
+                                if (subId && answer) {
+                                    const sel = container.querySelector('.matching-select[data-sub="' + subId + '"]');
+                                    if (sel) {
+                                        sel.value = answer;
+                                        sel.dispatchEvent(new Event('change'));
+                                    }
+                                }
+                            });
+                        }
+                    } else if (typeof value === 'object' && value.text) {
+                        const ta = card.querySelector('textarea[data-eq="' + eqId + '"]');
+                        if (ta) ta.value = value.text;
+                    } else if (Array.isArray(value)) {
+                        value.forEach(function(optId) {
+                            const c = card.querySelector('.option-card[data-eq="' + eqId + '"][data-option="' + optId + '"]');
+                            if (c) selectOption(c);
+                        });
+                    }
+                });
+            } catch (e) {}
+        }
+
+        // Restore backup on load
+        restoreFromLocalStorage();
+
+        // Periodic backup every 30 seconds
+        setInterval(saveToLocalStorage, 30000);
+        saveToLocalStorage();
+
+        // Session expired modal
+        function showSessionExpiredModal() {
+            const existing = document.getElementById('sessionExpiredModal');
+            if (existing) existing.remove();
+
+            const modalHtml = `
+                <div class="modal fade" id="sessionExpiredModal" tabindex="-1" data-bs-backdrop="static">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header border-0 pb-0">
+                                <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle me-1"></i> Сессия тамом шуд</h5>
+                            </div>
+                            <div class="modal-body">
+                                <p>Сессияи шумо ба анҷом расид. Ҷавобҳо дар хотираи локалӣ нигоҳ дошта шуданд.</p>
+                                <p class="mb-0">Барои идомаи кор, лутфан азнав ворид шавед.</p>
+                            </div>
+                            <div class="modal-footer border-0 pt-0">
+                                <button type="button" class="btn btn-primary" onclick="reLogin()">
+                                    <i class="bi bi-box-arrow-in-right me-1"></i> Ворид шудан
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            const modal = new bootstrap.Modal(document.getElementById('sessionExpiredModal'));
+            modal.show();
+        }
+
+        function reLogin() {
+            const loginUrl = "{{ route('login') }}";
+            const popup = window.open(loginUrl, '_blank', 'width=500,height=600');
+            if (popup) {
+                const checkClosed = setInterval(function() {
+                    if (popup.closed) {
+                        clearInterval(checkClosed);
+                        refreshCsrfToken();
+                        const backup = localStorage.getItem('exam_backup_{{ $attempt->id }}');
+                        if (backup) {
+                            showToast('Сессия нав шуд. Ҷавобҳо барқарор карда шуданд.');
+                        }
+                    }
+                }, 500);
+            } else {
+                window.location.href = loginUrl;
+            }
+        }
+
+        // Intercept form submit for 419 handling
+        const examForm = document.getElementById('examForm');
+        if (examForm) {
+            examForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(examForm);
+                fetch(submitUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                })
+                .then(function(res) {
+                    if (res.status === 419 || res.status === 401) {
+                        saveToLocalStorage();
+                        showSessionExpiredModal();
+                        return;
+                    }
+                    if (res.ok) {
+                        return res.text().then(function(txt) {
+                            window.location.href = resultUrl;
+                        });
+                    }
+                    res.text().then(function(txt) {
+                        showToast('Хатогӣ! ' + res.status);
+                    });
+                })
+                .catch(function(err) {
+                    showToast('Хатогӣ!');
+                });
+            });
+        }
+
         // Init
         updateNavState();
     </script>

@@ -33,8 +33,45 @@ return Application::configure(basePath: dirname(__DIR__))
 
     $middleware->web(append: [
         \App\Http\Middleware\ForcePasswordChange::class,
+        \App\Http\Middleware\SetCacheHeaders::class,
     ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException $e, $request) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $e->getMessage() ?? 'Дастрасӣ нест.'], 403);
+            }
+
+            $user = $request->user();
+            if ($user) {
+                return response()->view('auth.access-denied', [
+                    'user' => $user,
+                    'message' => $e->getMessage(),
+                    'intended' => $request->path(),
+                ], 403);
+            }
+
+            return redirect()->route('login')->with('error', 'Лутфан аввал ба система ворид шавед.');
+        });
+
+        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, $request) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'message' => 'Саҳифа кӯҳна шуд. Дубора кӯшиш кунед.',
+                    'token' => csrf_token(),
+                ], 419);
+            }
+
+            if ($request->is('POST') && ($request->is('logout') || $request->routeIs('logout'))) {
+                if ($request->hasSession()) {
+                    Auth::logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+                }
+
+                return redirect('/login')->with('success', 'Шумо бо муваффақият баромад кардед.');
+            }
+
+            return redirect()->back()->with('csrf_error', 'Саҳифа кӯҳна шуд. Дубора кӯшиш кунед.')->withInput($request->except('password'));
+        });
     })->create();

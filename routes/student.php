@@ -36,6 +36,7 @@ Route::middleware(['web', 'auth', 'role:student'])->prefix('student')->name('stu
         Route::get('/', [\App\Http\Controllers\Student\ExamController::class, 'index'])->name('index');
         Route::post('/{exam}/start', [\App\Http\Controllers\Student\ExamController::class, 'start'])->name('start');
         Route::get('/{exam}/take/{attempt}', [\App\Http\Controllers\Student\ExamController::class, 'take'])->name('take');
+        Route::get('/{exam}/keep-alive/{attempt}', [\App\Http\Controllers\Student\ExamController::class, 'keepAlive'])->name('keep-alive');
         Route::post('/{exam}/save-answer/{attempt}', [\App\Http\Controllers\Student\ExamController::class, 'saveAnswer'])->name('save-answer');
         Route::post('/{exam}/submit/{attempt}', [\App\Http\Controllers\Student\ExamController::class, 'submit'])->name('submit');
         Route::get('/{exam}/result/{attempt}', [\App\Http\Controllers\Student\ExamController::class, 'result'])->name('result');
@@ -71,6 +72,7 @@ Route::middleware(['web', 'auth', 'role:student'])->prefix('student')->name('stu
         Route::get('/', [\App\Http\Controllers\Student\RatingController::class, 'index'])->name('index');
         Route::post('/start/{ratingSession}/{subject}', [\App\Http\Controllers\Student\RatingController::class, 'start'])->name('start');
         Route::get('/take/{ratingAttempt}', [\App\Http\Controllers\Student\RatingController::class, 'take'])->name('take');
+        Route::get('/keep-alive/{ratingAttempt}', [\App\Http\Controllers\Student\RatingController::class, 'keepAlive'])->name('keep-alive');
         Route::post('/submit/{ratingAttempt}', [\App\Http\Controllers\Student\RatingController::class, 'submit'])->name('submit');
         Route::get('/result/{ratingAttempt}', [\App\Http\Controllers\Student\RatingController::class, 'result'])->name('result');
     });

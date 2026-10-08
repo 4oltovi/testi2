@@ -16,7 +16,7 @@ return [
     'cookie' => env('SESSION_COOKIE', Str::slug(env('APP_NAME', 'donishor'), '_').'_session'),
     'path' => '/',
     'domain' => null,
-    'secure' => false,
+    'secure' => env('SESSION_SECURE_COOKIE', false),
     'http_only' => true,
     'same_site' => 'lax',
     'partitioned' => false,
