@@ -15,7 +15,7 @@
                 @if($student)
                 <div class="alert alert-info mb-4">
                     <strong>Донишҷӯ:</strong> {{ $student->user?->short_name ?? 'Донишҷӯ #' . $student->id }} |
-                    <strong>Гурӯҳи ҳозира:</strong> {{ $student->group?->name ?? '-' }} |
+                    <strong>Гурӯҳи ҳозира:</strong> {{ $student->group?->display_name ?? '-' }} |
                     <strong>Ихтисоси ҳозира:</strong> {{ $student->specialty?->name ?? '-' }}
                 </div>
                 @endif
@@ -31,7 +31,7 @@
                                 <option value="">Интихоб кунед...</option>
                                 @foreach(\App\Models\Student::with('user')->get() as $s)
                                 <option value="{{ $s->id }}" {{ old('student_id', $student?->id) == $s->id ? 'selected' : '' }}>
-                                    {{ $s->user?->short_name ?? 'Донишҷӯ #' . $s->id }} ({{ $s->group?->name ?? '-' }})
+                                    {{ $s->user?->short_name ?? 'Донишҷӯ #' . $s->id }} ({{ $s->group?->display_name ?? '-' }})
                                 </option>
                                 @endforeach
                             </select>

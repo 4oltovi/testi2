@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Route;
 | ҳисоботҳо, танзимот, аудит, ҳисобобар) ба ӯ 403 медиҳад.
 */
 
-Route::middleware(['web', 'deny.hr.admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['web', 'auth', 'deny.hr.admin', 'role:admin,super_admin,moderator'])->prefix('admin')->name('admin.')->group(function () {
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -83,6 +83,7 @@ Route::middleware(['web', 'deny.hr.admin'])->prefix('admin')->name('admin.')->gr
         Route::get('/{teacher}', [\App\Http\Controllers\Admin\TeacherController::class, 'show'])->name('show');
         Route::get('/{teacher}/edit', [\App\Http\Controllers\Admin\TeacherController::class, 'edit'])->name('edit');
         Route::put('/{teacher}', [\App\Http\Controllers\Admin\TeacherController::class, 'update'])->name('update');
+        Route::delete('/{teacher}', [\App\Http\Controllers\Admin\TeacherController::class, 'destroy'])->name('destroy');
     });
 
     // Журнал

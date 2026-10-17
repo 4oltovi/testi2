@@ -8,7 +8,7 @@ $assignments = App\Models\SubjectAssignment::where('subject_id', 13)->with(['sub
 foreach ($assignments as $a) {
     $subjName = $a->subject ? $a->subject->name : 'N/A';
     $semName = $a->semester ? $a->semester->name : 'N/A';
-    $grpName = $a->group ? $a->group->name : 'N/A';
+    $grpName = $a->group ? $a->group->display_name : 'N/A';
     echo "ID=".$a->id." SubjectID=".$a->subject_id." Subject=".$subjName." SemesterID=".$a->semester_id." Semester=".$semName." GroupID=".$a->group_id." Group=".$grpName."\n";
 }
 
@@ -17,7 +17,7 @@ $studentIds = App\Models\RatingAttempt::where('status', 'finished')->pluck('stud
 foreach ($studentIds as $sid) {
     $student = App\Models\Student::with(['user', 'group'])->find($sid);
     if ($student) {
-        $grpName = $student->group ? $student->group->name : 'N/A';
+        $grpName = $student->group ? $student->group->display_name : 'N/A';
         echo "StudentID=".$student->id." GroupID=".$student->group_id." Group=".$grpName."\n";
     }
 }

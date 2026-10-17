@@ -26,7 +26,7 @@ class DebtorsExport implements FromCollection, WithHeadings, WithMapping
         return [
             $debt->id,
             $debt->student?->user?->full_name ?? '-',
-            $debt->student?->group?->name ?? '-',
+            $debt->student?->group?->display_name ?? '-',
             $debt->subject?->name ?? '-',
             $debt->semester?->name ?? '-',
             $debt->reason ?? '-',

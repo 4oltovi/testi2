@@ -117,7 +117,7 @@ class AttendanceReportController extends Controller
             ->selectRaw('
                 students.id,
                 CONCAT(users.last_name, " ", users.first_name) as student_name,
-                groups.name as group_name,
+                CONCAT(groups.name, " ", groups.code) as group_name,
                 students.student_id_number,
                 COUNT(*) as total,
                 SUM(CASE WHEN daily_attendance.status = "present" THEN 1 ELSE 0 END) as present
@@ -161,7 +161,7 @@ class AttendanceReportController extends Controller
             ->select(
                 'daily_attendance.attendance_date',
                 DB::raw("CONCAT(users.last_name, ' ', users.first_name) as student_name"),
-                'groups.name as group_name',
+                DB::raw("CONCAT(groups.name, ' ', groups.code) as group_name"),
                 'daily_attendance.status',
                 'students.student_id_number'
             )
@@ -201,7 +201,7 @@ class AttendanceReportController extends Controller
             ->select(
                 'daily_attendance.attendance_date',
                 DB::raw("CONCAT(users.last_name, ' ', users.first_name) as student_name"),
-                'groups.name as group_name',
+                DB::raw("CONCAT(groups.name, ' ', groups.code) as group_name"),
                 'daily_attendance.status',
                 'students.student_id_number'
             )

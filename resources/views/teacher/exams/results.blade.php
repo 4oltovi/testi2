@@ -3,7 +3,7 @@
 @section('title', 'Натиҷаҳои тест')
 @section('page-header', 'Натиҷаҳо: ' . $exam->title)
 @section('page-description')
-    {{ $exam->subjectAssignment?->subject?->name }} | {{ $exam->group?->name }}
+    {{ $exam->subjectAssignment?->subject?->name }} | {{ $exam->group?->display_name }}
 @endsection
 
 @section('content')

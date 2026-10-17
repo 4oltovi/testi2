@@ -10,7 +10,7 @@ class Attendance extends Model
 {
     protected $fillable = [
         'student_id', 'subject_assignment_id', 'lesson_date',
-        'lesson_number', 'status', 'note', 'marked_by',
+        'lesson_number', 'lesson_type', 'status', 'note', 'marked_by',
     ];
 
     protected function casts(): array

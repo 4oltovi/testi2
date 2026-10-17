@@ -81,7 +81,7 @@
                         <tr>
                             <td>{{ $i + 1 }}</td>
                             <td>{{ $r->student?->user?->short_name }}</td>
-                            <td>{{ $r->student?->group?->name }}</td>
+                            <td>{{ $r->student?->group?->display_name }}</td>
                             <td>{{ $r->subjectAssignment?->subject?->name }}</td>
                             <td>{{ $r->rating1_score ?? '—' }}</td>
                             <td>{{ $r->rating2_score ?? '—' }}</td>

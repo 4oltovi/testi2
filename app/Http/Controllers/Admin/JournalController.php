@@ -114,18 +114,22 @@ class JournalController extends Controller
         $created = 0;
 
         foreach ($request->group_ids as $groupId) {
+            // Як таъинот = фан + гурӯҳ + омӯзгор + семестр
+            // (навъи дарс дигар қисми калид нест — дарсҳо худ навъ доранд)
             $assignment = SubjectAssignment::updateOrCreate(
                 [
                     'subject_id' => $subjectId,
                     'teacher_id' => $request->teacher_id,
                     'group_id' => $groupId,
-                    'lesson_type' => $request->lesson_type ?? 'practice',
+                    'semester_id' => $semesterId,
                 ],
                 [
-                    'semester_id' => $semesterId,
                     'hours_per_week' => $request->hours_per_week ?? 2,
                     'is_active' => true,
                     'credits' => $request->credits,
+                    // Фақат ҳамчун навъи пешфарзи аввал; навъи воқеии
+                    // дарсҳоро худи журнал (category_scores.lesson_type) мегӯяд
+                    'lesson_type' => $request->lesson_type ?? 'lecture',
                 ]
             );
 
@@ -140,6 +144,14 @@ class JournalController extends Controller
 
     public function destroyAssignment(SubjectAssignment $subjectAssignment): RedirectResponse
     {
+        if ($subjectAssignment->attendances()->exists()
+            || $subjectAssignment->currentGrades()->exists()
+            || $subjectAssignment->semesterGrades()->exists()
+            || $subjectAssignment->exams()->exists()
+            || $subjectAssignment->schedules()->exists()) {
+            return back()->with('error', 'Журнали электронӣ нест кардан мумкин нест — маълумоти вобаста мавҷуданд.');
+        }
+
         $subjectAssignment->delete();
 
         return redirect()->route('admin.journal.index')

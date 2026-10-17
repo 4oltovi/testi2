@@ -1,0 +1,3 @@
+﻿No syntax errors detected in app\Console\Commands\MergeSubjectAssignments.php
+No syntax errors detected in app\Models\SubjectAssignment.php
+No syntax errors detected in app\Models\GradeCategorySetting.php

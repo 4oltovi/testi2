@@ -115,7 +115,7 @@ class StudentController extends Controller
                 'id' => $student->id,
                 'name' => $student->user?->full_name ?? '—',
                 'student_id' => $student->student_id_number,
-                'group' => $student->group?->name ?? '—',
+                'group' => $student->group?->display_name ?? '—',
                 'course' => $student->course?->name ?? '—',
                 'url' => route('admin.students.show', $student),
             ];

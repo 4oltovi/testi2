@@ -52,9 +52,37 @@ class CategoryScoreController extends Controller
             }
         }
 
+        // Determine lesson type for this lesson
+        $requestedLessonType = $request->input('lesson_type');
+        if ($requestedLessonType && in_array($requestedLessonType, ['lecture', 'practice', 'lab'], true)) {
+            $lessonType = $requestedLessonType;
+            // Store in session for subsequent requests
+            $request->session()->put('journal_lesson_type_' . $subjectAssignment->id, $lessonType);
+        } else {
+            $lessonType = $this->getStoredLessonType($subjectAssignment, $date, $lessonNumber, $period);
+            if (!$lessonType) {
+                $lessonType = 'lecture';
+                // Store in session for subsequent requests
+                $request->session()->put('journal_lesson_type_' . $subjectAssignment->id, $lessonType);
+            }
+        }
+
+        $activeSettings = $this->getApplicableSettings($categorySettings, $lessonType);
+        $maxForType = $this->getMaxForLessonType($categorySettings, $lessonType);
+
         return view('teacher.journal.category-scores', compact(
-            'subjectAssignment', 'students', 'semester',
-            'categorySettings', 'date', 'lessonNumber', 'period', 'existingScores', 'lockedScores'
+            'subjectAssignment',
+            'students',
+            'semester',
+            'categorySettings',
+            'date',
+            'lessonNumber',
+            'period',
+            'existingScores',
+            'lockedScores',
+            'lessonType',
+            'activeSettings',
+            'maxForType'
         ));
     }
 
@@ -74,6 +102,8 @@ class CategoryScoreController extends Controller
             'scores.*.*' => 'nullable|numeric|min:0',
         ]);
 
+        file_put_contents(storage_path('logs/debug.txt'), 'Store request: ' . print_r($request->all(), true) . PHP_EOL, FILE_APPEND);
+
         $semester = $subjectAssignment->semester;
         $categorySettings = GradeCategorySetting::getOrCreateDefaults($subjectAssignment->id);
         $maxScores = [];
@@ -86,13 +116,67 @@ class CategoryScoreController extends Controller
         $period = $request->input('period', 'rating1');
         $currentUserId = auth()->id();
 
-        DB::transaction(function () use ($subjectAssignment, $request, $semester, $maxScores, $date, $lessonNumber, $period, $currentUserId) {
+        // Determine lesson type for this lesson
+        $requestedLessonType = $request->input('lesson_type');
+        if ($requestedLessonType && !in_array($requestedLessonType, ['lecture', 'practice', 'lab'], true)) {
+            $requestedLessonType = null;
+        }
+
+        $currentLessonType = $this->getStoredLessonType($subjectAssignment, $date, $lessonNumber, $period);
+        $changeRequested = $currentLessonType && $requestedLessonType && $requestedLessonType !== $currentLessonType;
+
+        $lessonTypeToUse = $currentLessonType; // default to current lesson type
+        $hasError = false;
+        $errorMessage = '';
+
+        if ($changeRequested) {
+            if (!$request->has('confirm_type_change')) {
+                // Lesson type change requested without confirmation: block and show error
+                $hasError = true;
+                $errorMessage = 'Изменение типа урока требует подтверждения.';
+                // We still use the current lesson type for this operation
+                $lessonTypeToUse = $currentLessonType;
+            } else {
+                // We are changing the lesson type and have confirmation
+                $lessonTypeToUse = $requestedLessonType;
+                // Update existing scores' lesson type to the new one
+                CategoryScore::where('subject_assignment_id', $subjectAssignment->id)
+                    ->where('lesson_date', $date)
+                    ->where('lesson_number', $lessonNumber)
+                    ->where('period', $period)
+                    ->update(['lesson_type' => $lessonTypeToUse]);
+            }
+        } else {
+            // No change requested: use the requested lesson type if provided, otherwise current, otherwise default
+            $lessonTypeToUse = $requestedLessonType ?? $currentLessonType ?? 'lecture';
+        }
+
+        // Store the lesson type in session for subsequent requests
+        $request->session()->put('journal_lesson_type_' . $subjectAssignment->id, $lessonTypeToUse);
+
+        // Get applicable categories for the lesson type
+        $applicableSettings = $this->getApplicableSettings($categorySettings, $lessonTypeToUse);
+        $applicableCategories = $applicableSettings->pluck('category')->map(function ($category) {
+            return $category instanceof GradeCategory ? $category->value : $category;
+        })->all();
+
+        file_put_contents(storage_path('logs/debug.txt'), 'Applicable categories: ' . print_r($applicableCategories, true) . PHP_EOL, FILE_APPEND);
+
+        DB::transaction(function () use ($subjectAssignment, $request, $semester, $categorySettings, $maxScores, $date, $lessonNumber, $period, $currentUserId, $lessonTypeToUse, $applicableCategories) {
             foreach ($request->input('scores') as $studentId => $categories) {
                 foreach ($categories as $categoryValue => $score) {
                     if ($score === null || $score === '') continue;
 
                     $category = GradeCategory::tryFrom($categoryValue);
                     if (!$category) continue;
+
+                    file_put_contents(storage_path('logs/debug.txt'), 'Processing category: studentId=' . $studentId . ', categoryValue=' . $categoryValue . ', score=' . $score . ', applicableCategories=' . print_r($applicableCategories, true) . PHP_EOL, FILE_APPEND);
+
+                    // Check if the category is applicable to the lesson type
+                    if (!in_array($categoryValue, $applicableCategories)) {
+                        file_put_contents(storage_path('logs/debug.txt'), 'Skipping category: ' . $categoryValue . PHP_EOL, FILE_APPEND);
+                        continue;
+                    }
 
                     $maxScore = $maxScores[$categoryValue] ?? $category->defaultMaxScore();
                     $score = min((float) $score, $maxScore);
@@ -111,6 +195,7 @@ class CategoryScoreController extends Controller
                         if ($existing->is_locked && !$isAdmin) {
                             continue;
                         }
+                        file_put_contents(storage_path('logs/debug.txt'), 'Updating score: studentId=' . $studentId . ', category=' . $categoryValue . ', score=' . $score . ', maxScore=' . $maxScore . ', lessonType=' . $lessonTypeToUse . PHP_EOL, FILE_APPEND);
                         $existing->update([
                             'score' => $score,
                             'max_score' => $maxScore,
@@ -118,8 +203,10 @@ class CategoryScoreController extends Controller
                             'is_locked' => true,
                             'locked_at' => now(),
                             'locked_by' => $currentUserId,
+                            'lesson_type' => $lessonTypeToUse,
                         ]);
                     } else {
+                        file_put_contents(storage_path('logs/debug.txt'), 'Creating score: studentId=' . $studentId . ', category=' . $categoryValue . ', score=' . $score . ', maxScore=' . $maxScore . ', lessonType=' . $lessonTypeToUse . PHP_EOL, FILE_APPEND);
                         CategoryScore::create([
                             'student_id' => $studentId,
                             'subject_assignment_id' => $subjectAssignment->id,
@@ -134,11 +221,15 @@ class CategoryScoreController extends Controller
                             'is_locked' => true,
                             'locked_at' => now(),
                             'locked_by' => $currentUserId,
+                            'lesson_type' => $lessonTypeToUse,
                         ]);
                     }
+                    file_put_contents(storage_path('logs/debug.txt'), 'Finished processing category: studentId=' . $studentId . ', category=' . $categoryValue . PHP_EOL, FILE_APPEND);
                 }
             }
+        });
 
+        try {
             $gradeCalc = app(\App\Services\GradeCalculator::class);
             $studentsToRecalc = $subjectAssignment->group->activeStudents;
             foreach ($studentsToRecalc as $student) {
@@ -160,9 +251,56 @@ class CategoryScoreController extends Controller
                     }
                 }
             }
-        });
+        } catch (\Exception $e) {
+            file_put_contents(storage_path('logs/debug.txt'), 'Exception in grade calculation: ' . $e->getMessage() . PHP_EOL, FILE_APPEND);
+            throw $e;
+        }
 
         return back()->with('success', 'Баҳоҳо дар 5 категория сабт шуданд.');
+    }
+
+    /**
+     * Get the stored lesson type for a given lesson (date, number, period) from the category scores.
+     *
+     * @param  SubjectAssignment  $subjectAssignment
+     * @param  string  $date
+     * @param  int  $lessonNumber
+     * @param  string  $period
+     * @return string|null
+     */
+    private function getStoredLessonType(SubjectAssignment $subjectAssignment, string $date, int $lessonNumber, string $period): ?string
+    {
+        return CategoryScore::where('subject_assignment_id', $subjectAssignment->id)
+            ->where('lesson_date', $date)
+            ->where('lesson_number', $lessonNumber)
+            ->where('period', $period)
+            ->whereNotNull('lesson_type')
+            ->orderBy('id')
+            ->value('lesson_type');
+    }
+
+    /**
+     * Get the applicable category settings for a given lesson type.
+     *
+     * @param  \Illuminate\Support\Collection  $settings
+     * @param  string  $lessonType
+     * @return \Illuminate\Support\Collection
+     */
+    private function getApplicableSettings(\Illuminate\Support\Collection $settings, string $lessonType): \Illuminate\Support\Collection
+    {
+        return $settings->filter(fn(GradeCategorySetting $s) => $s->appliesTo($lessonType));
+    }
+
+    /**
+     * Get the maximum score for a given lesson type.
+     *
+     * @param  \Illuminate\Support\Collection  $settings
+     * @param  string  $lessonType
+     * @return float
+     */
+    private function getMaxForLessonType(\Illuminate\Support\Collection $settings, string $lessonType): float
+    {
+        return (float) $this->getApplicableSettings($settings, $lessonType)->sum('max_score');
     }
 
     /**
@@ -257,8 +395,13 @@ class CategoryScoreController extends Controller
         }
 
         return view('teacher.journal.category-report', compact(
-            'subjectAssignment', 'students', 'semester',
-            'categorySettings', 'lessons', 'scoreMatrix', 'studentTotals'
+            'subjectAssignment',
+            'students',
+            'semester',
+            'categorySettings',
+            'lessons',
+            'scoreMatrix',
+            'studentTotals'
         ));
     }
 

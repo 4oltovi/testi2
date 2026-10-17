@@ -18,11 +18,29 @@ class TranscriptController extends Controller
      */
     private function gradesFor($student)
     {
-        return SemesterGrade::where('student_id', $student?->id)
+        $rows = SemesterGrade::where('student_id', $student?->id)
             ->where('is_finalized', true)
             ->with(['subject', 'semester', 'subjectAssignment.subject', 'subjectAssignment.group'])
             ->orderBy('semester_id')
             ->get();
+
+        // Як фан дар як семестр = як сатр; кредитҳои ҷудошуда ҷамъ мешаванд
+        return $rows
+            ->groupBy(fn ($g) => $g->subject_id . '_' . $g->semester_id)
+            ->map(function ($group) {
+                if ($group->count() === 1) {
+                    return $group->first();
+                }
+
+                $representative = $group->first();
+                // Ҷамъи кредитҳои ҳамаи таъинотҳои ин фан (лекция+амалӣӣ+…)
+                $representative->subject_credits_override = (int) $group->sum(
+                    fn ($g) => (int) ($g->subjectAssignment?->getRawOriginal('credits') ?? $g->subject_credits)
+                );
+
+                return $representative;
+            })
+            ->values();
     }
 
     public function index(Request $request)

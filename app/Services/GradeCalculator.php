@@ -7,6 +7,7 @@ use App\Models\CategoryScore;
 use App\Models\CurrentGrade;
 use App\Models\Exam;
 use App\Models\ExamAttempt;
+use App\Models\GradeCategorySetting;
 use App\Models\RetakeExam;
 use App\Models\RetakeExamStudent;
 use App\Models\RatingAttempt;
@@ -66,6 +67,29 @@ class GradeCalculator
     // ================================================================
     // НАВ: Фоизи ЖУРНАЛИ ЭЛЕКТРОНӢ (аз категорияҳои омӯзгор)
     // ================================================================
+    /**
+     * ФОРМУЛАИ РЕЙТИНГ АЗ ЖУРНАЛ (R1/R2 — қисми 60-баллӣ):
+     *
+     *   журнал_балл = min( Σ_дарсҳо ( earned_L / max_L ) × refMax , journalMax )
+     *
+     * куҷо:
+     *   - L = як дарс (сана + рақами дарс) дар давраи рейтинг;
+     *   - earned_L = ҷамъи баллҳои донишҷӯ аз категорияҳои МУВОФИҚ ба
+     *     навъи дарси L (лексия / амалӣӣ / лаборатория);
+     *   - max_L = ҷамъи max_score-и ҳамон категорияҳои мувофиқ (масалан
+     *     лексия бе «Савод» = 10, амалӣӣ = 15);
+     *   - refMax = ҷамъи ҳамаи категорияҳои фаъоли таъинот (пурраи як дарс);
+     *   - journalMax = ҳадди аксари журнал (танзимот: 60).
+     *
+     * Барои маълумоти кӯҳнаи якнавъ (ҳамаи категорияҳо мувофиқ):
+     * max_L ≡ refMax ⇒ (earned_L / refMax) × refMax = earned_L ⇒
+     * натиҷа = min( Σ earned_L , 60 ) — ҲАМОН ҳисоби пешин (хом-ҷамъ),
+     * яъне натиҷаҳои мавҷудаи фанҳои якнавъ 100% тағйир намеёбанд.
+     *
+     * Барои лексияи нав (Савод хомӯш, max=10): дарси пурра (10/10) ҳамон
+     * қадр меҳисобад, ки дарси амалӣии пурра (15/15) — навъҳо бо ҳам
+     * муқоисаванда мешаванд ва ҳадди ниҳоӣ (0-100) тағйир намеёбад.
+     */
     public function calculateJournalPercentage(int $studentId, int $subjectAssignmentId, int $semesterId, string $period = 'rating1'): float
     {
         if (!array_key_exists($semesterId, $this->semesterStartDates)) {
@@ -83,7 +107,7 @@ class GradeCalculator
             ->get();
 
         if ($scores->isNotEmpty()) {
-            return round($scores->sum('score'), 2);
+            return $this->normalizedJournalSum($scores, $subjectAssignmentId);
         }
 
         $grades = CurrentGrade::where('student_id', $studentId)
@@ -93,6 +117,84 @@ class GradeCalculator
             ->get();
 
         return $this->calculateAverageScore($grades);
+    }
+
+    /**
+     * Ҳисоби нормализатсияшудаи журнал: ҳар дарс аз рӯи худи максимумаш
+     * (earned_L / max_L), баъд × refMax. Барои маълумоти якнавъ
+     * (ҳамаи категорияҳо мувофиқ) = хом-ҷамъи пешин ⇒ натиҷа якхела.
+     *
+     * @param  \Illuminate\Support\Collection<int, CategoryScore>  $scores
+     */
+    private function normalizedJournalSum($scores, int $subjectAssignmentId): float
+    {
+        // Танзимоти категорияҳои таъинот; маълумоти кӯҳна = ҳама мувофиқ
+        $settings = GradeCategorySetting::where('subject_assignment_id', $subjectAssignmentId)->get();
+
+        // Агар танзимот вуҷуд надошта бошад → ҳисоби пешин (хом-ҷамъ),
+        // то натиҷаҳои мавҷуда тағйир накунанд
+        if ($settings->isEmpty()) {
+            return round((float) $scores->sum('score'), 2);
+        }
+
+        $refMax = (float) $settings->where('is_active', true)->sum('max_score');
+        if ($refMax <= 0) {
+            return round((float) $scores->sum('score'), 2);
+        }
+
+        // Гурӯҳбандӣ аз рӯи дарс: (сана, рақами дарс) → навъ + сатрҳо
+        $lessons = [];
+        foreach ($scores as $score) {
+            $key = $score->lesson_date->format('Y-m-d') . '_' . $score->lesson_number;
+            $lessons[$key]['type'] = $lessons[$key]['type'] ?? $score->lesson_type;
+            $lessons[$key]['rows'] = $lessons[$key]['rows'] ?? collect();
+            $lessons[$key]['rows'][] = $score;
+        }
+
+        $total = 0.0;
+
+        foreach ($lessons as $lesson) {
+            $lessonType = $lesson['type'];
+            $lessonRows = $lesson['rows'];
+
+            $applicableSettings = $settings->filter(
+                fn (GradeCategorySetting $s) => $s->appliesTo($lessonType)
+            );
+
+            if ($applicableSettings->isNotEmpty()) {
+                $applicableCategories = $applicableSettings->map(
+                    fn (GradeCategorySetting $s) => $s->category instanceof \App\Enums\GradeCategory
+                        ? $s->category->value
+                        : (string) $s->category
+                )->all();
+
+                $filtered = $lessonRows->filter(
+                    fn (CategoryScore $r) => in_array($r->category->value, $applicableCategories, true)
+                );
+
+                // Агар ҳамаи сатрҳо хомӯш карда шуда бошанд → ҳисоб накун
+                if ($filtered->isNotEmpty()) {
+                    $lessonRows = $filtered;
+                }
+            }
+
+            $earned = (float) $lessonRows->sum('score');
+
+            // max_L аз танзимот (намудҳои мувофиқ); набошад → аз сатрҳо
+            $configuredMax = (float) $applicableSettings->sum('max_score');
+            $maxLesson = $configuredMax > 0
+                ? $configuredMax
+                : (float) $lessonRows->sum('max_score');
+
+            if ($maxLesson <= 0) {
+                $total += $earned;
+                continue;
+            }
+
+            $total += ($earned / $maxLesson) * $refMax;
+        }
+
+        return round($total, 2);
     }
 
     // ================================================================

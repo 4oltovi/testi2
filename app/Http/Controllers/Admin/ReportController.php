@@ -74,8 +74,8 @@ class ReportController extends Controller
             ->whereNull('academic_debts.deleted_at')
             ->join('students', 'academic_debts.student_id', '=', 'students.id')
             ->join('groups', 'students.group_id', '=', 'groups.id')
-            ->selectRaw('groups.name as group_name, COUNT(DISTINCT students.id) as debtors_count')
-            ->groupBy('groups.name')
+            ->selectRaw('CONCAT(groups.name, " ", groups.code) as group_name, COUNT(DISTINCT students.id) as debtors_count')
+            ->groupBy('groups.id', 'groups.name', 'groups.code')
             ->orderByDesc('debtors_count')
             ->get();
 
@@ -241,7 +241,7 @@ class ReportController extends Controller
 
             return [
                 'Донишҷӯ' => $student->user?->full_name ?? '-',
-                'Гурӯҳ' => $student->group?->name ?? '-',
+                'Гурӯҳ' => $student->group?->display_name ?? '-',
                 'Ҳамагӣ' => $total,
                 'Ҳозир' => $present,
                 'Ғоиб' => $absent,
@@ -262,7 +262,7 @@ class ReportController extends Controller
         $rows = $gpaData->map(function ($student) {
             return [
                 'Донишҷӯ' => $student->user?->full_name ?? '-',
-                'Гурӯҳ' => $student->group?->name ?? '-',
+                'Гурӯҳ' => $student->group?->display_name ?? '-',
                 'GPA' => $student->cumulative_gpa ?? 0,
             ];
         })->values();
@@ -285,7 +285,7 @@ class ReportController extends Controller
         $rows = $results->map(function ($grade) {
             return [
                 'Донишҷӯ' => $grade->student?->user?->full_name ?? '-',
-                'Гурӯҳ' => $grade->student?->group?->name ?? '-',
+                'Гурӯҳ' => $grade->student?->group?->display_name ?? '-',
                 'Фан' => $grade->subjectAssignment?->subject?->name ?? '-',
                 'Баҳо' => $grade->letter_grade ?? '-',
                 'Балл' => $grade->total_score ?? 0,

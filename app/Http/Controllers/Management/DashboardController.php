@@ -87,8 +87,8 @@ class DashboardController extends Controller
 
             $stats['students_by_group'] = $baseStudentQuery()
                 ->join('groups', 'students.group_id', '=', 'groups.id')
-                ->selectRaw('groups.name as group_name, COUNT(*) as count')
-                ->groupBy('groups.name')
+                ->selectRaw('CONCAT(groups.name, " ", groups.code) as group_name, COUNT(*) as count')
+                ->groupBy('groups.id', 'groups.name', 'groups.code')
                 ->orderByDesc('count')
                 ->limit(10)
                 ->get();

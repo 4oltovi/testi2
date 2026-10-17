@@ -100,7 +100,7 @@ class DebtController extends Controller
         $debts = $query->orderBy('student_id', 'asc')->orderByDesc('debt_date')->get();
 
         $groupedDebts = $debts->groupBy(function ($debt) {
-            return $debt->student?->group?->name ?? 'Без гурӯҳ';
+            return $debt->student?->group?->display_name ?? 'Без гурӯҳ';
         });
 
         $pdf = \PDF::loadView('admin.debts.export-pdf', compact('groupedDebts'));

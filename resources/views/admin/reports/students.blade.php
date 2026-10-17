@@ -80,7 +80,7 @@
                                 <td>{{ $students->firstItem() + $i }}</td>
                                 <td><strong>{{ $s->user?->full_name }}</strong></td>
                                 <td><code>{{ $s->student_id_number }}</code></td>
-                                <td>{{ $s->group?->name }}</td>
+                                <td>{{ $s->group?->display_name }}</td>
                                 <td>{{ $s->specialty?->department?->faculty?->short_name }}</td>
                                 <td>{{ $s->course?->number }}</td>
                                 <td><strong class="{{ $s->cumulative_gpa >= 3.0 ? 'text-success' : ($s->cumulative_gpa >= 2.0 ? 'text-warning' : 'text-danger') }}">{{ number_format($s->cumulative_gpa, 2) }}</strong></td>

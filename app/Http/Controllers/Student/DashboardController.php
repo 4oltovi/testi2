@@ -29,10 +29,15 @@ class DashboardController extends Controller
 
         if ($student && $semester) {
             $data['debts_count'] = $student->activeDebts()->count();
+            // Як фан = як сатр (лекция/амалӣӣ/лабораторӣ муттаҳид);
+            // тасдиқшуда ё баллтарин сатр афзалият дорад
             $data['grades'] = SemesterGrade::where('student_id', $student->id)
                 ->where('semester_id', $semester->id)
                 ->with('subjectAssignment.subject')
-                ->get();
+                ->get()
+                ->groupBy('subject_id')
+                ->map(fn ($rows) => $rows->sortByDesc('is_finalized')->first())
+                ->values();
             $data['attendance_percentage'] = $student->getAttendancePercentage($semester->id);
 
             // Натиҷаҳои охирини тестҳо

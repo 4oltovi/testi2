@@ -170,7 +170,7 @@
                                     </a>
                                 </td>
                                 <td><code>{{ $student->student_id_number }}</code></td>
-                                <td><span class="badge bg-info">{{ $student->group?->name }}</span></td>
+                                <td><span class="badge bg-info">{{ $student->group?->display_name }}</span></td>
                                 <td>{{ $student->course?->number }}</td>
                                 <td>
                                     <strong class="{{ $student->cumulative_gpa >= 3.0 ? 'text-success' : ($student->cumulative_gpa >= 2.0 ? 'text-warning' : 'text-danger') }}">

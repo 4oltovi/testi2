@@ -199,7 +199,7 @@ class RatingSessionController extends Controller
 
                 $rows[] = [
                     'student' => $student->user?->full_name ?? '-',
-                    'group' => $student->group?->name ?? '-',
+                    'group' => $student->group?->display_name ?? '-',
                     'subject' => $subject->name,
                     'pct' => $r ? round((float) $r->best_pct, 2) : null,
                     'scaled' => $r ? round(((float) $r->best_pct / 100) * $testMax, 2) : null,

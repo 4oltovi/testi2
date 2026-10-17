@@ -98,7 +98,7 @@
                 <span></span>
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                <span><strong>Ихтисос:</strong> {{ $vedomost['group']->specialty?->name ?? '' }} ({{ $vedomost['subject']->credits ?? '' }})</span>
+                <span><strong>Ихтисос:</strong> {{ $vedomost['group']->specialty?->name ?? '' }} </span>
                 <span><strong>Миқдори кредит:</strong> {{ $vedomost['subject']->credits ?? '' }}</span>
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
@@ -107,7 +107,7 @@
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                 <span><strong>Соли хониш:</strong> {{ $vedomost['semester']?->academicYear?->name ?? '' }}</span>
-                <span><strong>санаи имтиҳон:</strong> __________</span>
+                <span><strong>санаи рейтинг:</strong> __________</span>
             </div>
             <div style="display: flex; justify-content: space-between;">
                 <span><strong>Номи фан:</strong> {{ $vedomost['subject']?->name ?? '' }}</span>
@@ -117,11 +117,11 @@
         <table>
             <thead>
                 <tr>
-                    <th>#</th>
+                    <th>№</th>
                     <th>ID</th>
                     <th>Ном ва насаб</th>
-                    <th>Рейтинги 1 (R1)</th>
-                    <th>Рейтинги 2 (R2)</th>
+                    <th>Рейтинги 1</th>
+                    <th>Рейтинги 2</th>
                 </tr>
             </thead>
             <tbody>

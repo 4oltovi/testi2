@@ -1,0 +1,3 @@
+﻿No syntax errors detected in app\Services\GradeCalculator.php
+No syntax errors detected in app\Models\CategoryScore.php
+No syntax errors detected in app\Models\Attendance.php

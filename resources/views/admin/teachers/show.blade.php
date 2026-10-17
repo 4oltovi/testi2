@@ -10,6 +10,12 @@
     <a href="{{ route('admin.teachers.edit', $teacher) }}" class="btn btn-outline-primary">
         <i class="bi bi-pencil me-1"></i> Таҳрир
     </a>
+    <form action="{{ route('admin.teachers.destroy', $teacher) }}" method="POST" class="d-inline">
+        @csrf @method('DELETE')
+        <button type="submit" class="btn btn-outline-danger" data-confirm="Оё мутмаин ҳастед, ки мехоҳед ин омўзгаро нест кунед?">
+            <i class="bi bi-trash me-1"></i> Нест кардан
+        </button>
+    </form>
 @endsection
 
 @section('content')
@@ -100,17 +106,9 @@
                         @forelse($currentAssignments as $assignment)
                             <tr>
                                 <td>{{ $assignment->subject?->name }}</td>
-                                <td><span class="badge bg-primary">{{ $assignment->group?->name }}</span></td>
+                                <td><span class="badge bg-primary">{{ $assignment->group?->display_name }}</span></td>
                                 <td>
-                                    @php
-                                        $typeLabel = match($assignment->lesson_type) {
-                                            'lecture' => 'Лексия',
-                                            'practice' => 'Амалӣ',
-                                            'lab' => 'Лабораторӣ',
-                                            default => $assignment->lesson_type,
-                                        };
-                                    @endphp
-                                    {{ $typeLabel }}
+                                    @include('partials.lesson-type-breakdown', ['assignment' => $assignment])
                                 </td>
                                 <td>{{ $assignment->hours_per_week }}</td>
                             </tr>

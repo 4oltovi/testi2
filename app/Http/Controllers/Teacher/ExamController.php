@@ -366,4 +366,22 @@ class ExamController extends Controller
             abort(403, 'Шумо ба ин тест дастрасӣ надоред.');
         }
     }
+
+    /**
+     * Нест кардани тест (танҳо аз тарафи омўзгори соқиб)
+     */
+    public function destroy(Exam $exam, Request $request): RedirectResponse
+    {
+        $this->authorizeExam($exam, $request);
+
+        if ($exam->attempts()->exists()) {
+            return back()->with('error', 'Тестро нест кардан мумкин нест — кўшишҳо мавҷуданд.');
+        }
+
+        $title = $exam->title;
+        $exam->delete();
+
+        return redirect()->route('teacher.exams.index')
+            ->with('success', "Тест «{$title}» нест карда шуд.");
+    }
 }

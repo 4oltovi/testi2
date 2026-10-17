@@ -257,7 +257,29 @@ class TeacherController extends Controller
             }
         });
 
-        return redirect()->route('admin.teachers.show', $teacher)
-            ->with('success', 'Маълумоти омӯзгор навсозӣ шуд.');
+return redirect()->route('admin.teachers.show', $teacher)
+            ->with('success', 'Маълумоти омўзгор навсозӣ шуд.');
+    }
+
+    /**
+     * Нест кардани омўзгор (soft delete)
+     */
+    public function destroy(Teacher $teacher): RedirectResponse
+    {
+        if ($teacher->subjectAssignments()->whereNull('merged_into_id')->exists()) {
+            return back()->with('error', 'Омўзгаро нест кардан мумкин нест — таъинотҳо мавҷуданд.');
+        }
+
+        if ($teacher->activityLog()->exists()) {
+            return back()->with('error', 'Омўзгаро нест кардан мумкин нест — сабти/faъолият мавҷуд аст.');
+        }
+
+        $name = $teacher->user?->full_name ?? 'Омўзгор';
+        $teacher->delete();
+
+        AuditLog::log('delete', "Омўзгор нест карда шуд: {$name}", Teacher::class, $teacher->id);
+
+        return redirect()->route('admin.teachers.index')
+            ->with('success', "Омўзгор «{$name}» нест карда шуд.");
     }
 }

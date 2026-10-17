@@ -3,7 +3,7 @@
 @section('title', $exam->title)
 @section('page-header', $exam->title)
 @section('page-description')
-    {{ $exam->subjectAssignment?->subject?->name }} | {{ $exam->group?->name }}
+    {{ $exam->subjectAssignment?->subject?->name }} | {{ $exam->group?->display_name }}
 @endsection
 
 @section('content')
@@ -22,11 +22,17 @@
                                 <p class="text-muted">{{ $exam->description }}</p>
                             @endif
                         </div>
-                        <div class="text-end">
+<div class="text-end">
                             @if($exam->status === 'draft')
                                 <a href="{{ route('teacher.exams.edit', $exam) }}" class="btn btn-outline-primary btn-sm">
                                     <i class="bi bi-pencil me-1"></i> Таҳрир
                                 </a>
+                                <form action="{{ route('teacher.exams.destroy', $exam) }}" method="POST" class="d-inline">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn btn-outline-danger btn-sm" data-confirm="Оё мутмаин ҳастед, ки мехоҳед ин тестро нест кунед?">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
                             @endif
                         </div>
                     </div>
@@ -129,7 +135,7 @@
                                     <td><span class="badge bg-light text-dark">{{ $eq->question->type }}</span></td>
                                     <td><strong>{{ $eq->points }}</strong></td>
                                     <td>{{ $eq->question->difficulty_level }}/5</td>
-                                    @if($exam->status === 'draft')
+@if($exam->status === 'draft')
                                         <td>
                                             <form method="POST" action="{{ route('teacher.exams.remove-question', [$exam, $eq]) }}" class="d-inline">
                                                 @csrf
@@ -139,65 +145,63 @@
                                                 </button>
                                             </form>
                                         </td>
-                                    @endif
+@endif
                                 </tr>
                             @endforeach
                         </tbody>
                         <tfoot class="table-light">
                             <tr>
-                                <td colspan="3"><strong>Маҷмӯи баллҳо:</strong></td>
+                                <td colspan="3"><strong>Маҷмūи баллҳо:</strong></td>
                                 <td><strong>{{ $examQuestions->sum('points') }}</strong></td>
                                 <td colspan="2"></td>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
-            @endif
+            </div>
         </div>
-    </div>
 
-    {{-- Илова кардани саволҳо --}}
-    @if($exam->status === 'draft' && $availableQuestions->isNotEmpty())
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white">
-                <h6 class="mb-0"><i class="bi bi-plus-circle me-2"></i> Илова кардани саволҳо</h6>
-            </div>
-            <div class="card-body p-0">
-                <form method="POST" action="{{ route('teacher.exams.add-questions', $exam) }}">
-                    @csrf
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th style="width: 40px;"><input type="checkbox" id="selectAll"></th>
-                                    <th>Савол</th>
-                                    <th style="width: 80px;">Навъ</th>
-                                    <th style="width: 80px;">Балл</th>
-                                    <th style="width: 80px;">Сатҳ</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($availableQuestions->take(50) as $q)
+        @if($exam->status === 'draft' && $availableQuestions->isNotEmpty())
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="bi bi-plus-circle me-2"></i> Илова кардани саволҳо</h6>
+                </div>
+                <div class="card-body p-0">
+                    <form method="POST" action="{{ route('teacher.exams.add-questions', $exam) }}">
+                        @csrf
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover mb-0">
+                                <thead class="table-light">
                                     <tr>
-                                        <td><input type="checkbox" name="question_ids[]" value="{{ $q->id }}"></td>
-                                        <td>{{ \Illuminate\Support\Str::limit($q->question_text, 80) }}</td>
-                                        <td><span class="badge bg-light text-dark">{{ $q->type }}</span></td>
-                                        <td>{{ $q->points }}</td>
-                                        <td>{{ $q->difficulty_level }}/5</td>
+                                        <th style="width: 40px;"><input type="checkbox" id="selectAll"></th>
+                                        <th>Савол</th>
+                                        <th style="width: 80px;">Навъ</th>
+                                        <th style="width: 80px;">Балл</th>
+                                        <th style="width: 80px;">Сатҳ</th>
                                     </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="card-footer bg-white text-end">
-                        <button type="submit" class="btn btn-primary btn-sm">
-                            <i class="bi bi-plus-circle me-1"></i> Илова кардан
-                        </button>
-                    </div>
-                </form>
+                                </thead>
+                                <tbody>
+                                    @foreach($availableQuestions->take(50) as $q)
+                                        <tr>
+                                            <td><input type="checkbox" name="question_ids[]" value="{{ $q->id }}"></td>
+                                            <td>{{ \Illuminate\Support\Str::limit($q->question_text, 80) }}</td>
+                                            <td><span class="badge bg-light text-dark">{{ $q->type }}</span></td>
+                                            <td>{{ $q->points }}</td>
+                                            <td>{{ $q->difficulty_level }}/5</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-footer bg-white text-end">
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="bi bi-plus-circle me-1"></и> Илова кардан
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </div>
-    @endif
+        @endif
 @endsection
 
 @push('scripts')

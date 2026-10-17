@@ -338,7 +338,7 @@
                     @forelse($debts as $debt)
                     <tr>
                         <td><a href="{{ route('admin.students.show', $debt->student) }}" class="student-link">{{ $debt->student?->user?->short_name }}</a></td>
-                        <td><span class="badge-soft-info">{{ $debt->student?->group?->name }}</span></td>
+                        <td><span class="badge-soft-info">{{ $debt->student?->group?->display_name }}</span></td>
                         <td><small>{{ $debt->subject?->name }}</small></td>
                         <td><small class="text-muted">{{ $debt->reason_label }}</small></td>
                         <td><span class="badge-grade">{{ $debt->original_grade }}</span> <small class="text-muted">({{ $debt->original_score }})</small></td>

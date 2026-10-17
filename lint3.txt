@@ -1,0 +1,3 @@
+﻿No syntax errors detected in app\Http\Controllers\Student\GradeController.php
+No syntax errors detected in app\Http\Controllers\Teacher\CategoryScoreController.php
+No syntax errors detected in app\Console\Commands\MergeSubjectAssignments.php

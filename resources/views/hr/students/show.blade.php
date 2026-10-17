@@ -56,7 +56,7 @@
                         </tr>
                         <tr>
                             <th>Гурӯҳ</th>
-                            <td>{{ $student->group?->name ?? '—' }}</td>
+                            <td>{{ $student->group?->display_name ?? '—' }}</td>
                         </tr>
                         <tr>
                             <th>Хулоса</th>

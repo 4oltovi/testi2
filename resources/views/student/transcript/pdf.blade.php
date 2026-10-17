@@ -37,7 +37,7 @@
                 <td>{{ $grade->subject?->name ?? '—' }}</td>
                 <td>{{ $grade->semester?->name ?? '—' }}</td>
                 <td class="text-center">{{ $grade->subjectAssignment?->group?->code ?? '—' }}</td>
-                <td class="text-center">{{ $grade->subject_credits }}</td>
+                <td class="text-center">{{ $grade->subject_credits_override ?? $grade->subject_credits }}</td>
                 <td class="text-center">{{ $grade->total_score ? number_format($grade->total_score, 0) . '%' : '—' }}</td>
                 <td class="text-center">
                     @if($grade->letter_grade)
@@ -52,7 +52,7 @@
         <tfoot>
             <tr>
                 <td colspan="4"><strong>Маҷмӯъ:</strong></td>
-                <td class="text-center"><strong>{{ $grades->sum('subject_credits') }}</strong></td>
+                <td class="text-center"><strong>{{ $grades->sum(fn ($g) => $g->subject_credits_override ?? $g->subject_credits) }}</strong></td>
                 <td class="text-center"><strong>{{ number_format($grades->avg('total_score'), 0) }}</strong></td>
                 <td></td>
                 <td class="text-center"><strong>{{ number_format($grades->avg('grade_point'), 2) }}</strong></td>

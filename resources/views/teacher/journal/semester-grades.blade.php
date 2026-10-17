@@ -9,7 +9,7 @@
         <i class="bi bi-book me-1"></i> {{ $subjectAssignment->subject?->name }}
     </span>
     <span class="text-muted">|</span>
-    <span><i class="bi bi-people me-1"></i> {{ $subjectAssignment->group?->name }}</span>
+    <span><i class="bi bi-people me-1"></i> {{ $subjectAssignment->group?->display_name }}</span>
     <span class="text-muted">|</span>
     <span><i class="bi bi-calendar3 me-1"></i> {{ $semester->name }}</span>
     <span class="text-muted">|</span>
@@ -182,7 +182,7 @@
                                     <a href="{{ route('admin.students.show', $student) }}" class="text-decoration-none fw-semibold text-dark hover-text-primary">
                                         {{ $fullName }}
                                     </a>
-                                    <div class="small text-muted">Гурӯҳ: {{ $subjectAssignment->group?->name }}</div>
+                                    <div class="small text-muted">Гурӯҳ: {{ $subjectAssignment->group?->display_name }}</div>
                                 </div>
                             </div>
                         </td>

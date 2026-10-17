@@ -100,15 +100,7 @@
                                     <td>{{ $assignment->subject?->name }}</td>
                                     <td>{{ $assignment->teacher?->short_name ?? '—' }}</td>
                                     <td>
-                                        @php
-                                            $typeLabel = match($assignment->lesson_type) {
-                                                'lecture' => 'Лексия',
-                                                'practice' => 'Амалӣ',
-                                                'lab' => 'Лабораторӣ',
-                                                default => $assignment->lesson_type,
-                                            };
-                                        @endphp
-                                        <span class="badge bg-secondary">{{ $typeLabel }}</span>
+                                        @include('partials.lesson-type-breakdown', ['assignment' => $assignment])
                                     </td>
                                     <td>{{ $assignment->hours_per_week }}</td>
                                 </tr>

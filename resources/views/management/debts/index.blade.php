@@ -65,7 +65,7 @@
                     <tr>
                         <td>{{ $debts->firstItem() + $loop->index }}</td>
                         <td>{{ $debt->student?->user?->full_name ?? '—' }}</td>
-                        <td>{{ $debt->student?->group?->name ?? '—' }}</td>
+                        <td>{{ $debt->student?->group?->display_name ?? '—' }}</td>
                         <td>{{ $debt->subject?->name ?? '—' }}</td>
                         <td>{{ $debt->reason ?? '—' }}</td>
                         <td class="text-center">

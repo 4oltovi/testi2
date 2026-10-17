@@ -94,7 +94,7 @@ class GroupController extends Controller
 
         $group = Group::create($validated);
 
-        return redirect()->route('admin.structure.groups.show', $group)
+        return redirect()->route('admin.structure.groups.create', $group)
             ->with('success', 'Гурӯҳ бомуваффақият сохта шуд.');
     }
 

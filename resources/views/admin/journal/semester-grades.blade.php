@@ -3,7 +3,7 @@
 @section('title', 'Баҳоҳои семестрӣ')
 @section('page-header', 'Баҳоҳои семестрӣ — Рейтинг ва Имтиҳон')
 @section('page-description')
-{{ $subjectAssignment->subject?->name }} | {{ $subjectAssignment->group?->name }} | {{ $semester->name }}
+{{ $subjectAssignment->subject?->name }} | {{ $subjectAssignment->group?->display_name }} | {{ $semester->name }}
 @endsection
 
 @section('content')

@@ -64,7 +64,7 @@
             <div class="col-md-6"><strong>Ному насаб:</strong> {{ $student->user?->full_name ?? '-' }}</div>
             <div class="col-md-6"><strong>ID донишҷӯ:</strong> {{ $student->student_id_number ?? $student->id }}</div>
             <div class="col-md-6"><strong>Ихтисос:</strong> {{ $student->specialty?->name ?? '-' }}</div>
-            <div class="col-md-6"><strong>Гурӯҳ:</strong> {{ $student->group?->name ?? '-' }}</div>
+            <div class="col-md-6"><strong>Гурӯҳ:</strong> {{ $student->group?->display_name ?? '-' }}</div>
             <div class="col-md-6"><strong>Факулта:</strong> {{ optional(optional(optional($student->specialty)->department)->faculty)->name ?? '-' }}</div>
             <div class="col-md-6">
                 <strong>Шӯъба:</strong>

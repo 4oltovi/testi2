@@ -38,7 +38,7 @@
                     <tr>
                         <td>{{ $students->firstItem() + $loop->index }}</td>
                         <td>{{ $student->user?->full_name ?? '—' }}</td>
-                        <td>{{ $student->group?->name ?? '—' }}</td>
+                        <td>{{ $student->group?->display_name ?? '—' }}</td>
                         <td>{{ $student->specialty?->name ?? '—' }}</td>
                         <td>{{ $student->course?->number ?? '—' }}</td>
                         <td class="text-end">{{ number_format($student->cumulative_gpa ?? 0, 2) }}</td>

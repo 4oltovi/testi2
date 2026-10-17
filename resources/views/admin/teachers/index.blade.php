@@ -96,6 +96,12 @@
                                 <td class="text-end">
                                     <a href="{{ route('admin.teachers.show', $teacher) }}" class="btn btn-sm btn-outline-info"><i class="bi bi-eye"></i></a>
                                     <a href="{{ route('admin.teachers.edit', $teacher) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                                    <form action="{{ route('admin.teachers.destroy', $teacher) }}" method="POST" class="d-inline">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" data-confirm="Оё мутмаин ҳастед, ки мехоҳед ин омўзгаро нест кунед?">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
                                 </td>
                             </tr>
                         @empty

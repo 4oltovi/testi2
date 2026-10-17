@@ -3,7 +3,7 @@
 @section('title', $student->user?->full_name)
 @section('page-header', $student->user?->full_name)
 @section('page-description')
-    {{ $student->student_id_number }} | {{ $student->group?->name }} | {{ $student->course?->name }}
+    {{ $student->student_id_number }} | {{ $student->group?->display_name }} | {{ $student->course?->name }}
 @endsection
 
 @section('content')
@@ -79,7 +79,7 @@
                 <table class="table table-sm table-borderless mb-0">
                     <tr><td class="text-muted">Ихтисос:</td><td>{{ $student->specialty?->name }}</td></tr>
                     <tr><td class="text-muted">Факултет:</td><td>{{ $student->specialty?->department?->faculty?->name }}</td></tr>
-                    <tr><td class="text-muted">Гурӯҳ:</td><td><strong>{{ $student->group?->name }}</strong></td></tr>
+                    <tr><td class="text-muted">Гурӯҳ:</td><td><strong>{{ $student->group?->display_name }}</strong></td></tr>
                     <tr><td class="text-muted">Курс:</td><td>{{ $student->course?->name }}</td></tr>
                     <tr><td class="text-muted">Шакл:</td><td>{{ $student->education_form === 'budget' ? 'Буҷетӣ' : 'Шартномавӣ' }}</td></tr>
                     <tr><td class="text-muted">Санаи қабул:</td><td>{{ $student->enrollment_date?->format('d.m.Y') }}</td></tr>

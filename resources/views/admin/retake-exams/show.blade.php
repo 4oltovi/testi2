@@ -109,7 +109,7 @@
                             <tr>
                                 <td>{{ $loop->iteration }}</td>
                                 <td>{{ $student->student->user?->short_name ?? 'Донишҷӯ #' . $student->student->id }}</td>
-                                <td>{{ $student->student->group?->name ?? '-' }}</td>
+                                <td>{{ $student->student->group?->display_name ?? '-' }}</td>
                                 <td>
                                     {{ $originalGrade }}
                                     ({{ $originalScore !== '-' ? number_format($originalScore, 2) : '-' }})

@@ -96,7 +96,7 @@ class ExamController extends Controller
                     'teacher_id' => $request->user()->id,
                     'group_id' => $group->id,
                     'semester_id' => $semester?->id,
-                    'lesson_type' => 'theory',
+                    'lesson_type' => 'lecture',
                     'hours_per_week' => 2,
                     'is_active' => true,
                 ]);
@@ -368,6 +368,11 @@ class ExamController extends Controller
 
     public function destroy(Exam $exam): RedirectResponse
     {
+        if ($exam->attempts()->exists()) {
+            return back()->with('error', 'Имтиҳон нест кардан мумкин нест — кūшишҳо мавҷуданд.');
+        }
+
+        $exam->examQuestions()->delete();
         $exam->delete();
 
         return redirect()->route('admin.exams.index')

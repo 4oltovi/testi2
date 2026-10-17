@@ -23,6 +23,6 @@ $assignments = App\Models\SubjectAssignment::with(['subject', 'semester', 'group
 foreach ($assignments as $a) {
     $subjName = $a->subject ? $a->subject->name : 'N/A';
     $semName = $a->semester ? $a->semester->name : 'N/A';
-    $grpName = $a->group ? $a->group->name : 'N/A';
+    $grpName = $a->group ? $a->group->display_name : 'N/A';
     echo "ID=".$a->id." SubjectID=".$a->subject_id." Subject=".$subjName." SemesterID=".$a->semester_id." Semester=".$semName." Group=".$grpName."\n";
 }

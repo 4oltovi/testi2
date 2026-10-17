@@ -4,7 +4,7 @@
 @section('page-header', 'Панели асосӣ')
 @section('page-description')
 Хуш омадед, {{ auth()->user()->first_name }}!
-@if($student) | {{ $student->group?->name }} | {{ $student->course?->name }} @endif
+@if($student) | {{ $student->group?->display_name }} | {{ $student->course?->name }} @endif
 @endsection
 
 @section('content')

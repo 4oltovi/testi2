@@ -63,6 +63,10 @@ class QuestionBankController extends Controller
 
     public function destroy(QuestionBank $questionBank)
     {
+        if ($questionBank->questions()->exists()) {
+            return back()->with('error', 'Банки саволҳо нест кардан мумкин нест — саволҳо мавҷуданд.');
+        }
+
         $questionBank->delete();
         return redirect()->route('admin.exams.question-banks.index')->with('success', 'Нест шуд.');
     }

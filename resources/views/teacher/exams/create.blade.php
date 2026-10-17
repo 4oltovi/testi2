@@ -17,7 +17,7 @@
                         <option value="">— Интихоб кунед —</option>
                         @foreach($assignments as $a)
                         <option value="{{ $a->id }}" {{ old('subject_assignment_id') == $a->id ? 'selected' : '' }}>
-                            {{ $a->subjectAssignment?->subject?->name }} — {{ $a->group?->name }}
+                            {{ $a->subjectAssignment?->subject?->name }} — {{ $a->group?->display_name }}
                         </option>
                         @endforeach
                     </select>

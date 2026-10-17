@@ -3,7 +3,7 @@
 @section('title', 'Танзимоти категорияҳо')
 @section('page-header', 'Танзимоти категорияҳои баҳо')
 @section('page-description')
-    {{ $subjectAssignment->subject?->name }} | {{ $subjectAssignment->group?->name }}
+    {{ $subjectAssignment->subject?->name }} | {{ $subjectAssignment->group?->display_name }}
 @endsection
 
 @section('content')
@@ -30,8 +30,11 @@
                         <tr>
                             <th style="width: 50px;">#</th>
                             <th>Категория</th>
-                            <th style="width: 200px;">Ҳадди аксари балл</th>
-                            <th style="width: 100px;">Icon</th>
+                            <th style="width: 150px;">Ҳадди аксари балл</th>
+                            <th class="text-center" style="width: 100px;">Лексия</th>
+                            <th class="text-center" style="width: 100px;">Амалӣ</th>
+                            <th class="text-center" style="width: 120px;">Лаборатория</th>
+                            <th style="width: 80px;">Icon</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -51,6 +54,24 @@
                                            value="{{ $cs->max_score }}">
                                 </td>
                                 <td class="text-center">
+                                    <input type="hidden" name="settings[{{ $index }}][applies_lecture]" value="0">
+                                    <input type="checkbox" class="form-check-input" style="transform: scale(1.4);"
+                                           name="settings[{{ $index }}][applies_lecture]" value="1"
+                                           {{ $cs->applies_lecture ? 'checked' : '' }}>
+                                </td>
+                                <td class="text-center">
+                                    <input type="hidden" name="settings[{{ $index }}][applies_practical]" value="0">
+                                    <input type="checkbox" class="form-check-input" style="transform: scale(1.4);"
+                                           name="settings[{{ $index }}][applies_practical]" value="1"
+                                           {{ $cs->applies_practical ? 'checked' : '' }}>
+                                </td>
+                                <td class="text-center">
+                                    <input type="hidden" name="settings[{{ $index }}][applies_lab]" value="0">
+                                    <input type="checkbox" class="form-check-input" style="transform: scale(1.4);"
+                                           name="settings[{{ $index }}][applies_lab]" value="1"
+                                           {{ $cs->applies_lab ? 'checked' : '' }}>
+                                </td>
+                                <td class="text-center">
                                     <i class="bi {{ $cs->category->icon() }} fs-4 text-{{ $cs->category->colorClass() }}"></i>
                                 </td>
                             </tr>
@@ -60,7 +81,7 @@
                         <tr>
                             <td colspan="2"><strong>Маҷмӯъи ҳадди аксар (барои як дарс):</strong></td>
                             <td><strong id="totalMax">{{ $categorySettings->sum('max_score') }}</strong></td>
-                            <td></td>
+                            <td colspan="4"></td>
                         </tr>
                     </tfoot>
                 </table>

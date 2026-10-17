@@ -173,7 +173,7 @@
             @foreach($debts as $index => $debt)
             <tr>
                 <td class="text-center">{{ $index + 1 }}</td>
-                <td>{{ $debt->student?->group?->name ?? '—' }}</td>
+                <td>{{ $debt->student?->group?->display_name ?? '—' }}</td>
                 <td>{{ $debt->student?->user?->short_name ?? '—' }}</td>
                 <td><small>{{ $debt->subject?->name ?? '—' }}</small></td>
                 <td><small>{{ $debt->reason_label ?? '—' }}</small></td>

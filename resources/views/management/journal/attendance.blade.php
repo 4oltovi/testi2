@@ -3,7 +3,7 @@
 @section('title', 'Давомот')
 @section('page-header', 'Давомот')
 @section('page-description')
-    {{ $subjectAssignment->subject?->name }} | {{ $subjectAssignment->group?->name }} | {{ $semester->name }}
+    {{ $subjectAssignment->subject?->name }} | {{ $subjectAssignment->group?->display_name }} | {{ $semester->name }}
 @endsection
 
 @section('content')
@@ -17,7 +17,7 @@
                 <th class="text-muted">Фан:</th>
                 <td>{{ $subjectAssignment->subject?->name }}</td>
                 <th class="text-muted ms-4">Гурӯҳ:</th>
-                <td>{{ $subjectAssignment->group?->name }}</td>
+                <td>{{ $subjectAssignment->group?->display_name }}</td>
             </tr>
             <tr>
                 <th class="text-muted">Омӯзгор:</th>

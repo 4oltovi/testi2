@@ -1,0 +1,11 @@
+﻿PHPUnit 11.5.56 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.3.30
+Configuration: C:\laragon\www\testi-main\phpunit.xml
+
+......                                                              6 / 6 (100%)
+
+Time: 02:23.924, Memory: 64.00 MB
+
+OK, but there were issues!
+Tests: 6, Assertions: 39, PHPUnit Deprecations: 2.

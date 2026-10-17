@@ -47,7 +47,7 @@
                         <tr>
                             <td>{{ $students->firstItem() + $index }}</td>
                             <td><a href="{{ route('admin.transcript.show', $student) }}">{{ $student->user?->full_name }}</a></td>
-                            <td><span class="badge bg-info">{{ $student->group?->name }}</span></td>
+                            <td><span class="badge bg-info">{{ $student->group?->display_name }}</span></td>
                             <td><small>{{ $student->specialty?->name }}</small></td>
                             <td>{{ $student->course?->number }}</td>
                             <td>

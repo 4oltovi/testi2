@@ -76,7 +76,7 @@
                             <tr>
                                 <td>{{ $debts->firstItem() + $i }}</td>
                                 <td><strong>{{ $debt->student?->user?->short_name }}</strong></td>
-                                <td><span class="badge bg-info">{{ $debt->student?->group?->name }}</span></td>
+                                <td><span class="badge bg-info">{{ $debt->student?->group?->display_name }}</span></td>
                                 <td>{{ $debt->subject?->name }}</td>
                                 <td><small>{{ $debt->reason_label }}</small></td>
                                 <td><span class="badge bg-danger">{{ $debt->original_grade }}</span> {{ $debt->original_score }}</td>

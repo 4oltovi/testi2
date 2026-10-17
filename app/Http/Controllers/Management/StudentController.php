@@ -89,7 +89,7 @@ class StudentController extends Controller
                 'id' => $s->id,
                 'name' => $s->user?->full_name ?? '',
                 'student_id' => $s->student_id_number,
-                'group' => $s->group?->name,
+                'group' => $s->group?->display_name,
                 'url' => route('management.students.show', $s),
             ])
         );

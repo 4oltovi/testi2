@@ -27,9 +27,20 @@
                 </div>
 
                 <div class="col-md-2">
-                    <label class="form-label">Кредит (ихтиёрӣ)</label>
-                    <input type="number" name="credits" min="1" max="30" class="form-control"
-                        placeholder="аз фан">
+                    <label class="form-label">
+                        Кредит <span class="text-danger">*</span>
+                    </label>
+                    <input type="number"
+                        name="credits"
+                        min="1"
+                        max="30"
+                        value="{{ old('credits') }}"
+                        class="form-control @error('credits') is-invalid @enderror"
+                        placeholder="Кредитро ворид кунед"
+                        required>
+                    @error('credits')
+                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                    @enderror
                 </div>
 
                 <div class="col-md-6">
@@ -69,7 +80,7 @@
                                         id="group-{{ $group->id }}"
                                         {{ in_array($group->id, old('group_ids', [])) ? 'checked' : '' }}>
                                     <label class="form-check-label ms-2" for="group-{{ $group->id }}">
-                                            {{ $group->full_name }}
+                                        {{ $group->full_name }}
                                     </label>
                                 </div>
                             </div>
@@ -108,7 +119,7 @@
 
                 <div class="col-md-6">
                     <label class="form-label">Соат/ҳафта</label>
-                    <input type="number" name="hours_per_week" class="form-control" min="1" max="20" value="{{ old('hours_per_week', 2) }}">
+                    <input type="number" name="hours_per_week" class="form-control" min="1" max="20" value="{{ old('hours_per_week', 5) }}">
                 </div>
             </div>
 

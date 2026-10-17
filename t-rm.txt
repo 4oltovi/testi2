@@ -1,0 +1,63 @@
+﻿PHPUnit 11.5.56 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.3.30
+Configuration: C:\laragon\www\testi-main\phpunit.xml
+
+......EEEEE                                                       11 / 11 (100%)
+
+Time: 03:00.202, Memory: 68.00 MB
+
+There were 5 errors:
+
+1) Tests\Feature\RatingLessonTypeTest::test_single_type_result_equals_legacy_raw_sum
+Error: Call to a member function filter() on array
+
+C:\laragon\www\testi-main\app\Services\GradeCalculator.php:170
+C:\laragon\www\testi-main\app\Services\GradeCalculator.php:110
+C:\laragon\www\testi-main\app\Services\GradeCalculator.php:57
+C:\laragon\www\testi-main\app\Services\GradeCalculator.php:42
+C:\laragon\www\testi-main\tests\Feature\RatingLessonTypeTest.php:152
+C:\laragon\www\testi-main\tests\Feature\RatingLessonTypeTest.php:184
+
+2) Tests\Feature\RatingLessonTypeTest::test_full_lecture_lesson_counts_same_as_full_practical
+Error: Call to a member function filter() on array
+
+C:\laragon\www\testi-main\app\Services\GradeCalculator.php:170
+C:\laragon\www\testi-main\app\Services\GradeCalculator.php:110
+C:\laragon\www\testi-main\app\Services\GradeCalculator.php:57
+C:\laragon\www\testi-main\app\Services\GradeCalculator.php:42
+C:\laragon\www\testi-main\tests\Feature\RatingLessonTypeTest.php:152
+C:\laragon\www\testi-main\tests\Feature\RatingLessonTypeTest.php:200
+
+3) Tests\Feature\RatingLessonTypeTest::test_partial_lecture_scales_to_reference_max
+Error: Call to a member function filter() on array
+
+C:\laragon\www\testi-main\app\Services\GradeCalculator.php:170
+C:\laragon\www\testi-main\app\Services\GradeCalculator.php:110
+C:\laragon\www\testi-main\app\Services\GradeCalculator.php:57
+C:\laragon\www\testi-main\app\Services\GradeCalculator.php:42
+C:\laragon\www\testi-main\tests\Feature\RatingLessonTypeTest.php:152
+C:\laragon\www\testi-main\tests\Feature\RatingLessonTypeTest.php:229
+
+4) Tests\Feature\RatingLessonTypeTest::test_journal_part_is_capped_at_60
+Error: Call to a member function filter() on array
+
+C:\laragon\www\testi-main\app\Services\GradeCalculator.php:170
+C:\laragon\www\testi-main\app\Services\GradeCalculator.php:110
+C:\laragon\www\testi-main\app\Services\GradeCalculator.php:57
+C:\laragon\www\testi-main\app\Services\GradeCalculator.php:42
+C:\laragon\www\testi-main\tests\Feature\RatingLessonTypeTest.php:152
+C:\laragon\www\testi-main\tests\Feature\RatingLessonTypeTest.php:248
+
+5) Tests\Feature\RatingLessonTypeTest::test_mixed_lesson_types_are_summed_normalized
+Error: Call to a member function filter() on array
+
+C:\laragon\www\testi-main\app\Services\GradeCalculator.php:170
+C:\laragon\www\testi-main\app\Services\GradeCalculator.php:110
+C:\laragon\www\testi-main\app\Services\GradeCalculator.php:57
+C:\laragon\www\testi-main\app\Services\GradeCalculator.php:42
+C:\laragon\www\testi-main\tests\Feature\RatingLessonTypeTest.php:152
+C:\laragon\www\testi-main\tests\Feature\RatingLessonTypeTest.php:283
+
+ERRORS!
+Tests: 11, Assertions: 40, Errors: 5, PHPUnit Deprecations: 2.

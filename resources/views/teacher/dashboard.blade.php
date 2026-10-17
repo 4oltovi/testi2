@@ -153,6 +153,16 @@
             'lab' => 'warning',
             default => 'secondary'
             };
+            // Тақсимоти аз рӯи навъ: «Лексия: 4 · Амалӣ: 6»
+            $bd = $a->lessonTypeBreakdown();
+            $bdLabels = ['lecture' => 'Лексия', 'practice' => 'Амалӣ', 'lab' => 'Лабор.'];
+            $bdParts = [];
+            foreach ($bd as $bdType => $bdCount) {
+                if ($bdCount > 0) {
+                    $bdParts[] = $bdLabels[$bdType] . ': ' . $bdCount;
+                }
+            }
+            $breakdownText = $bdParts !== [] ? implode(' · ', $bdParts) : $lessonType;
             @endphp
             <div class="col-md-6 col-xl-4">
                 <div class="card subject-card border-0 shadow-sm h-100 rounded-4">
@@ -163,7 +173,7 @@
                                 <i class="bi bi-book fs-4"></i>
                             </div>
                             <span class="badge bg-{{ $typeColor }} bg-opacity-10 text-{{ $typeColor }} border border-{{ $typeColor }} border-opacity-25 px-3 py-2 rounded-pill">
-                                {{ $lessonType }}
+                                {{ $breakdownText }}
                             </span>
                         </div>
 
@@ -176,14 +186,17 @@
                         <div class="mb-4">
                             <span class="badge bg-light text-dark border px-3 py-2 rounded-pill">
                                 <i class="bi bi-people-fill me-1 text-muted"></i>
-                                <span class="fw-semibold">{{ $a->group?->name ?? 'Гурӯҳ нест' }}</span>
+                                <span class="fw-semibold">{{ $a->group?->display_name ?? 'Гурӯҳ нест' }}</span>
                             </span>
                         </div>
 
-                        <!-- Тугмаҳои амал (Фақат Давомот ва Рейтинг) -->
+                        <!-- Тугмаҳои амал (Категория ва Рейтинг) -->
+                        @php
+                            $defaultLessonType = (($a->lessonTypeBreakdown()['lecture'] ?? 0) > 0) ? 'lecture' : 'practice';
+                        @endphp
                         <div class="mt-auto d-grid gap-2">
-                            <a href="{{ route('teacher.journal.attendance', $a) }}" class="btn btn-outline-success action-btn rounded-3 py-2">
-                                <i class="bi bi-calendar-check me-2"></i> Давомот
+                            <a href="{{ route('teacher.journal.category-scores', array_merge([$a], ['lesson_type' => $defaultLessonType])) }}" class="btn btn-outline-success action-btn rounded-3 py-2">
+                                <i class="bi bi-grid-3x3 me-2"></i> Категория
                             </a>
                             <a href="{{ route('teacher.journal.semester-grades', $a) }}" class="btn btn-outline-primary action-btn rounded-3 py-2">
                                 <i class="bi bi-graph-up-arrow me-2"></i> Рейтинг

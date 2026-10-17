@@ -42,7 +42,7 @@
                     <tr><td class="text-muted">Телефон:</td><td>{{ $teacher->user?->phone ?? '—' }}</td></tr>
                     <tr><td class="text-muted">Email:</td><td>{{ $teacher->user?->email ?? '—' }}</td></tr>
                     <tr>
-                        <td class="text-muted">Ҳолат:</td>
+                        <td class="text-mut§ed">Ҳолат:</td>
                         <td>
                             @php
                                 $statusBadge = match($teacher->status) {
@@ -91,17 +91,9 @@
                         @forelse($currentAssignments as $assignment)
                             <tr>
                                 <td>{{ $assignment->subject?->name }}</td>
-                                <td><span class="badge bg-primary">{{ $assignment->group?->name }}</span></td>
+                                <td><span class="badge bg-primary">{{ $assignment->group?->display_name }}</span></td>
                                 <td>
-                                    @php
-                                        $typeLabel = match($assignment->lesson_type) {
-                                            'lecture' => 'Лексия',
-                                            'practice' => 'Амалӣ',
-                                            'lab' => 'Лабораторӣ',
-                                            default => $assignment->lesson_type,
-                                        };
-                                    @endphp
-                                    {{ $typeLabel }}
+                                    @include('partials.lesson-type-breakdown', ['assignment' => $assignment])
                                 </td>
                                 <td>{{ $assignment->hours_per_week }}</td>
                             </tr>

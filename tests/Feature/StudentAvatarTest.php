@@ -536,7 +536,7 @@ class StudentAvatarTest extends TestCase
         Storage::disk(self::DISK)->put('students/anonymous.jpg', 'x');
 
         $this->delete(route('admin.students.avatar.destroy', $student->student))
-            ->assertForbidden();
+            ->assertRedirect('/login');
 
         $this->assertSame('students/anonymous.jpg', $student->fresh()->avatar);
         Storage::disk(self::DISK)->assertExists('students/anonymous.jpg');

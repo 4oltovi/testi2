@@ -3,7 +3,7 @@
 @section('title', 'Қарздорӣ')
 @section('page-header', 'Қарздорӣ: ' . ($debt->student?->user?->full_name ?? '—'))
 @section('page-description')
-    {{ $debt->subject?->name ?? '—' }} | Гурӯҳ: {{ $debt->student?->group?->name ?? '—' }}
+    {{ $debt->subject?->name ?? '—' }} | Гурӯҳ: {{ $debt->student?->group?->display_name ?? '—' }}
 @endsection
 
 @section('content')
@@ -17,7 +17,7 @@
                 <th class="text-muted">Донишҷӯ:</th>
                 <td>{{ $debt->student?->user?->full_name ?? '—' }}</td>
                 <th class="text-muted ms-4">Гурӯҳ:</th>
-                <td>{{ $debt->student?->group?->name ?? '—' }}</td>
+                <td>{{ $debt->student?->group?->display_name ?? '—' }}</td>
             </tr>
             <tr>
                 <th class="text-muted">Фан:</th>

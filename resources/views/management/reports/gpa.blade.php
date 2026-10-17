@@ -43,7 +43,7 @@
                     <tr>
                         <td>{{ $gpaData->firstItem() + $loop->index }}</td>
                         <td>{{ $student->user?->full_name ?? '—' }}</td>
-                        <td>{{ $student->group?->name ?? '—' }}</td>
+                        <td>{{ $student->group?->display_name ?? '—' }}</td>
                         <td class="text-end">
                             <span class="badge bg-{{ $color }}">{{ number_format($gpa, 2) }}</span>
                         </td>

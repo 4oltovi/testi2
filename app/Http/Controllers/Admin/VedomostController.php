@@ -419,7 +419,7 @@ class VedomostController extends Controller
                 'n' => $i + 1,
                 'code' => $s->student_id_number ?? $s->id,
                 'fio' => $this->studentName($s),
-                'group_name' => $s->group?->name ?? '-',
+                'group_name' => $s->group?->display_name ?? '-',
                 'r1' => number_format($r1, 2),
                 'r2' => number_format($r2, 2),
                 'takr' => number_format($takr, 2),

@@ -123,7 +123,7 @@ class RetakeExamController extends Controller
             if (!$hasExam) {
                 $sa = \App\Models\SubjectAssignment::find($saId);
                 if ($sa) {
-                    $groupsWithoutMainExam[] = $sa->group?->name ?? "ID {$sa->group_id}";
+                    $groupsWithoutMainExam[] = $sa->group?->display_name ?? "ID {$sa->group_id}";
                 }
             }
         }
@@ -276,7 +276,7 @@ class RetakeExamController extends Controller
             $groupInfo = [
                 'subject_assignment_id' => $saId,
                 'group_id' => $sa->group_id,
-                'group_name' => $sa->group?->name ?? '—',
+                'group_name' => $sa->group?->display_name ?? '—',
                 'has_main_exam' => $hasExam,
             ];
             if ($hasExam) {
@@ -351,7 +351,7 @@ class RetakeExamController extends Controller
                     'n' => $i + 1,
                     'student_id' => $r->student->student_id_number ?? $r->student->id,
                     'fio' => $r->student->user?->short_name ?? 'Донишҷӯ #' . $r->student->id,
-                    'group_name' => $r->student->group?->name ?? '-',
+                    'group_name' => $r->student->group?->display_name ?? '-',
                     'original_score' => $sg?->total_score ?? '-',
                     'original_grade' => $sg?->letter_grade ?? '-',
                     'retake_score' => $attempt?->total_score !== null ? number_format($attempt->total_score, 2) : '-',
@@ -396,7 +396,7 @@ class RetakeExamController extends Controller
                     'n' => $i + 1,
                     'student_id' => $r->student->student_id_number ?? $r->student->id,
                     'fio' => $r->student->user?->short_name ?? 'Донишҷӯ #' . $r->student->id,
-                    'group_name' => $r->student->group?->name ?? '-',
+                    'group_name' => $r->student->group?->display_name ?? '-',
                     'original_score' => $sg?->total_score ?? '-',
                     'original_grade' => $sg?->letter_grade ?? '-',
                     'retake_score' => $attempt?->total_score !== null ? number_format($attempt->total_score, 2) : '-',
@@ -425,6 +425,10 @@ class RetakeExamController extends Controller
 
     public function destroy(RetakeExam $retakeExam): RedirectResponse
     {
+        if ($retakeExam->retakeExamStudents()->exists() || $retakeExam->retakeVedomosts()->exists()) {
+            return back()->with('error', 'Имтиҳони такрорӣ нест кардан мумкин нест — сабтҳо мавҷуданд.');
+        }
+
         $retakeExam->delete();
 
         return redirect()->route('admin.retake-exams.index')

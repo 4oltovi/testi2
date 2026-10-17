@@ -115,24 +115,26 @@ public function earnedCredits(): int
         ->whereNotNull('subject_assignment_id')
         ->whereNotNull('subject_id')
         ->with('subjectAssignment')
-        ->get(['subject_id', 'subject_assignment_id']);
+        ->get(['subject_id', 'subject_assignment_id', 'semester_id']);
 
-    // Як фан = як маротиба
+    // Як фан дар як семестр = як маротиба: қисматҳо ҷамъ (2+2+2=6),
+    // байни семестрҳо фан танҳо як маротиба ҳисоб мешавад
     return (int) $passed
-        ->groupBy('subject_id')
+        ->groupBy(fn ($row) => $row->subject_id . '_' . $row->semester_id)
         ->map(function ($rows) {
-            $credits = 0;
+            $raws = $rows
+                ->map(fn ($row) => $row->subjectAssignment?->getRawOriginal('credits'))
+                ->filter(fn ($v) => $v !== null);
 
-            foreach ($rows as $row) {
-                $value = (int) ($row->subjectAssignment?->credits ?? 0);
-
-                if ($value > $credits) {
-                    $credits = $value;
-                }
+            if ($raws->isNotEmpty()) {
+                return (int) $raws->sum();
             }
 
-            return $credits;
+            // Ҳамаи майдонҳо null → кредити фан (accessor, монанди пешин)
+            return (int) ($rows->first()->subjectAssignment?->credits ?? 0);
         })
+        ->groupBy(fn ($credits, $key) => (string) ((int) explode('_', $key)[0]))
+        ->map(fn ($semesterSums) => $semesterSums->max())
         ->sum();
 }
 

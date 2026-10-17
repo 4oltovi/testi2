@@ -89,25 +89,32 @@ class AccountantDashboardController extends Controller
             'payment_date' => 'required|date',
             'payment_method' => 'nullable|string|max:50',
             'note' => 'nullable|string|max:500',
-            'receipt_number' => 'nullable|string|max:50',
+            'receipt_number' => 'required|string|max:50',
             'academic_year_id' => 'nullable|exists:academic_years,id',
         ], [
-            'receipt_number.max' => 'Рақами расид бояд ҳадди ақал 50 арафа бошад.',
+            'receipt_number.required' => 'Рақами расид лозим аст.',
+            'receipt_number.string' => 'Рақами расид бояд матн бошад.',
+            'receipt_number.max' => 'Рақами расид бояд ҳадди аксар 50 арафа бошад.',
         ]);
 
-        $receiptNumber = $validated['receipt_number'] ?? null;
-        if ($receiptNumber !== null && $receiptNumber !== '') {
-            $receiptNumber = trim($receiptNumber);
+        // Тоза кардан аз фосилаҳои барзиёдӣ (trim) пеш аз санҷиш
+        $receiptNumber = trim($validated['receipt_number']);
 
-            $existing = ContractPayment::where('receipt_number', $receiptNumber)->first();
+        if ($receiptNumber === '') {
+            return back()
+                ->withInput()
+                ->withErrors(['receipt_number' => 'Рақами расид лозим аст.']);
+        }
 
-            if ($existing && $existing->student_id !== $student->id) {
-                return back()
-                    ->withInput()
-                    ->withErrors([
-                        'receipt_number' => "Рақами расид «{$receiptNumber}» қабул шудааст. Дар як вақт танҳо як пардохт барои як расид имконпазир аст.",
-                    ]);
-            }
+        // Як расид = як пардохт (unique дар DB). Дубликат рад мешавад.
+        $existing = ContractPayment::where('receipt_number', $receiptNumber)->first();
+
+        if ($existing) {
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'receipt_number' => "Рақами расид «{$receiptNumber}» аллакай истифода шудааст. Дар як вақт танҳо як пардохт ба як расид имконпазир аст.",
+                ]);
         }
 
         $overpaid = ($student->contract_paid + $validated['amount']) > (float) ($student->contract_amount ?? 0);

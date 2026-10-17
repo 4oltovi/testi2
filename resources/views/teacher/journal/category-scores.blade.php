@@ -3,7 +3,7 @@
 @section('title', 'Баҳогузорӣ бо категорияҳо')
 @section('page-header', 'Журнал — Баҳоҳои категориявӣ')
 @section('page-description')
-    {{ $subjectAssignment->subject?->name }} | {{ $subjectAssignment->group?->name }}
+    {{ $subjectAssignment->subject?->name }} | {{ $subjectAssignment->group?->display_name }}
 @endsection
 
 @section('content')
@@ -11,11 +11,11 @@
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
             <form method="GET" class="row g-3 align-items-end">
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label">Санаи дарс</label>
                     <input type="date" name="date" class="form-control" value="{{ $date }}">
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                     <label class="form-label">Рақами дарс</label>
                     <input type="number" name="lesson_number" class="form-control" min="1" max="8" value="{{ $lessonNumber }}">
                 </div>
@@ -26,12 +26,28 @@
                         <option value="rating2" {{ $period == 'rating2' ? 'selected' : '' }}>Рейтинги 2 (Ҳафтаҳои 9-16)</option>
                     </select>
                 </div>
+                <div class="col-md-3">
+                    <label class="form-label">Навъи дарс</label>
+                    <div class="btn-group btn-group-sm w-100" role="group" aria-label="Навъи дарс">
+                        <input type="radio" class="btn-check" name="lesson_type" id="lt_lecture"
+                               value="lecture" {{ $lessonType === 'lecture' ? 'checked' : '' }} onchange="this.form.submit()">
+                        <label class="btn btn-outline-primary" for="lt_lecture">Лексия</label>
+
+                        <input type="radio" class="btn-check" name="lesson_type" id="lt_practice"
+                               value="practice" {{ $lessonType === 'practice' ? 'checked' : '' }} onchange="this.form.submit()">
+                        <label class="btn btn-outline-success" for="lt_practice">Амалӣ</label>
+
+                        <input type="radio" class="btn-check" name="lesson_type" id="lt_lab"
+                               value="lab" {{ $lessonType === 'lab' ? 'checked' : '' }} onchange="this.form.submit()">
+                        <label class="btn btn-outline-info" for="lt_lab">Лаборатория</label>
+                    </div>
+                </div>
                 <div class="col-md-2">
                     <button type="submit" class="btn btn-outline-primary">
                         <i class="bi bi-search me-1"></i> Нишон деҳ
                     </button>
                 </div>
-                <div class="col-md-3 text-end">
+                <div class="col-md-2 text-end">
                     @php
                         $routePrefix = request()->is('admin/*') ? 'admin.journal' : 'teacher.journal';
                     @endphp
@@ -53,21 +69,47 @@
                 <i class="bi bi-journal-check me-2"></i>
                 {{ $period == 'rating1' ? 'Рейтинги 1 (Ҳафтаҳои 1-8)' : 'Рейтинги 2 (Ҳафтаҳои 9-16)' }}:
                 {{ \Carbon\Carbon::parse($date)->format('d.m.Y') }} — Дарси {{ $lessonNumber }}
+                <span class="badge bg-secondary ms-2">
+                    {{ match($lessonType) { 'lecture' => 'Лексия', 'practice' => 'Амалӣ', 'lab' => 'Лабораторӣ', default => $lessonType } }}
+                </span>
             </h6>
             <div>
-                @foreach($categorySettings->where('is_active', true) as $cs)
+                @foreach($activeSettings as $cs)
+                    @if($lessonType !== 'lecture' || $cs->category->value !== 'savod')
                     <span class="badge bg-{{ $cs->category->colorClass() }} me-1">
                         {{ $cs->category->shortLabel() }}: макс {{ $cs->max_score }}
                     </span>
+                    @endif
                 @endforeach
+                <span class="badge bg-dark">ҶАМЪ: {{ $maxForType + 0 }}</span>
             </div>
         </div>
+        @if(!empty($orphanScoreCategories))
+            <div class="alert alert-warning mb-0 rounded-0">
+                <i class="bi bi-exclamation-triangle me-1"></i>
+                Дарс навъи «{{ match($lessonType) { 'lecture' => 'Лексия', 'practice' => 'Амалӣ', 'lab' => 'Лабораторӣ', default => $lessonType } }}» дорад,
+                вале баллҳои категорияҳои
+                {{ collect($orphanScoreCategories)->map(fn ($v) => \App\Enums\GradeCategory::tryFrom($v)?->label() ?? $v)->join(', ') }}
+                мавҷуданд, ки барои ин навъ мувофиқ нестанд.
+                Баллҳо ҳифз шудаанд, вале ҳисоб намешаванд.
+            </div>
+        @endif
+        @error('lesson_type')
+            <div class="alert alert-danger mb-0 rounded-0">
+                <i class="bi bi-shield-exclamation me-1"></i>{{ $message }}
+                <label class="ms-2 small">
+                    <input type="checkbox" form="category-scores-form" name="confirm_type_change" value="1">
+                    Тасдиқ мекунам — навъро иваз кун (баллҳо ҳифз мешаванд)
+                </label>
+            </div>
+        @enderror
         <div class="card-body p-0">
-            <form method="POST" action="{{ route((request()->is('admin/*') ? 'admin.journal' : 'teacher.journal') . '.category-scores.store', $subjectAssignment) }}">
+            <form method="POST" id="category-scores-form" action="{{ route((request()->is('admin/*') ? 'admin.journal' : 'teacher.journal') . '.category-scores.store', $subjectAssignment) }}">
                 @csrf
                 <input type="hidden" name="date" value="{{ $date }}">
                 <input type="hidden" name="lesson_number" value="{{ $lessonNumber }}">
                 <input type="hidden" name="period" value="{{ $period }}">
+                <input type="hidden" name="lesson_type" value="{{ $lessonType }}">
 
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered table-hover mb-0">
@@ -75,12 +117,14 @@
                             <tr>
                                 <th style="width: 40px;">#</th>
                                 <th style="min-width: 180px;">Донишҷӯ</th>
-                                @foreach($categorySettings->where('is_active', true) as $cs)
+                                @foreach($activeSettings as $cs)
+                                    @if($lessonType !== 'lecture' || $cs->category->value !== 'savod')
                                     <th class="text-center" style="min-width: 80px;">
                                         <i class="bi {{ $cs->category->icon() }} me-1"></i>
                                         {{ $cs->category->shortLabel() }}
                                         <br><small class="text-muted">(0-{{ $cs->max_score }})</small>
                                     </th>
+                                    @endif
                                 @endforeach
                                 <th class="text-center">Ҷамъ</th>
                             </tr>
@@ -90,7 +134,8 @@
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
                                     <td>{{ $student->user?->full_name }}</td>
-                                    @foreach($categorySettings->where('is_active', true) as $cs)
+                                    @foreach($activeSettings as $cs)
+                                        @if($lessonType !== 'lecture' || $cs->category->value !== 'savod')
                                         @php
                                             $key = $student->id . '_' . $cs->category->value;
                                             $existing = $existingScores[$key] ?? null;
@@ -117,6 +162,7 @@
                                                        placeholder="—">
                                             @endif
                                         </td>
+                                        @endif
                                     @endforeach
                                     <td class="text-center">
                                         <strong class="student-total" id="total-{{ $student->id }}">0</strong>

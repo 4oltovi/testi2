@@ -164,7 +164,7 @@ class RatingService
                 return [
                     'rank' => $index + 1,
                     'student_name' => $student->user?->full_name,
-                    'group' => $student->group?->name,
+                    'group' => $student->group?->display_name,
                     'specialty' => $student->specialty?->name,
                     'gpa' => $gpa?->gpa ?? 0,
                     'cumulative_gpa' => $student->cumulative_gpa,

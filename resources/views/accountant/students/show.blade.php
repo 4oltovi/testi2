@@ -40,6 +40,16 @@
                             <input type="date" class="form-control" name="payment_date" value="{{ now()->format('Y-m-d') }}" required>
                         </div>
                         <div class="col-md-4">
+                            <label class="form-label">Рақами расид <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="receipt_number"
+                                   maxlength="50" required
+                                   value="{{ old('receipt_number') }}"
+                                   placeholder="Масалан: 000123">
+                            @error('receipt_number')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-4">
                             <label class="form-label">Тарзи пардохт</label>
                             <input type="text" class="form-control" name="payment_method" placeholder="Масалан: нақд, бонк">
                         </div>
@@ -74,12 +84,13 @@
                 <div class="table-responsive">
                     <table class="table table-sm table-hover mb-0">
                         <thead class="table-light">
-                            <tr><th>Сана</th><th>Маблағ</th><th>Тарзи пардохт</th></tr>
+                            <tr><th>Сана</th><th>Рақами расид</th><th>Маблағ</th><th>Тарзи пардохт</th></tr>
                         </thead>
                         <tbody>
                             @forelse($student->contractPayments->sortByDesc('payment_date') as $p)
                             <tr>
-                                <td>{{ $p->payment_date?->format('d.m.Y') }}</td><td>{{ $p->receipt_number ?? '\u2014' }}</td>
+                                <td>{{ $p->payment_date?->format('d.m.Y') }}</td>
+                                <td>{{ $p->receipt_number ?? '—' }}</td>
                                 <td class="text-success">{{ number_format($p->amount, 0) }}</td>
                                 <td>{{ $p->payment_method ?? '—' }}</td>
                             </tr>

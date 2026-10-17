@@ -31,7 +31,7 @@
                 <tr>
                     <td>{{ $i + 1 }}</td>
                     <td>{{ $debt->student?->user?->full_name ?? '-' }}</td>
-                    <td>{{ $debt->student?->group?->name ?? '-' }}</td>
+                    <td>{{ $debt->student?->group?->display_name ?? '-' }}</td>
                     <td>{{ $debt->subject?->name ?? '-' }}</td>
                     <td>{{ $debt->semester?->name ?? '-' }}</td>
                     <td>{{ $debt->reason ?? '-' }}</td>

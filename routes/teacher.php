@@ -20,8 +20,6 @@ Route::middleware(['web', 'auth', 'role:teacher'])->prefix('teacher')->name('tea
     // Журнали электронӣ
     Route::prefix('journal')->name('journal.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Teacher\JournalController::class, 'index'])->name('index');
-        Route::get('/attendance/{subjectAssignment}', [\App\Http\Controllers\Teacher\JournalController::class, 'attendance'])->name('attendance');
-        Route::post('/attendance/{subjectAssignment}', [\App\Http\Controllers\Teacher\JournalController::class, 'storeAttendance'])->name('attendance.store');
         Route::get('/grades/{subjectAssignment}', [\App\Http\Controllers\Teacher\JournalController::class, 'grades'])->name('grades');
         Route::post('/grades/{subjectAssignment}', [\App\Http\Controllers\Teacher\JournalController::class, 'storeGrades'])->name('grades.store');
         Route::get('/semester-grades/{subjectAssignment}', [\App\Http\Controllers\Teacher\JournalController::class, 'semesterGrades'])->name('semester-grades');
@@ -46,6 +44,7 @@ Route::middleware(['web', 'auth', 'role:teacher'])->prefix('teacher')->name('tea
         Route::post('/{exam}/publish', [\App\Http\Controllers\Teacher\ExamController::class, 'publish'])->name('publish');
         Route::post('/{exam}/add-questions', [\App\Http\Controllers\Teacher\ExamController::class, 'addQuestions'])->name('add-questions');
         Route::delete('/{exam}/questions/{examQuestion}', [\App\Http\Controllers\Teacher\ExamController::class, 'removeQuestion'])->name('remove-question');
+        Route::delete('/{exam}', [\App\Http\Controllers\Teacher\ExamController::class, 'destroy'])->name('destroy');
     });
 
     // Банки саволҳо

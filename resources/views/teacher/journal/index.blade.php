@@ -24,12 +24,12 @@
                         <div class="card-body">
                             <p class="mb-1">
                                 <i class="bi bi-people me-1"></i>
-                                <strong>Гурӯҳ:</strong> {{ $assignment->group?->name }}
+                                <strong>Гурӯҳ:</strong> {{ $assignment->group?->display_name }}
                             </p>
                             <p class="mb-1">
                                 <i class="bi bi-bookmark me-1"></i>
                                 <strong>Навъ:</strong>
-                                {{ match($assignment->lesson_type) { 'lecture' => 'Лексия', 'practice' => 'Амалӣ', 'lab' => 'Лабораторӣ', default => $assignment->lesson_type } }}
+                                @include('partials.lesson-type-breakdown', ['assignment' => $assignment])
                             </p>
                             <p class="mb-0">
                                 <i class="bi bi-clock me-1"></i>

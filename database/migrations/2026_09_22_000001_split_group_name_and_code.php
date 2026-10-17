@@ -9,8 +9,22 @@ return new class extends Migration
 {
     public function up(): void
     {
-        $uniqueExists = DB::select("SHOW INDEX FROM `groups` WHERE Key_name = 'groups_code_unique'");
-        if (!empty($uniqueExists)) {
+        // SQLite-compatible check for unique index
+        $uniqueExists = false;
+        if (DB::getDriverName() === 'sqlite') {
+            $indexes = DB::select("PRAGMA index_list('groups')");
+            foreach ($indexes as $idx) {
+                if (isset($idx->name) && $idx->name === 'groups_code_unique') {
+                    $uniqueExists = true;
+                    break;
+                }
+            }
+        } else {
+            $result = DB::select("SHOW INDEX FROM `groups` WHERE Key_name = 'groups_code_unique'");
+            $uniqueExists = !empty($result);
+        }
+
+        if ($uniqueExists) {
             Schema::table('groups', function (Blueprint $table) {
                 $table->dropUnique('groups_code_unique');
             });

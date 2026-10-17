@@ -24,7 +24,7 @@ class AttendanceController extends Controller
             $records = DB::table('daily_attendance')
                 ->where('student_id', $student->id)
                 ->join('groups', 'daily_attendance.group_id', '=', 'groups.id')
-                ->select('daily_attendance.*', 'groups.name as group_name')
+                ->select('daily_attendance.*', DB::raw("CONCAT(groups.name, ' ', groups.code) as group_name"))
                 ->orderByDesc('daily_attendance.attendance_date')
                 ->paginate(50);
 

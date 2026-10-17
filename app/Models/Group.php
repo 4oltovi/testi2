@@ -60,7 +60,31 @@ class Group extends Model
 
     public function getFullNameAttribute(): string
     {
-        return trim($this->name . ' ' . $this->code);
+        return $this->display_name;
+    }
+
+    public function getDisplayNameAttribute(): string
+    {
+        $name = trim((string) ($this->name ?? ''));
+        $code = trim((string) ($this->code ?? ''));
+
+        if ($name === '' && $code === '') {
+            return '—';
+        }
+        if ($name === '') {
+            return $code;
+        }
+        if ($code === '') {
+            return $name;
+        }
+        if (strcasecmp($name, $code) === 0) {
+            return $name;
+        }
+        if (preg_match('/(?:^|\s)' . preg_quote($code, '/') . '$/u', $name)) {
+            return $name;
+        }
+
+        return $name . ' ' . $code;
     }
 
     public function getStudentsCountAttribute(): int

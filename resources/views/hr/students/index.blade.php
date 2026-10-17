@@ -75,7 +75,7 @@
                                 </a>
                             </td>
                             <td><code>{{ $student->student_id_number }}</code></td>
-                            <td>{{ $student->group?->name ?? '—' }}</td>
+                            <td>{{ $student->group?->display_name ?? '—' }}</td>
                             <td>{{ $student->specialty?->name ?? '—' }}</td>
                             <td>{{ $student->course?->name ?? '—' }}</td>
                             <td>

@@ -90,7 +90,7 @@
                     <td style="border:none; padding:2px 0; text-align:right;">Миқдори кредит: <b>{{ $v?->subjectAssignment?->credits ?? $v?->subject?->credits ?? '-' }}</b></td>
                 </tr>
                 <tr>
-                    <td style="border:none; padding:2px 0;">Гурӯҳ: <b>{{ optional($group)->name ?? '-' }}</b></td>
+                    <td style="border:none; padding:2px 0;">Гурӯҳ: <b>{{ optional($group)->full_name ?? '-' }}</b></td>
                     <td style="border:none; padding:2px 0; text-align:right;">Нимсола: <b>{{ optional($retakeExam->semester)->name ?? optional($retakeExam->semester)->number ?? $retakeExam->semester_id }}</b></td>
                 </tr>
                 <tr>

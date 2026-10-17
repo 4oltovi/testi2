@@ -179,7 +179,7 @@ $showNav = $user->hasRole(App\Enums\UserRole::DEAN) || $user->hasRole(App\Enums\
                             @forelse($stats['recent_students'] as $student)
                             <tr>
                                 <td>{{ $student->user?->full_name ?? '—' }}</td>
-                                <td>{{ $student->group?->name ?? '—' }}</td>
+                                <td>{{ $student->group?->display_name ?? '—' }}</td>
                                 <td><small>{{ $student->created_at?->format('d.m.Y') }}</small></td>
                             </tr>
                             @empty

@@ -255,7 +255,7 @@ class TranscriptController extends Controller
             'totalEarned'     => $totalEarned,
             'totalMandatory'  => $totalMandatory,
             'studyForm'       => $studyForm,
-            'bahshGroup'      => ($student->course?->number ?? $student->course?->name ?? '') . '-' . ($student->group?->code ?? $student->group?->name ?? ''),
+            'bahshGroup'      => ($student->course?->number ?? $student->course?->name ?? '') . '-' . ($student->group?->code ?? $student->group?->display_name ?? ''),
             'specialtyCode'   => $student->specialty?->code ?? '',
             'facultyName'     => optional(optional(optional($student->specialty)->department)->faculty)->name ?? optional($student->specialty)->name ?? '-',
             'transcriptNumber' => $number,

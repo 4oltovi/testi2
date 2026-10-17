@@ -3,7 +3,7 @@
 @section('title', 'Давомот')
 @section('page-header', 'Давомот')
 @section('page-description')
-    {{ $subjectAssignment->subject?->name }} | {{ $subjectAssignment->group?->name }}
+    {{ $subjectAssignment->subject?->name }} | {{ $subjectAssignment->group?->display_name }}
 @endsection
 
 @section('content')

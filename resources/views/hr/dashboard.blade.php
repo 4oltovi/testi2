@@ -159,7 +159,7 @@
                                             </td>
                                             <td class="text-end">
                                                 <span class="badge bg-light text-dark">
-                                                    {{ $student->group?->name ?? '—' }}
+                                                    {{ $student->group?->display_name ?? '—' }}
                                                 </span>
                                             </td>
                                         </tr>

@@ -63,18 +63,10 @@
                     <tr>
                         <td class="fw-semibold">{{ $assignment->subject?->name }}</td>
                         <td class="text-center"><span class="badge bg-primary">{{ $assignment->credits }}</span></td>
-                        <td><span class="badge bg-info">{{ $assignment->group?->name }}</span></td>
+                        <td><span class="badge bg-info">{{ $assignment->group?->display_name }}</span></td>
                         <td>{{ $assignment->teacher?->short_name ?? '—' }}</td>
                         <td>
-                            @php
-                            $typeLabel = match($assignment->lesson_type) {
-                            'lecture' => 'Лексия',
-                            'practice' => 'Амалӣ',
-                            'lab' => 'Лабор.',
-                            default => $assignment->lesson_type,
-                            };
-                            @endphp
-                            <small>{{ $typeLabel }}</small>
+                            <small>@include('partials.lesson-type-breakdown', ['assignment' => $assignment])</small>
                         </td>
                         <td><small>{{ $assignment->semester?->name }}</small></td>
 <td class="text-center">

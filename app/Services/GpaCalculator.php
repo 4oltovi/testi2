@@ -56,15 +56,25 @@ class GpaCalculator
         $subjectsPassed = 0;
         $subjectsFailed = 0;
 
-        foreach ($grades as $grade) {
-            $credits = $grade->subjectAssignment?->credits ?? 0;
-            $gradePoint = $grade->grade_point ?? 0;
+        // Як фан = як ҳисоб (лекция/амалӣӣ/лабораторӣ = як фан):
+        // кредитҳо ҷамъ мешаванд, аммо шумораи фанҳо як маротиба ҳисоб мешавад
+        $bySubject = $grades->groupBy('subject_id');
 
-            $totalCreditsAttempted += $credits;
-            $totalGradePoints += ($gradePoint * $credits);
+        foreach ($bySubject as $subjectRows) {
+            foreach ($subjectRows as $grade) {
+                $credits = $grade->subjectAssignment?->credits ?? 0;
+                $gradePoint = $grade->grade_point ?? 0;
 
-            if ($grade->isPassed()) {
-                $totalCreditsEarned += $credits;
+                $totalCreditsAttempted += $credits;
+                $totalGradePoints += ($gradePoint * $credits);
+
+                if ($grade->isPassed()) {
+                    $totalCreditsEarned += $credits;
+                }
+            }
+
+            // Фан агар ҳатто як қисми он гузашта бошад = гузашта
+            if ($subjectRows->contains(fn ($grade) => $grade->isPassed())) {
                 $subjectsPassed++;
             } else {
                 $subjectsFailed++;
