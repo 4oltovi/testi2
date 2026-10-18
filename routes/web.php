@@ -38,6 +38,23 @@ Route::get('/csrf-refresh', function (Request $request) {
     return response()->json(['token' => csrf_token()]);
 })->name('csrf.refresh');
 
+// Session status check (AJAX-friendly, no auth required for the check itself)
+Route::get('/session-check', function (Request $request) {
+    if (! $request->user()) {
+        return response()->json(['valid' => false, 'remaining' => 0], 401);
+    }
+
+    $lifetime = (int) config('session.lifetime') * 60;
+    $activity = $request->session()->get('last_activity', time());
+    $remaining = max(0, $activity + $lifetime - time());
+
+    return response()->json([
+        'valid' => true,
+        'remaining' => $remaining,
+        'lifetime' => $lifetime,
+    ]);
+})->name('session.check');
+
 // Парол
 Route::middleware('auth')->group(function () {
     Route::get('/password/change', [PasswordController::class, 'showChangeForm'])->name('password.change');

@@ -53,6 +53,10 @@ class LoginController extends Controller
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
 
+            // Initialize session activity tracking so the client-side
+            // countdown can be synchronized with the server-side lifetime.
+            $request->session()->put('last_activity', time());
+
             $user = Auth::user();
 
             $intended = session()->pull('url.intended', null);

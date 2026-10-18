@@ -90,9 +90,17 @@
                     <input type="text" x-model="search" @input.debounce.300ms="
                         if (search.length >= 2) {
                             loading = true;
-                            fetch('{{ route('admin.students.search') }}?' + new URLSearchParams({ search: search, group_id: '{{ request('group_id') }}', course_id: '{{ request('course_id') }}', status: '{{ request('status') }}' }))
-                                .then(r => r.json())
-                                .then(data => { results = data; showResults = true; loading = false; })
+                            fetch('{{ route('admin.students.search') }}?' + new URLSearchParams({ search: search, group_id: '{{ request('group_id') }}', course_id: '{{ request('course_id') }}', status: '{{ request('status') }}' }), {
+                                headers: { 'Accept': 'application/json' }
+                            })
+                                .then(r => {
+                                    if (r.status === 401 || r.status === 419) {
+                                        window.location.replace('/login');
+                                        return null;
+                                    }
+                                    return r.json();
+                                })
+                                .then(data => { if (data) { results = data; showResults = true; } loading = false; })
                                 .catch(() => { loading = false; });
                         } else {
                             results = []; showResults = false;

@@ -29,11 +29,13 @@ return Application::configure(basePath: dirname(__DIR__))
         'restrict.offline' => \App\Http\Middleware\RestrictOfflineAccess::class,
         'dean.readonly'    => \App\Http\Middleware\DeanReadOnly::class,
         'deny.hr.admin'   => \App\Http\Middleware\DenyHrAdminAccess::class,
+        'track.session'    => \App\Http\Middleware\TrackSessionActivity::class,
     ]);
 
     $middleware->web(append: [
         \App\Http\Middleware\ForcePasswordChange::class,
         \App\Http\Middleware\SetCacheHeaders::class,
+        \App\Http\Middleware\TrackSessionActivity::class,
     ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

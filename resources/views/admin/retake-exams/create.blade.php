@@ -105,9 +105,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function checkSelection() {
         if (subjectSelect.value && semesterSelect.value && retakeTypeSelect.value) {
-            fetch(`{{ route('admin.retake-exams.check-main-exam') }}?subject_id=${subjectSelect.value}&semester_id=${semesterSelect.value}&retake_type=${retakeTypeSelect.value}`)
-                .then(response => response.json())
+            fetch(`{{ route('admin.retake-exams.check-main-exam') }}?subject_id=${subjectSelect.value}&semester_id=${semesterSelect.value}&retake_type=${retakeTypeSelect.value}`, {
+                    headers: { 'Accept': 'application/json' }
+                })
+                .then(response => {
+                    if (response.status === 401 || response.status === 419) {
+                        window.location.replace('/login');
+                        return null;
+                    }
+                    return response.json();
+                })
                 .then(data => {
+                    if (!data) return;
                     if (data.exists) {
                         document.getElementById('mainExamFormat').textContent = data.format;
                         document.getElementById('mainExamDuration').textContent = data.duration_minutes + ' дақиқа';

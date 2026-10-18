@@ -164,3 +164,143 @@ function gradeColorClass(letter) {
     if (letter.startsWith('D')) return 'grade-d';
     return 'grade-f';
 }
+
+// ====== Session Expiry Manager ======
+
+(function() {
+    let sessionManager = null;
+    let redirectInProgress = false;
+    const CHECK_INTERVAL = 30000; // 30 seconds
+
+    function getCsrfToken() {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        return meta ? meta.content : '';
+    }
+
+    function getLoginUrl() {
+        return '/login';
+    }
+
+    async function checkSession() {
+        try {
+            const resp = await fetch('/session-check', {
+                headers: { 'Accept': 'application/json' },
+                credentials: 'same-origin'
+            });
+
+            if (resp.status === 401) {
+                handleSessionExpired();
+                return;
+            }
+
+            if (!resp.ok) {
+                return;
+            }
+
+            const data = await resp.json();
+
+            if (data.valid === false || data.remaining <= 0) {
+                handleSessionExpired();
+                return;
+            }
+
+            if (sessionManager) {
+                sessionManager.updateRemaining(data.remaining);
+            }
+        } catch(e) {
+            // Network error or unexpected response - don't redirect
+        }
+    }
+
+    function handleSessionExpired() {
+        if (redirectInProgress) return;
+        redirectInProgress = true;
+
+        // Show Tajik message if possible
+        try {
+            if (typeof bootstrap !== 'undefined') {
+                const toastEl = document.createElement('div');
+                toastEl.className = 'toast-container position-fixed top-0 end-0 p-3';
+                toastEl.innerHTML =
+                    '<div class="toast show" role="alert">' +
+                    '<div class="toast-header bg-warning text-white">' +
+                    '<strong class="me-auto">Р”РѕРЅРёС€С‘СЂ</strong>' +
+                    '</div>' +
+                    '<div class="toast-body">' +
+                    'РњСѓТіР»Р°С‚Рё СЃРµСЃСЃРёСЏРё С€СѓРјРѕ Р±Р° РѕС…РёСЂ СЂР°СЃРёРґ. Р›СѓС‚С„Р°РЅ, Р°Р· РЅР°РІ РІРѕСЂРёРґ С€Р°РІРµРґ.' +
+                    '</div>' +
+                    '</div>';
+                document.body.appendChild(toastEl);
+            }
+        } catch(e) {}
+
+        // Redirect after a brief delay
+        setTimeout(() => {
+            window.location.replace(getLoginUrl());
+        }, 1500);
+    }
+
+    function initSessionManager() {
+        if (sessionManager) return;
+        sessionManager = {
+            remaining: 0,
+            timer: null,
+            updateRemaining(sec) {
+                if (this.timer) clearInterval(this.timer);
+                this.remaining = sec;
+                if (sec <= 0) {
+                    handleSessionExpired();
+                    return;
+                }
+                this.timer = setInterval(() => {
+                    this.remaining--;
+                    if (this.remaining <= 0) {
+                        clearInterval(this.timer);
+                        handleSessionExpired();
+                    }
+                }, 1000);
+            }
+        };
+
+        // Initial check
+        checkSession();
+
+        // Periodic server check
+        setInterval(() => {
+            checkSession();
+        }, CHECK_INTERVAL);
+    }
+
+    // Fetch interceptor
+    const originalFetch = window.fetch;
+    window.fetch = function(...args) {
+        return originalFetch.apply(this, args).then(response => {
+            // Check for auth-related status codes
+            if (response.status === 401 || response.status === 419) {
+                // Only redirect if this is a same-origin request to our app
+                const url = typeof args[0] === 'string' ? args[0] : (args[0] && args[0].url);
+                if (url && typeof url === 'string' && url.startsWith('/')) {
+                    handleSessionExpired();
+                }
+            }
+            return response;
+        });
+    };
+
+    // Initialize on DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', function() {
+        // Only start session manager if user is authenticated (check for sidebar or navbar)
+        const hasAuthElements = document.getElementById('sidebar') ||
+            document.querySelector('.navbar') ||
+            document.querySelector('[class*="dashboard"]');
+        if (hasAuthElements) {
+            initSessionManager();
+        }
+    });
+
+    // Expose for testing
+    window.DonishorSession = {
+        checkSession: checkSession,
+        init: initSessionManager
+    };
+})();
