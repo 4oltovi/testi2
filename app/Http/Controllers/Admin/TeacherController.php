@@ -153,7 +153,7 @@ class TeacherController extends Controller
         $teacher->load([
             'user.roles',
             'department.faculty:id,name',
-            'subjectAssignments' => fn($q) => $q->with(['subject:id,name', 'group:id,name', 'semester:id,number'])->where('is_active', true),
+            'subjectAssignments' => fn($q) => $q->with(['subject:id,name', 'group:id,name,code', 'semester:id,number'])->where('is_active', true),
             'activityLog' => fn($q) => $q->latest(),
         ]);
 

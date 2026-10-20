@@ -47,7 +47,7 @@ class VedomostController extends Controller
             $assignments = SubjectAssignment::with([
                 'subject:id,name',
                 'teacher:id,first_name,last_name,middle_name',
-                'group:id,name,academic_year_id',
+                'group:id,name,code,academic_year_id',
             ])
                 ->where('group_id', $groupId)
                 ->where('semester_id', $semesterId)
@@ -69,7 +69,7 @@ class VedomostController extends Controller
             $vedomosts = Vedomost::with([
                 'subject:id,name,credits',
                 'subjectAssignment:id,subject_id,credits',
-                'group:id,name',
+                'group:id,name,code',
                 'teacher:id,first_name,last_name,middle_name',
                 'semester:id,number',
                 'academicYear:id,name',
@@ -245,7 +245,7 @@ class VedomostController extends Controller
     {
         $vedomosts = Vedomost::with([
             'subject:id,name',
-            'group:id,name',
+            'group:id,name,code',
             'teacher:id,first_name,last_name',
             'semester:id,number',
             'academicYear:id,name',
@@ -297,7 +297,7 @@ class VedomostController extends Controller
         $query = RetakeVedomost::with([
             'retakeExam.subject:id,name',
             'retakeExam.semester.academicYear:id,name',
-            'group:id,name',
+            'group:id,name,code',
             'academicYear:id,name',
             'semester:id,number',
         ]);
@@ -389,7 +389,7 @@ class VedomostController extends Controller
             ->groupBy('student_id')
             ->map(fn ($items) => $items->first());
 
-        $students = Student::with(['user:id,first_name,last_name,middle_name', 'group:id,name'])
+        $students = Student::with(['user:id,first_name,last_name,middle_name', 'group:id,name,code'])
             ->whereIn('id', $studentIds)
             ->where('status', 'active')
             ->get()

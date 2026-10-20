@@ -80,7 +80,7 @@ class SubjectController extends Controller
     {
         $subject->load([
             'department.faculty:id,name',
-            'subjectAssignments' => fn($q) => $q->with(['group:id,name', 'semester:id,number']),
+            'subjectAssignments' => fn($q) => $q->with(['group:id,name,code', 'semester:id,number']),
             'questionBanks' => fn($q) => $q->withCount('questions')
         ]);
 

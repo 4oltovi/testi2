@@ -45,7 +45,7 @@ class JournalController extends Controller
         $query = SubjectAssignment::with([
             'subject:id,name,code',
             'teacher:id,first_name,last_name,middle_name',
-            'group:id,name',
+            'group:id,name,code',
             'semester:id,number,academic_year_id',
         ])
             ->where('is_active', true);

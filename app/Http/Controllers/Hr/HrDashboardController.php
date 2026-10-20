@@ -100,7 +100,7 @@ class HrDashboardController extends Controller
                                 ->orWhere('middle_name', 'like', $like);
                         }));
                 })
-                ->with(['user:id,first_name,last_name,middle_name,avatar', 'group:id,name'])
+                ->with(['user:id,first_name,last_name,middle_name,avatar', 'group:id,name,code'])
                 ->orderBy('last_name')
                 ->limit(10)
                 ->get();

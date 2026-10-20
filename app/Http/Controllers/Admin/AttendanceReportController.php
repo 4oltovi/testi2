@@ -122,7 +122,7 @@ class AttendanceReportController extends Controller
                 COUNT(*) as total,
                 SUM(CASE WHEN daily_attendance.status = "present" THEN 1 ELSE 0 END) as present
             ')
-            ->groupBy('students.id', 'users.last_name', 'users.first_name', 'groups.name', 'students.student_id_number')
+            ->groupBy('students.id', 'users.last_name', 'users.first_name', 'groups.name', 'groups.code', 'students.student_id_number')
             ->havingRaw('(SUM(CASE WHEN daily_attendance.status = "present" THEN 1 ELSE 0 END) / COUNT(*)) * 100 < 75')
             ->orderByRaw('(present / total) * 100')
             ->limit(20)

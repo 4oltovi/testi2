@@ -85,7 +85,7 @@ class HrStudentController extends Controller
         // Ҳамаи алоқаҳо бо ҳадаф аст: танҳо identity.
         $student->loadMissing([
             'user:id,first_name,last_name,middle_name,status,avatar',
-            'group:id,name',
+            'group:id,name,code',
             'specialty:id,name',
             'course:id,name',
         ]);

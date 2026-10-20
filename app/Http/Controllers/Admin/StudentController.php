@@ -33,7 +33,7 @@ class StudentController extends Controller
         // Оптимизатсияи Eager Loading бо муносибатҳои лозимӣ
         $query = Student::with([
             'user:id,first_name,last_name,middle_name,login,status',
-            'group:id,name,specialty_id,course_id',
+            'group:id,name,code,specialty_id,course_id',
             'group.specialty:id,name',
             'specialty:id,name',
             'course:id,number'
@@ -86,7 +86,7 @@ class StudentController extends Controller
 
         $query = Student::with([
             'user:id,first_name,last_name,middle_name',
-            'group:id,name',
+            'group:id,name,code',
             'course:id,number,name'
         ])->limit(20);
 
