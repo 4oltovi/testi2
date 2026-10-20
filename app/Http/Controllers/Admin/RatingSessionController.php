@@ -9,7 +9,9 @@ use App\Models\Semester;
 use App\Models\Setting;
 use App\Models\Student;
 use App\Models\Subject;
+use App\Models\SubjectAssignment;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -30,10 +32,63 @@ class RatingSessionController extends Controller
     public function create(): View
     {
         $semesters = Semester::with('academicYear')->orderByDesc('start_date')->get();
-        $subjects = Subject::active()->orderBy('name')->get();
+        $currentSemester = Semester::current();
+        $currentSemesterId = $currentSemester?->id;
+
+        $subjects = $this->getSubjectsForSemester($currentSemesterId);
+
         $groups = Group::active()->with('specialty')->orderBy('name')->get();
 
-        return view('admin.rating-sessions.create', compact('semesters', 'subjects', 'groups'));
+        return view('admin.rating-sessions.create', compact('semesters', 'subjects', 'groups', 'currentSemesterId'));
+    }
+
+    public function subjectsBySemester(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'semester_id' => 'required|exists:semesters,id',
+            'group_ids' => 'nullable|array',
+            'group_ids.*' => 'integer|exists:groups,id',
+        ]);
+
+        $semesterId = (int) $validated['semester_id'];
+        $groupIds = $request->input('group_ids', []);
+
+        if (is_array($groupIds) && ! empty($groupIds)) {
+            $groupIds = array_map('intval', $groupIds);
+            $subjects = $this->getSubjectsForSemester($semesterId, $groupIds);
+        } else {
+            $subjects = $this->getSubjectsForSemester($semesterId);
+        }
+
+        return response()->json([
+            'subjects' => $subjects->map(function (Subject $subject) {
+                return [
+                    'id' => $subject->id,
+                    'name' => $subject->name,
+                ];
+            })->values(),
+        ]);
+    }
+
+    private function getSubjectsForSemester(?int $semesterId, array $groupIds = []): \Illuminate\Support\Collection
+    {
+        if (! $semesterId) {
+            return collect();
+        }
+
+        $query = Subject::active()
+            ->whereHas('subjectAssignments', function ($q) use ($semesterId, $groupIds) {
+                $q->where('semester_id', $semesterId)
+                    ->where('is_active', true);
+                // subject_assignments.merged_into_id is excluded by global scope
+
+                if (! empty($groupIds)) {
+                    $q->whereIn('group_id', $groupIds);
+                }
+            })
+            ->orderBy('name');
+
+        return $query->get();
     }
 
     public function store(Request $request): RedirectResponse
@@ -52,6 +107,29 @@ class RatingSessionController extends Controller
             'subject_ids.*' => 'integer|exists:subjects,id',
             'group_windows' => 'nullable|array',
         ]);
+
+        $semesterId = (int) $validated['semester_id'];
+        $groupIds = [];
+        if ($validated['schedule_mode'] === 'by_group' && $request->filled('group_windows')) {
+            $groupIds = array_keys($request->input('group_windows', []));
+            $groupIds = array_map('intval', $groupIds);
+        }
+
+        $allowedSubjectIds = $this->getSubjectsForSemester($semesterId, $groupIds)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $submittedSubjectIds = collect($validated['subject_ids'])
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $invalidSubjects = array_values(array_diff($submittedSubjectIds, $allowedSubjectIds));
+        if (! empty($invalidSubjects)) {
+            return back()->withInput()->withErrors([
+                'subject_ids' => 'Баъзе фанҳо барои семестри интихобшуда ва гурӯҳҳо иҷозат надораданд.',
+            ]);
+        }
 
         $session = new RatingSession();
 

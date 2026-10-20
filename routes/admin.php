@@ -215,10 +215,11 @@ Route::middleware(['web', 'auth', 'deny.hr.admin', 'role:admin,super_admin,moder
     Route::prefix('rating-sessions')->name('rating-sessions.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\RatingSessionController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\Admin\RatingSessionController::class, 'create'])->name('create');
+        Route::post('/subjects-by-semester', [\App\Http\Controllers\Admin\RatingSessionController::class, 'subjectsBySemester'])->name('subjects-by-semester');
         Route::post('/', [\App\Http\Controllers\Admin\RatingSessionController::class, 'store'])->name('store');
 
-        // ⚠️ МУҲИМ: {session} — на {ratingSession}! (ном бо $session рост ояд)
-        // ⚠️ /create бояд ПЕШ аз /{session} бошад!
+        // вљ пёЏ РњРЈТІРРњ: {session} вЂ” РЅР° {ratingSession}! (РЅРѕРј Р±Рѕ $session СЂРѕСЃС‚ РѕСЏРґ)
+        // вљ пёЏ /create Р±РѕСЏРґ РџР•РЁ Р°Р· /{session} Р±РѕС€Р°Рґ!
         Route::get('/{session}', [\App\Http\Controllers\Admin\RatingSessionController::class, 'show'])->name('show');
         Route::post('/{session}/publish', [\App\Http\Controllers\Admin\RatingSessionController::class, 'publish'])->name('publish');
         Route::post('/{session}/close', [\App\Http\Controllers\Admin\RatingSessionController::class, 'close'])->name('close');
