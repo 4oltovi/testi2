@@ -112,20 +112,13 @@ class RatingSession extends Model
             return ['total' => 0, 'ready' => 0, 'missing' => 0, 'missing_ids' => []];
         }
 
-        $ids = implode(',', array_map('intval', $subjectIds));
-
-        $counts = collect(DB::select("
-            SELECT qb.subject_id AS sid, COUNT(*) AS cnt
-            FROM questions q
-            JOIN question_banks qb ON qb.id = q.question_bank_id
-            WHERE qb.bank_type = 'rating' AND qb.subject_id IN ({$ids})
-            GROUP BY qb.subject_id
-        "))->keyBy('sid');
-
         $missing = [];
+        $counts = [];
         foreach ($subjectIds as $sid) {
-            if ((int) ($counts[$sid]->cnt ?? 0) < $need) {
-                $missing[] = $sid;
+            $cnt = \App\Models\Question::forRatingSelectable((int)$sid)->count();
+            $counts[$sid] = $cnt;
+            if ($cnt < $need) {
+                $missing[] = (int)$sid;
             }
         }
 
@@ -134,6 +127,7 @@ class RatingSession extends Model
             'ready' => count($subjectIds) - count($missing),
             'missing' => count($missing),
             'missing_ids' => $missing,
+            'counts' => $counts,
         ];
     }
 }

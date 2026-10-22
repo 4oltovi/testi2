@@ -79,4 +79,42 @@ class Question extends Model
             default => (float) ($this->points ?? 1.0),
         };
     }
+
+    /**
+     * Scope for selectable rating questions (shared rule for start() and readinessReport())
+     * Question is selectable if: belongs to question bank with bank_type='rating' and subject_id;
+     * questions.is_active = 1; questions.deleted_at IS NULL (and question bank not soft-deleted if used);
+     * has at least one answer option and exactly one correct option.
+     */
+    public function scopeForRatingSelectable($query, int $subjectId)
+    {
+        $query->withoutTrashed()
+            ->where('questions.is_active', true)
+            ->whereHas('questionBank', function ($q) use ($subjectId) {
+                $q->where('bank_type', 'rating')
+                    ->where('subject_id', $subjectId);
+                if (method_exists($q->getModel(), 'getDeletedAtColumn')) {
+                    $q->withoutTrashed();
+                }
+            })
+            ->whereHas('answerOptions', function ($q) {
+                $q->where('is_correct', true);
+            }, '=', 1)
+            ->whereHas('answerOptions');
+
+        return $query;
+    }
+
+    /**
+     * Get selectable rating question ids for subject
+     */
+    public static function selectableRatingIds(int $subjectId)
+    {
+        return static::forRatingSelectable($subjectId)
+            ->select('questions.id')
+            ->pluck('questions.id');
+    }
 }
+
+use Illuminate\Support\Facades\DB;
+

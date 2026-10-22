@@ -203,7 +203,7 @@ class RatingController extends Controller
         $answers = $request->input('answers', []);
         $ids = $ratingAttempt->answers_json['ids'] ?? [];
 
-        // Ҷавобҳои дуруст — ЯК query
+        //    —   query
         $correctOptions = AnswerOption::whereIn('question_id', $ids)
             ->where('is_correct', true)
             ->pluck('id', 'question_id');
@@ -219,7 +219,9 @@ class RatingController extends Controller
             }
         }
 
-        $total = count($ids) ?: 1;
+        // compute total_questions from the number of questions actually presented in this attempt (the ids that resolve)
+        $presented = Question::whereIn('id', $ids)->count();
+        $total = $presented > 0 ? $presented : (count($ids) ?: 1);
         $percentage = round(($correct / $total) * 100, 2);
 
         $ratingAttempt->update([
