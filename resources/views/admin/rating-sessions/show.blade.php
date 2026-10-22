@@ -106,6 +106,45 @@
         <h6 class="mb-0"><i class="bi bi-table me-2"></i>Натиҷаҳо (автоматӣ)</h6>
         <small class="text-muted">Журнал: {{ $results['journal_max'] }} бал | Тест: {{ $results['test_max'] }} бал</small>
     </div>
+    <div class="card-body border-bottom py-2">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" id="rsSearch" class="form-control" placeholder="Ҷустуҷӯи донишҷӯ...">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <select id="rsGroup" class="form-select form-select-sm">
+                    <option value="">Ҳама гурӯҳҳо</option>
+                    @foreach(collect($results['rows'])->pluck('group')->unique()->sort() as $g)
+                        <option value="{{ $g }}">{{ $g }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select id="rsSubject" class="form-select form-select-sm">
+                    <option value="">Ҳама фанҳо</option>
+                    @foreach(collect($results['rows'])->pluck('subject')->unique()->sort() as $s)
+                        <option value="{{ $s }}">{{ $s }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select id="rsStatus" class="form-select form-select-sm">
+                    <option value="">Ҳама</option>
+                    <option value="done">Супоридааст</option>
+                    <option value="none">Ҳанӯз нест</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="button" id="rsReset" class="btn btn-outline-secondary btn-sm w-100">Тоза кардан</button>
+            </div>
+            <div class="col-md-1 text-end">
+                <small class="text-muted" id="rsCounter"></small>
+            </div>
+        </div>
+    </div>
     <div class="card-body p-0">
         <div class="table-responsive" style="max-height: 60vh; overflow-y: auto;">
             <table class="table table-sm table-hover mb-0">
@@ -121,7 +160,8 @@
                 </thead>
                 <tbody>
                     @forelse($results['rows'] as $row)
-                    <tr>
+                    <tr data-student="{{ mb_strtolower($row['student']) }}" data-group="{{ $row['group'] }}" data-subject="{{ $row['subject'] }}" data-status="{{ $row['pct'] !== null ? 'done' : 'none' }}">
+
                         <td>{{ $row['student'] }}</td>
                         <td><span class="badge bg-info">{{ $row['group'] }}</span></td>
                         <td>{{ $row['subject'] }}</td>
@@ -145,4 +185,46 @@
         </div>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const search=document.getElementById('rsSearch');
+  const group=document.getElementById('rsGroup');
+  const subject=document.getElementById('rsSubject');
+  const status=document.getElementById('rsStatus');
+  const reset=document.getElementById('rsReset');
+  const counter=document.getElementById('rsCounter');
+  const rows=Array.from(document.querySelectorAll('tbody tr[data-student]'));
+  const total=rows.length;
+  function norm(s){return (s||'').toLowerCase().trim();}
+  function apply(){
+    const q=norm(search.value);
+    const g=group.value;
+    const s=subject.value;
+    const st=status.value;
+    let visible=0;
+    rows.forEach(r=>{
+      let ok=true;
+      if(q && norm(r.dataset.student).indexOf(q)===-1) ok=false;
+      if(ok && g && r.dataset.group!==g) ok=false;
+      if(ok && s && r.dataset.subject!==s) ok=false;
+      if(ok && st && r.dataset.status!==st) ok=false;
+      r.style.display=ok?'':'none';
+      if(ok) visible++;
+    });
+    counter.textContent='Нишон дода шуд: '+visible+' аз '+total;
+    // empty message
+    let emptyRow=document.getElementById('rsEmptyRow');
+    if(!emptyRow){
+      emptyRow=document.createElement('tr');
+      emptyRow.id='rsEmptyRow';
+      emptyRow.innerHTML='<td colspan="6" class="text-center text-muted py-4">Натиҷа ёфт нашуд.</td>';
+      document.querySelector('tbody').appendChild(emptyRow);
+    }
+    emptyRow.style.display = visible===0 ? '' : 'none';
+  }
+  [search,group,subject,status].forEach(el=>{ if(el){ el.addEventListener('input',apply); el.addEventListener('change',apply);} });
+  reset.addEventListener('click',function(){ search.value=''; group.value=''; subject.value=''; status.value=''; apply(); });
+  apply();
+});
+</script>
 @endsection
