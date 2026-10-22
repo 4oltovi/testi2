@@ -29,6 +29,16 @@
                     @endforeach
                 </select>
             </div>
+            <div class="col-md-3">
+                <label class="form-label small">Ҷустуҷӯи фан</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" name="q" class="form-control" placeholder="Ҷустуҷӯи фан..." value="{{ request('q') }}">
+                    @if(request('q'))
+                        <a href="{{ request()->fullUrlWithQuery(['q' => null]) }}" class="btn btn-outline-secondary">×</a>
+                    @endif
+                </div>
+            </div>
             <div class="col-md-2">
                 <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-filter me-1"></i> Филтр</button>
             </div>
@@ -100,7 +110,7 @@
                     <tr>
                         <td colspan="7" class="text-center text-muted py-4">
                             <i class="bi bi-journal-x fs-1 d-block mb-2"></i>
-                            Таъинот ёфт нашуд.
+                            {{ request('q') ? 'Фан ёфт нашуд' : 'Таъинот ёфт нашуд.' }}
                         </td>
                     </tr>
                     @endforelse

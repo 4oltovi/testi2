@@ -58,6 +58,11 @@ class JournalController extends Controller
             $query->where('group_id', $groupId);
         }
 
+        if ($q = trim((string) $request->get('q'))) {
+            $escaped = str_replace(['%', '_'], ['\\%', '\\_'], $q);
+            $query->whereHas('subject', fn ($s) => $s->where('name', 'like', '%' . $escaped . '%'));
+        }
+
         if ($teacherId = $request->get('teacher_id')) {
             $query->where('teacher_id', $teacherId);
         }
