@@ -9,7 +9,7 @@ use App\Models\Semester;
 use App\Models\Setting;
 use App\Models\Student;
 use App\Models\Subject;
-use App\Models\SubjectAssignment;
+use App\Services\RatingSubjectPairService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -19,6 +19,10 @@ use Illuminate\View\View;
 
 class RatingSessionController extends Controller
 {
+    public function __construct(private RatingSubjectPairService $pairService)
+    {
+    }
+
     public function index(): View
     {
         $sessions = RatingSession::with('semester.academicYear')
@@ -35,7 +39,8 @@ class RatingSessionController extends Controller
         $currentSemester = Semester::current();
         $currentSemesterId = $currentSemester?->id;
 
-        $subjects = $this->getSubjectsForSemester($currentSemesterId);
+        // Ҳамаи фанҳои фаъол + шумораи гурӯҳҳое, ки онҳоро дар семестр мехӯҷанд
+        $subjects = $this->pairService->subjectsWithGroupCounts($currentSemesterId);
 
         $groups = Group::active()->with('specialty')->orderBy('name')->get();
 
@@ -53,42 +58,21 @@ class RatingSessionController extends Controller
         $semesterId = (int) $validated['semester_id'];
         $groupIds = $request->input('group_ids', []);
 
-        if (is_array($groupIds) && ! empty($groupIds)) {
-            $groupIds = array_map('intval', $groupIds);
-            $subjects = $this->getSubjectsForSemester($semesterId, $groupIds);
-        } else {
-            $subjects = $this->getSubjectsForSemester($semesterId);
+        if (! is_array($groupIds)) {
+            $groupIds = [];
         }
+
+        $subjects = $this->pairService->subjectsWithGroupCounts($semesterId, array_map('intval', $groupIds));
 
         return response()->json([
             'subjects' => $subjects->map(function (Subject $subject) {
                 return [
                     'id' => $subject->id,
                     'name' => $subject->name,
+                    'groups_count' => (int) $subject->groups_count,
                 ];
             })->values(),
         ]);
-    }
-
-    private function getSubjectsForSemester(?int $semesterId, array $groupIds = []): \Illuminate\Support\Collection
-    {
-        if (! $semesterId) {
-            return collect();
-        }
-
-        $query = Subject::active()
-            ->whereHas('subjectAssignments', function ($q) use ($semesterId, $groupIds) {
-                $q->where('semester_id', $semesterId)
-                    ->where('is_active', true);
-                // subject_assignments.merged_into_id is excluded by global scope
-
-                if (! empty($groupIds)) {
-                    $q->whereIn('group_id', $groupIds);
-                }
-            })
-            ->orderBy('name');
-
-        return $query->get();
     }
 
     public function store(Request $request): RedirectResponse
@@ -109,25 +93,45 @@ class RatingSessionController extends Controller
         ]);
 
         $semesterId = (int) $validated['semester_id'];
-        $groupIds = [];
-        if ($validated['schedule_mode'] === 'by_group' && $request->filled('group_windows')) {
-            $groupIds = array_keys($request->input('group_windows', []));
-            $groupIds = array_map('intval', $groupIds);
-        }
 
-        $allowedSubjectIds = $this->getSubjectsForSemester($semesterId, $groupIds)
-            ->pluck('id')
-            ->map(fn ($id) => (int) $id)
-            ->all();
+        // Гурӯҳҳои иштирок: дар ҳолати «Аз рӯи гурӯҳҳо» — ани онҳое,
+        // ки равзанаи вақташон дар формул ҳаст; дар ҳолати умумӣ — ҳама.
+        $groupIds = [];
+        $groupWindows = [];
+
+        if ($validated['schedule_mode'] === 'by_group' && $request->filled('group_windows')) {
+            $groupWindows = $request->input('group_windows', []);
+            $requested = array_map('intval', array_keys($groupWindows));
+
+            $groupIds = Group::whereIn('id', $requested)
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+        }
 
         $submittedSubjectIds = collect($validated['subject_ids'])
             ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
             ->all();
 
-        $invalidSubjects = array_values(array_diff($submittedSubjectIds, $allowedSubjectIds));
-        if (! empty($invalidSubjects)) {
+        // Ҷуфтҳои (гурӯҳ, фан)-и мувофиқ — танҳо барои гурӯҳҳое,
+        // ки воқеан ин фанро дар ин семестр мехӯҷанд.
+        $pairs = $this->pairService->pairs($semesterId, $submittedSubjectIds, $groupIds);
+
+        $validSubjectIds = collect($pairs)
+            ->pluck('subject_id')
+            ->unique()
+            ->map(fn ($id) => (int) $id)
+            ->values()
+            ->all();
+
+        // Фанҳое, ки ягон гурӯҳ онҳоро намехӯҷад — гузашта мешаванд
+        $skippedSubjectIds = array_values(array_diff($submittedSubjectIds, $validSubjectIds));
+
+        if (empty($validSubjectIds)) {
             return back()->withInput()->withErrors([
-                'subject_ids' => 'Баъзе фанҳо барои семестри интихобшуда ва гурӯҳҳо иҷозат надораданд.',
+                'subject_ids' => 'Ин фанҳоро ягон гурӯҳ дар ин семестр намехӯҷад — сессия сохта нашуд.',
             ]);
         }
 
@@ -149,27 +153,39 @@ class RatingSessionController extends Controller
         ]);
 
         $session->save();
-        
 
-        // Фанҳо — ЯКБОРА (на як-як!)
+        // Фанҳо — ЯКБОРА (на як-як!), танҳо фанҳои дарозшаванда
         $session->subjects()->attach(
-            collect($validated['subject_ids'])
+            collect($validSubjectIds)
                 ->mapWithKeys(fn($id) => [$id => ['questions_count' => null]])
                 ->all()
         );
 
         // Гурӯҳҳо бо равзанаи вақт (режими by_group)
-        if ($validated['schedule_mode'] === 'by_group' && $request->filled('group_windows')) {
-            foreach ($request->group_windows as $groupId => $w) {
+        if ($validated['schedule_mode'] === 'by_group' && ! empty($groupWindows)) {
+            foreach ($groupIds as $groupId) {
+                $w = $groupWindows[$groupId] ?? [];
+
                 $session->groups()->attach($groupId, [
-                    'start_at' => $w['start_at'] ?: null,
-                    'end_at'   => $w['end_at'] ?: null,
+                    'start_at' => ($w['start_at'] ?? null) ?: null,
+                    'end_at'   => ($w['end_at'] ?? null) ?: null,
                 ]);
             }
         }
 
+        // Хулоса: чанд ҷуфт (гурӯҳ, фан) сохта шуд + кадом фанҳо гузашта шуданд
+        $message = sprintf(
+            'Сессия сохта шуд: %d ҷуфт (гурӯҳ, фан). Санҷиши омодагиро бинед ва нашр кунед.',
+            count($pairs)
+        );
+
+        if (! empty($skippedSubjectIds)) {
+            $skippedNames = Subject::whereIn('id', $skippedSubjectIds)->pluck('name')->implode(', ');
+            $message .= ' Фанҳои бе гурӯҳ (гузошта шуданд): ' . $skippedNames . '.';
+        }
+
         return redirect()->route('admin.rating-sessions.show', $session)
-            ->with('success', 'Сессия сохта шуд. Санҷиши омодагиро бинед ва нашр кунед.');
+            ->with('success', $message);
     }
 
     public function show(RatingSession $session): View
@@ -270,9 +286,19 @@ class RatingSessionController extends Controller
             ->get()
             ->sortBy(fn($s) => mb_strtolower($s->user?->last_name ?? ''));
 
+        // Фанҳои ҳар донишҷӯ — танҳо онҳое, ки гурӯҳи ӯ воқеан
+        // дар семестри сессия мехӯҷад (ҳеҷ сатри холи корӣ намешавад).
+        $allowedByGroup = $this->allowedSubjectsByGroup($session);
+
         $rows = [];
         foreach ($students as $student) {
+            $studentSubjectIds = $allowedByGroup->get((int) $student->group_id, []);
+
             foreach ($session->subjects as $subject) {
+                if (! in_array((int) $subject->id, $studentSubjectIds, true)) {
+                    continue;
+                }
+
                 $r = $bestMap->get($student->id . '_' . $subject->id);
 
                 $rows[] = [
@@ -291,5 +317,21 @@ class RatingSessionController extends Controller
             'journal_max' => $journalMax,
             'test_max' => $testMax,
         ];
+    }
+
+    /**
+     * [group_id => [subject_id, ...]] — фанҳои ҳар гурӯҳ дар семестри сессия.
+     */
+    private function allowedSubjectsByGroup(RatingSession $session): \Illuminate\Support\Collection
+    {
+        $groupIds = $session->schedule_mode === 'by_group'
+            ? $session->groups->pluck('id')->map(fn ($id) => (int) $id)->all()
+            : [];
+
+        $subjectIds = $session->subjects->pluck('id')->map(fn ($id) => (int) $id)->all();
+
+        return collect($this->pairService->pairs($session->semester_id, $subjectIds, $groupIds))
+            ->groupBy('group_id')
+            ->map(fn ($items) => $items->pluck('subject_id')->map(fn ($id) => (int) $id)->values()->all());
     }
 }

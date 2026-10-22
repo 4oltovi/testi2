@@ -23,6 +23,7 @@ class Subject extends Model
         'is_elective',
         'is_active',
         'description',
+        'semester_number',
     ];
 
     protected function casts(): array

@@ -20,10 +20,18 @@
 @section('content')
     {{-- Агар фан интихоб нашуда — рӯйхати фанҳо --}}
     @if(!request('subject_id'))
+        <div class="mb-3">
+            <select class="form-select form-select-sm" style="width:auto;display:inline-block;" onchange="const u=new URL(window.location.href); if(this.value) u.searchParams.set('semester_number',this.value); else u.searchParams.delete('semester_number'); window.location.href=u.toString();">
+                <option value="">Ҳама семестрҳо</option>
+                @for($i=1;$i<=12;$i++)
+                    <option value="{{ $i }}" {{ request('semester_number') == $i ? 'selected' : '' }}>Семестри {{ $i }}</option>
+                @endfor
+            </select>
+        </div>
         <div class="row g-3">
             @foreach($subjects as $subject)
                 @php $count = $questionCounts->get($subject->id, 0); @endphp
-                <div class="col-6 col-md-4 col-lg-3">
+                 <div class="col-6 col-md-4 col-lg-3" data-semester="{{ $subject->semester_number ?? '' }}">
                     <a href="{{ route('admin.exams.questions.index', ['subject_id' => $subject->id]) }}" class="text-decoration-none">
                         <div class="card border-0 shadow-sm h-100 hover-card">
                             <div class="card-body text-center py-4">
@@ -31,6 +39,9 @@
                                     <i class="bi bi-book fs-2 text-primary"></i>
                                 </div>
                                 <h6 class="mb-1 text-dark">{{ $subject->name }}</h6>
+                                @if($subject->semester_number)
+                                    <span class="badge bg-info text-dark mb-1">Семестри {{ $subject->semester_number }}</span><br>
+                                @endif
                                 <span class="badge bg-{{ $count > 0 ? 'success' : 'secondary' }}">
                                     {{ $count }} савол
                                 </span>
@@ -44,7 +55,7 @@
         @if($subjects->isEmpty())
             <div class="text-center py-5 text-muted">
                 <i class="bi bi-book fs-1 d-block mb-2"></i>
-                <p>Фанҳо ёфт нашуд. Аввал фанҳоро илова кунед.</p>
+                <p>Дар ин семестр фан нест.</p>
             </div>
         @endif
 

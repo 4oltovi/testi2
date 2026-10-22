@@ -55,11 +55,21 @@
                                 <option value="diff_credit" {{ old('exam_type', $subject->exam_type) == 'diff_credit' ? 'selected' : '' }}>Синҷиши бо баҳо</option>
                             </select>
                             @error('exam_type') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
-                    </div>
+                         </div>
+                     </div>
 
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Тавсиф</label>
+                     <div class="mb-3">
+                         <label for="semester_number" class="form-label">Семестр</label>
+                         <select class="form-select" id="semester_number" name="semester_number">
+                             <option value="">— муайян нашудааст —</option>
+                             @for($i = 1; $i <= 12; $i++)
+                                 <option value="{{ $i }}" {{ old('semester_number', $subject->semester_number) == $i ? 'selected' : '' }}>Семестри {{ $i }}</option>
+                             @endfor
+                         </select>
+                     </div>
+
+                     <div class="mb-3">
+                         <label for="description" class="form-label">Тавсиф</label>
                         <textarea class="form-control" id="description" name="description" rows="3">{{ old('description', $subject->description) }}</textarea>
                     </div>
 

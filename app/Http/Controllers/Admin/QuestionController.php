@@ -28,7 +28,10 @@ class QuestionController extends Controller
             ->latest()
             ->paginate(30);
 
-        $subjects = Subject::orderBy('name')->get();
+        $subjects = Subject::query()
+            ->when($request->filled('semester_number'), fn ($q) => $q->where('semester_number', $request->semester_number))
+            ->orderByRaw('CASE WHEN semester_number IS NULL THEN 1 ELSE 0 END, semester_number, name')
+            ->get();
         $questionCounts = Question::whereHas('questionBank', fn ($q) => $q->where('bank_type', 'exam'))
             ->selectRaw('subject_id, COUNT(*) as aggregate')
             ->groupBy('subject_id')

@@ -4874,3 +4874,1484 @@ Processing category: studentId=1, categoryValue=sarulibos, score=2, applicableCa
 )
 
 Creating score: studentId=1, category=sarulibos, score=2, maxScore=2, lessonType=lecture
+Store request: Array
+(
+    [date] => 2026-09-02
+    [lesson_number] => 3
+    [period] => rating1
+    [lesson_type] => practice
+    [scores] => Array
+        (
+            [22] => Array
+                (
+                    [savod] => 5
+                    [sarulibos] => 2
+                    [jihoz] => 1
+                    [ishtirok] => 3
+                    [intizom] => 3
+                )
+
+        )
+
+)
+
+Applicable categories: Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Processing category: studentId=22, categoryValue=savod, score=5, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=22, category=savod, score=5, maxScore=5.00, lessonType=practice
+Finished processing category: studentId=22, category=savod
+Processing category: studentId=22, categoryValue=sarulibos, score=2, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=22, category=sarulibos, score=2, maxScore=2.00, lessonType=practice
+Finished processing category: studentId=22, category=sarulibos
+Processing category: studentId=22, categoryValue=jihoz, score=1, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=22, category=jihoz, score=1, maxScore=2.00, lessonType=practice
+Finished processing category: studentId=22, category=jihoz
+Processing category: studentId=22, categoryValue=ishtirok, score=3, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=22, category=ishtirok, score=3, maxScore=3.00, lessonType=practice
+Finished processing category: studentId=22, category=ishtirok
+Processing category: studentId=22, categoryValue=intizom, score=3, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=22, category=intizom, score=3, maxScore=3.00, lessonType=practice
+Finished processing category: studentId=22, category=intizom
+Store request: Array
+(
+    [date] => 2026-09-05
+    [lesson_number] => 1
+    [period] => rating1
+    [lesson_type] => lecture
+    [scores] => Array
+        (
+            [23] => Array
+                (
+                    [savod] => 5
+                    [sarulibos] => 2
+                    [jihoz] => 2
+                    [ishtirok] => 3
+                    [intizom] => 3
+                )
+
+        )
+
+)
+
+Applicable categories: Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Processing category: studentId=23, categoryValue=savod, score=5, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Skipping category: savod
+Processing category: studentId=23, categoryValue=sarulibos, score=2, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Creating score: studentId=23, category=sarulibos, score=2, maxScore=2.00, lessonType=lecture
+Finished processing category: studentId=23, category=sarulibos
+Processing category: studentId=23, categoryValue=jihoz, score=2, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Creating score: studentId=23, category=jihoz, score=2, maxScore=2.00, lessonType=lecture
+Finished processing category: studentId=23, category=jihoz
+Processing category: studentId=23, categoryValue=ishtirok, score=3, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Creating score: studentId=23, category=ishtirok, score=3, maxScore=3.00, lessonType=lecture
+Finished processing category: studentId=23, category=ishtirok
+Processing category: studentId=23, categoryValue=intizom, score=3, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Creating score: studentId=23, category=intizom, score=3, maxScore=3.00, lessonType=lecture
+Finished processing category: studentId=23, category=intizom
+Store request: Array
+(
+    [date] => 2026-09-07
+    [lesson_number] => 1
+    [period] => rating1
+    [lesson_type] => practice
+    [scores] => Array
+        (
+            [24] => Array
+                (
+                    [savod] => 5
+                    [sarulibos] => 2
+                )
+
+        )
+
+)
+
+Applicable categories: Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Processing category: studentId=24, categoryValue=savod, score=5, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=24, category=savod, score=5, maxScore=5.00, lessonType=practice
+Finished processing category: studentId=24, category=savod
+Processing category: studentId=24, categoryValue=sarulibos, score=2, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=24, category=sarulibos, score=2, maxScore=2.00, lessonType=practice
+Finished processing category: studentId=24, category=sarulibos
+Store request: Array
+(
+    [date] => 2026-09-07
+    [lesson_number] => 1
+    [period] => rating1
+    [lesson_type] => lecture
+    [scores] => Array
+        (
+            [24] => Array
+                (
+                    [sarulibos] => 2
+                )
+
+        )
+
+)
+
+Applicable categories: Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Processing category: studentId=24, categoryValue=sarulibos, score=2, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Store request: Array
+(
+    [date] => 2026-09-02
+    [lesson_number] => 3
+    [period] => rating1
+    [lesson_type] => practice
+    [scores] => Array
+        (
+            [4] => Array
+                (
+                    [savod] => 5
+                    [sarulibos] => 2
+                    [jihoz] => 1
+                    [ishtirok] => 3
+                    [intizom] => 3
+                )
+
+        )
+
+)
+
+Applicable categories: Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Processing category: studentId=4, categoryValue=savod, score=5, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=4, category=savod, score=5, maxScore=5.00, lessonType=practice
+Finished processing category: studentId=4, category=savod
+Processing category: studentId=4, categoryValue=sarulibos, score=2, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=4, category=sarulibos, score=2, maxScore=2.00, lessonType=practice
+Finished processing category: studentId=4, category=sarulibos
+Processing category: studentId=4, categoryValue=jihoz, score=1, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=4, category=jihoz, score=1, maxScore=2.00, lessonType=practice
+Finished processing category: studentId=4, category=jihoz
+Processing category: studentId=4, categoryValue=ishtirok, score=3, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=4, category=ishtirok, score=3, maxScore=3.00, lessonType=practice
+Finished processing category: studentId=4, category=ishtirok
+Processing category: studentId=4, categoryValue=intizom, score=3, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=4, category=intizom, score=3, maxScore=3.00, lessonType=practice
+Finished processing category: studentId=4, category=intizom
+Store request: Array
+(
+    [date] => 2026-09-05
+    [lesson_number] => 1
+    [period] => rating1
+    [lesson_type] => lecture
+    [scores] => Array
+        (
+            [5] => Array
+                (
+                    [savod] => 5
+                    [sarulibos] => 2
+                    [jihoz] => 2
+                    [ishtirok] => 3
+                    [intizom] => 3
+                )
+
+        )
+
+)
+
+Applicable categories: Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Processing category: studentId=5, categoryValue=savod, score=5, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Skipping category: savod
+Processing category: studentId=5, categoryValue=sarulibos, score=2, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Creating score: studentId=5, category=sarulibos, score=2, maxScore=2.00, lessonType=lecture
+Finished processing category: studentId=5, category=sarulibos
+Processing category: studentId=5, categoryValue=jihoz, score=2, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Creating score: studentId=5, category=jihoz, score=2, maxScore=2.00, lessonType=lecture
+Finished processing category: studentId=5, category=jihoz
+Processing category: studentId=5, categoryValue=ishtirok, score=3, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Creating score: studentId=5, category=ishtirok, score=3, maxScore=3.00, lessonType=lecture
+Finished processing category: studentId=5, category=ishtirok
+Processing category: studentId=5, categoryValue=intizom, score=3, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Creating score: studentId=5, category=intizom, score=3, maxScore=3.00, lessonType=lecture
+Finished processing category: studentId=5, category=intizom
+Store request: Array
+(
+    [date] => 2026-09-07
+    [lesson_number] => 1
+    [period] => rating1
+    [lesson_type] => practice
+    [scores] => Array
+        (
+            [6] => Array
+                (
+                    [savod] => 5
+                    [sarulibos] => 2
+                )
+
+        )
+
+)
+
+Applicable categories: Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Processing category: studentId=6, categoryValue=savod, score=5, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=6, category=savod, score=5, maxScore=5.00, lessonType=practice
+Finished processing category: studentId=6, category=savod
+Processing category: studentId=6, categoryValue=sarulibos, score=2, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=6, category=sarulibos, score=2, maxScore=2.00, lessonType=practice
+Finished processing category: studentId=6, category=sarulibos
+Store request: Array
+(
+    [date] => 2026-09-07
+    [lesson_number] => 1
+    [period] => rating1
+    [lesson_type] => lecture
+    [scores] => Array
+        (
+            [6] => Array
+                (
+                    [sarulibos] => 2
+                )
+
+        )
+
+)
+
+Applicable categories: Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Processing category: studentId=6, categoryValue=sarulibos, score=2, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Store request: Array
+(
+    [date] => 2026-09-02
+    [lesson_number] => 3
+    [period] => rating1
+    [lesson_type] => practice
+    [scores] => Array
+        (
+            [4] => Array
+                (
+                    [savod] => 5
+                    [sarulibos] => 2
+                    [jihoz] => 1
+                    [ishtirok] => 3
+                    [intizom] => 3
+                )
+
+        )
+
+)
+
+Applicable categories: Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Processing category: studentId=4, categoryValue=savod, score=5, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=4, category=savod, score=5, maxScore=5.00, lessonType=practice
+Finished processing category: studentId=4, category=savod
+Processing category: studentId=4, categoryValue=sarulibos, score=2, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=4, category=sarulibos, score=2, maxScore=2.00, lessonType=practice
+Finished processing category: studentId=4, category=sarulibos
+Processing category: studentId=4, categoryValue=jihoz, score=1, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=4, category=jihoz, score=1, maxScore=2.00, lessonType=practice
+Finished processing category: studentId=4, category=jihoz
+Processing category: studentId=4, categoryValue=ishtirok, score=3, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=4, category=ishtirok, score=3, maxScore=3.00, lessonType=practice
+Finished processing category: studentId=4, category=ishtirok
+Processing category: studentId=4, categoryValue=intizom, score=3, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=4, category=intizom, score=3, maxScore=3.00, lessonType=practice
+Finished processing category: studentId=4, category=intizom
+Store request: Array
+(
+    [date] => 2026-09-05
+    [lesson_number] => 1
+    [period] => rating1
+    [lesson_type] => lecture
+    [scores] => Array
+        (
+            [5] => Array
+                (
+                    [savod] => 5
+                    [sarulibos] => 2
+                    [jihoz] => 2
+                    [ishtirok] => 3
+                    [intizom] => 3
+                )
+
+        )
+
+)
+
+Applicable categories: Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Processing category: studentId=5, categoryValue=savod, score=5, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Skipping category: savod
+Processing category: studentId=5, categoryValue=sarulibos, score=2, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Creating score: studentId=5, category=sarulibos, score=2, maxScore=2.00, lessonType=lecture
+Finished processing category: studentId=5, category=sarulibos
+Processing category: studentId=5, categoryValue=jihoz, score=2, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Creating score: studentId=5, category=jihoz, score=2, maxScore=2.00, lessonType=lecture
+Finished processing category: studentId=5, category=jihoz
+Processing category: studentId=5, categoryValue=ishtirok, score=3, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Creating score: studentId=5, category=ishtirok, score=3, maxScore=3.00, lessonType=lecture
+Finished processing category: studentId=5, category=ishtirok
+Processing category: studentId=5, categoryValue=intizom, score=3, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Creating score: studentId=5, category=intizom, score=3, maxScore=3.00, lessonType=lecture
+Finished processing category: studentId=5, category=intizom
+Store request: Array
+(
+    [date] => 2026-09-07
+    [lesson_number] => 1
+    [period] => rating1
+    [lesson_type] => practice
+    [scores] => Array
+        (
+            [6] => Array
+                (
+                    [savod] => 5
+                    [sarulibos] => 2
+                )
+
+        )
+
+)
+
+Applicable categories: Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Processing category: studentId=6, categoryValue=savod, score=5, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=6, category=savod, score=5, maxScore=5.00, lessonType=practice
+Finished processing category: studentId=6, category=savod
+Processing category: studentId=6, categoryValue=sarulibos, score=2, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=6, category=sarulibos, score=2, maxScore=2.00, lessonType=practice
+Finished processing category: studentId=6, category=sarulibos
+Store request: Array
+(
+    [date] => 2026-09-07
+    [lesson_number] => 1
+    [period] => rating1
+    [lesson_type] => lecture
+    [scores] => Array
+        (
+            [6] => Array
+                (
+                    [sarulibos] => 2
+                )
+
+        )
+
+)
+
+Applicable categories: Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Processing category: studentId=6, categoryValue=sarulibos, score=2, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Store request: Array
+(
+    [date] => 2026-09-02
+    [lesson_number] => 3
+    [period] => rating1
+    [lesson_type] => practice
+    [scores] => Array
+        (
+            [22] => Array
+                (
+                    [savod] => 5
+                    [sarulibos] => 2
+                    [jihoz] => 1
+                    [ishtirok] => 3
+                    [intizom] => 3
+                )
+
+        )
+
+)
+
+Applicable categories: Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Processing category: studentId=22, categoryValue=savod, score=5, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=22, category=savod, score=5, maxScore=5.00, lessonType=practice
+Finished processing category: studentId=22, category=savod
+Processing category: studentId=22, categoryValue=sarulibos, score=2, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=22, category=sarulibos, score=2, maxScore=2.00, lessonType=practice
+Finished processing category: studentId=22, category=sarulibos
+Processing category: studentId=22, categoryValue=jihoz, score=1, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=22, category=jihoz, score=1, maxScore=2.00, lessonType=practice
+Finished processing category: studentId=22, category=jihoz
+Processing category: studentId=22, categoryValue=ishtirok, score=3, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=22, category=ishtirok, score=3, maxScore=3.00, lessonType=practice
+Finished processing category: studentId=22, category=ishtirok
+Processing category: studentId=22, categoryValue=intizom, score=3, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=22, category=intizom, score=3, maxScore=3.00, lessonType=practice
+Finished processing category: studentId=22, category=intizom
+Store request: Array
+(
+    [date] => 2026-09-05
+    [lesson_number] => 1
+    [period] => rating1
+    [lesson_type] => lecture
+    [scores] => Array
+        (
+            [23] => Array
+                (
+                    [savod] => 5
+                    [sarulibos] => 2
+                    [jihoz] => 2
+                    [ishtirok] => 3
+                    [intizom] => 3
+                )
+
+        )
+
+)
+
+Applicable categories: Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Processing category: studentId=23, categoryValue=savod, score=5, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Skipping category: savod
+Processing category: studentId=23, categoryValue=sarulibos, score=2, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Creating score: studentId=23, category=sarulibos, score=2, maxScore=2.00, lessonType=lecture
+Finished processing category: studentId=23, category=sarulibos
+Processing category: studentId=23, categoryValue=jihoz, score=2, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Creating score: studentId=23, category=jihoz, score=2, maxScore=2.00, lessonType=lecture
+Finished processing category: studentId=23, category=jihoz
+Processing category: studentId=23, categoryValue=ishtirok, score=3, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Creating score: studentId=23, category=ishtirok, score=3, maxScore=3.00, lessonType=lecture
+Finished processing category: studentId=23, category=ishtirok
+Processing category: studentId=23, categoryValue=intizom, score=3, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Creating score: studentId=23, category=intizom, score=3, maxScore=3.00, lessonType=lecture
+Finished processing category: studentId=23, category=intizom
+Store request: Array
+(
+    [date] => 2026-09-07
+    [lesson_number] => 1
+    [period] => rating1
+    [lesson_type] => practice
+    [scores] => Array
+        (
+            [24] => Array
+                (
+                    [savod] => 5
+                    [sarulibos] => 2
+                )
+
+        )
+
+)
+
+Applicable categories: Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Processing category: studentId=24, categoryValue=savod, score=5, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=24, category=savod, score=5, maxScore=5.00, lessonType=practice
+Finished processing category: studentId=24, category=savod
+Processing category: studentId=24, categoryValue=sarulibos, score=2, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=24, category=sarulibos, score=2, maxScore=2.00, lessonType=practice
+Finished processing category: studentId=24, category=sarulibos
+Store request: Array
+(
+    [date] => 2026-09-07
+    [lesson_number] => 1
+    [period] => rating1
+    [lesson_type] => lecture
+    [scores] => Array
+        (
+            [24] => Array
+                (
+                    [sarulibos] => 2
+                )
+
+        )
+
+)
+
+Applicable categories: Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Processing category: studentId=24, categoryValue=sarulibos, score=2, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Store request: Array
+(
+    [date] => 2026-09-02
+    [lesson_number] => 3
+    [period] => rating1
+    [lesson_type] => practice
+    [scores] => Array
+        (
+            [22] => Array
+                (
+                    [savod] => 5
+                    [sarulibos] => 2
+                    [jihoz] => 1
+                    [ishtirok] => 3
+                    [intizom] => 3
+                )
+
+        )
+
+)
+
+Applicable categories: Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Processing category: studentId=22, categoryValue=savod, score=5, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=22, category=savod, score=5, maxScore=5.00, lessonType=practice
+Finished processing category: studentId=22, category=savod
+Processing category: studentId=22, categoryValue=sarulibos, score=2, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=22, category=sarulibos, score=2, maxScore=2.00, lessonType=practice
+Finished processing category: studentId=22, category=sarulibos
+Processing category: studentId=22, categoryValue=jihoz, score=1, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=22, category=jihoz, score=1, maxScore=2.00, lessonType=practice
+Finished processing category: studentId=22, category=jihoz
+Processing category: studentId=22, categoryValue=ishtirok, score=3, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=22, category=ishtirok, score=3, maxScore=3.00, lessonType=practice
+Finished processing category: studentId=22, category=ishtirok
+Processing category: studentId=22, categoryValue=intizom, score=3, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=22, category=intizom, score=3, maxScore=3.00, lessonType=practice
+Finished processing category: studentId=22, category=intizom
+Store request: Array
+(
+    [date] => 2026-09-05
+    [lesson_number] => 1
+    [period] => rating1
+    [lesson_type] => lecture
+    [scores] => Array
+        (
+            [23] => Array
+                (
+                    [savod] => 5
+                    [sarulibos] => 2
+                    [jihoz] => 2
+                    [ishtirok] => 3
+                    [intizom] => 3
+                )
+
+        )
+
+)
+
+Applicable categories: Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Processing category: studentId=23, categoryValue=savod, score=5, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Skipping category: savod
+Processing category: studentId=23, categoryValue=sarulibos, score=2, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Creating score: studentId=23, category=sarulibos, score=2, maxScore=2.00, lessonType=lecture
+Finished processing category: studentId=23, category=sarulibos
+Processing category: studentId=23, categoryValue=jihoz, score=2, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Creating score: studentId=23, category=jihoz, score=2, maxScore=2.00, lessonType=lecture
+Finished processing category: studentId=23, category=jihoz
+Processing category: studentId=23, categoryValue=ishtirok, score=3, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Creating score: studentId=23, category=ishtirok, score=3, maxScore=3.00, lessonType=lecture
+Finished processing category: studentId=23, category=ishtirok
+Processing category: studentId=23, categoryValue=intizom, score=3, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Creating score: studentId=23, category=intizom, score=3, maxScore=3.00, lessonType=lecture
+Finished processing category: studentId=23, category=intizom
+Store request: Array
+(
+    [date] => 2026-09-07
+    [lesson_number] => 1
+    [period] => rating1
+    [lesson_type] => practice
+    [scores] => Array
+        (
+            [24] => Array
+                (
+                    [savod] => 5
+                    [sarulibos] => 2
+                )
+
+        )
+
+)
+
+Applicable categories: Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Processing category: studentId=24, categoryValue=savod, score=5, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=24, category=savod, score=5, maxScore=5.00, lessonType=practice
+Finished processing category: studentId=24, category=savod
+Processing category: studentId=24, categoryValue=sarulibos, score=2, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=24, category=sarulibos, score=2, maxScore=2.00, lessonType=practice
+Finished processing category: studentId=24, category=sarulibos
+Store request: Array
+(
+    [date] => 2026-09-07
+    [lesson_number] => 1
+    [period] => rating1
+    [lesson_type] => lecture
+    [scores] => Array
+        (
+            [24] => Array
+                (
+                    [sarulibos] => 2
+                )
+
+        )
+
+)
+
+Applicable categories: Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Processing category: studentId=24, categoryValue=sarulibos, score=2, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Store request: Array
+(
+    [date] => 2026-09-02
+    [lesson_number] => 3
+    [period] => rating1
+    [lesson_type] => practice
+    [scores] => Array
+        (
+            [1] => Array
+                (
+                    [savod] => 5
+                    [sarulibos] => 2
+                    [jihoz] => 1
+                    [ishtirok] => 3
+                    [intizom] => 3
+                )
+
+        )
+
+)
+
+Applicable categories: Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Processing category: studentId=1, categoryValue=savod, score=5, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=1, category=savod, score=5, maxScore=5, lessonType=practice
+Finished processing category: studentId=1, category=savod
+Processing category: studentId=1, categoryValue=sarulibos, score=2, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=1, category=sarulibos, score=2, maxScore=2, lessonType=practice
+Finished processing category: studentId=1, category=sarulibos
+Processing category: studentId=1, categoryValue=jihoz, score=1, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=1, category=jihoz, score=1, maxScore=2, lessonType=practice
+Finished processing category: studentId=1, category=jihoz
+Processing category: studentId=1, categoryValue=ishtirok, score=3, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=1, category=ishtirok, score=3, maxScore=3, lessonType=practice
+Finished processing category: studentId=1, category=ishtirok
+Processing category: studentId=1, categoryValue=intizom, score=3, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=1, category=intizom, score=3, maxScore=3, lessonType=practice
+Finished processing category: studentId=1, category=intizom
+Store request: Array
+(
+    [date] => 2026-09-05
+    [lesson_number] => 1
+    [period] => rating1
+    [lesson_type] => lecture
+    [scores] => Array
+        (
+            [1] => Array
+                (
+                    [savod] => 5
+                    [sarulibos] => 2
+                    [jihoz] => 2
+                    [ishtirok] => 3
+                    [intizom] => 3
+                )
+
+        )
+
+)
+
+Applicable categories: Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Processing category: studentId=1, categoryValue=savod, score=5, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Skipping category: savod
+Processing category: studentId=1, categoryValue=sarulibos, score=2, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Creating score: studentId=1, category=sarulibos, score=2, maxScore=2, lessonType=lecture
+Finished processing category: studentId=1, category=sarulibos
+Processing category: studentId=1, categoryValue=jihoz, score=2, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Creating score: studentId=1, category=jihoz, score=2, maxScore=2, lessonType=lecture
+Finished processing category: studentId=1, category=jihoz
+Processing category: studentId=1, categoryValue=ishtirok, score=3, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Creating score: studentId=1, category=ishtirok, score=3, maxScore=3, lessonType=lecture
+Finished processing category: studentId=1, category=ishtirok
+Processing category: studentId=1, categoryValue=intizom, score=3, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Creating score: studentId=1, category=intizom, score=3, maxScore=3, lessonType=lecture
+Finished processing category: studentId=1, category=intizom
+Store request: Array
+(
+    [date] => 2026-09-07
+    [lesson_number] => 1
+    [period] => rating1
+    [lesson_type] => practice
+    [scores] => Array
+        (
+            [1] => Array
+                (
+                    [savod] => 5
+                    [sarulibos] => 2
+                )
+
+        )
+
+)
+
+Applicable categories: Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Processing category: studentId=1, categoryValue=savod, score=5, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=1, category=savod, score=5, maxScore=5, lessonType=practice
+Finished processing category: studentId=1, category=savod
+Processing category: studentId=1, categoryValue=sarulibos, score=2, applicableCategories=Array
+(
+    [0] => savod
+    [1] => sarulibos
+    [2] => jihoz
+    [3] => ishtirok
+    [4] => intizom
+)
+
+Creating score: studentId=1, category=sarulibos, score=2, maxScore=2, lessonType=practice
+Finished processing category: studentId=1, category=sarulibos
+Store request: Array
+(
+    [date] => 2026-09-07
+    [lesson_number] => 1
+    [period] => rating1
+    [lesson_type] => lecture
+    [scores] => Array
+        (
+            [1] => Array
+                (
+                    [sarulibos] => 2
+                )
+
+        )
+
+)
+
+Applicable categories: Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Processing category: studentId=1, categoryValue=sarulibos, score=2, applicableCategories=Array
+(
+    [0] => sarulibos
+    [1] => jihoz
+    [2] => ishtirok
+    [3] => intizom
+)
+
+Creating score: studentId=1, category=sarulibos, score=2, maxScore=2, lessonType=lecture

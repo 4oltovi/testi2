@@ -21,7 +21,10 @@ class RatingQuestionController extends Controller
      */
     public function index(Request $request): View
     {
-        $subjects = Subject::active()->orderBy('name')->get();
+        $subjects = Subject::active()
+            ->when($request->filled('semester_number'), fn ($q) => $q->where('semester_number', $request->semester_number))
+            ->orderByRaw('CASE WHEN semester_number IS NULL THEN 1 ELSE 0 END, semester_number, name')
+            ->get();
         $subjectId = $request->integer('subject_id') ?: null;
 
         $counts = Question::join('question_banks as qb', 'qb.id', '=', 'questions.question_bank_id')

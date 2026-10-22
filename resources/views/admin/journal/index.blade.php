@@ -69,32 +69,32 @@
                             <small>@include('partials.lesson-type-breakdown', ['assignment' => $assignment])</small>
                         </td>
                         <td><small>{{ $assignment->semester?->name }}</small></td>
-<td class="text-center">
-                             <div class="btn-group btn-group-sm">
-                                 <a href="{{ route('admin.journal.category-scores', $assignment) }}"
-                                     class="btn btn-outline-info" title="Категорияҳо (5)">
-                                     <i class="bi bi-grid-3x3"></i> Категория
-                                 </a>
-                                 <a href="{{ route('admin.journal.assignments.edit', $assignment) }}"
-                                     class="btn btn-outline-primary" title="Таҳрир">
-                                     <i class="bi bi-pencil"></i> Таҳрир
-                                 </a>
-                                 <a href="{{ route('admin.journal.semester-grades', $assignment) }}"
-                                     class="btn btn-outline-warning" title="Рейтинг/Имтиҳон">
-                                     <i class="bi bi-trophy"></i> Рейтинг
-                                 </a>
-                                 <form action="{{ route('admin.journal.assignments.destroy', $assignment) }}"
-                                       method="POST"
-                                       class="d-inline"
-                                       onsubmit="return confirm('Оё мутмаин ҳастед, ки ин журналро нест кардан мехоҳед? Ҳамаи маълумоти донишҷӯён (давомот, баҳоҳо, имтиҳонҳо) ҳамчун ҳамроҳ нест мешаванд.')">
-                                     @csrf
-                                     @method('DELETE')
-                                     <button type="submit" class="btn btn-outline-danger" title="Нест кардан">
-                                         <i class="bi bi-trash"></i>
-                                     </button>
-                                 </form>
-                             </div>
-                         </td>
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm journal-action-buttons">
+                                <a href="{{ route('admin.journal.category-scores', $assignment) }}"
+                                    class="btn btn-outline-info" title="Категорияҳо (5)">
+                                    <i class="bi bi-grid-3x3"></i> Категория
+                                </a>
+                                <a href="{{ route('admin.journal.assignments.edit', $assignment) }}"
+                                    class="btn btn-outline-primary" title="Таҳрир">
+                                    <i class="bi bi-pencil"></i> Таҳрир
+                                </a>
+                                <a href="{{ route('admin.journal.semester-grades', $assignment) }}"
+                                    class="btn btn-outline-warning" title="Рейтинг/Имтиҳон">
+                                    <i class="bi bi-trophy"></i> Рейтинг
+                                </a>
+                                <form action="{{ route('admin.journal.assignments.destroy', $assignment) }}"
+                                    method="POST"
+                                    class="d-inline"
+                                    onsubmit="return confirm('Оё мутмаин ҳастед, ки ин журналро нест кардан мехоҳед? Ҳамаи маълумоти донишҷӯён (давомот, баҳоҳо, имтиҳонҳо) ҳамчун ҳамроҳ нест мешаванд.')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-outline-danger" title="Нест кардан">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
                     </tr>
                     @empty
                     <tr>
@@ -112,4 +112,47 @@
     <div class="card-footer bg-white">{{ $assignments->links() }}</div>
     @endif
 </div>
+
+<style>
+    /* Танҳо тугмаҳои амалҳои журнали электронӣ */
+    .journal-action-buttons {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0;
+        white-space: nowrap;
+    }
+
+    .journal-action-buttons>.btn,
+    .journal-action-buttons form .btn {
+        font-size: 0.78rem;
+        line-height: 1.2;
+        padding: 0.35rem 0.55rem;
+        min-height: 34px;
+    }
+
+    .journal-action-buttons .btn i {
+        font-size: 0.8rem;
+        margin-right: 2px;
+    }
+
+    .journal-action-buttons form {
+        display: inline-flex;
+        margin: 0;
+    }
+
+    .journal-action-buttons .btn:focus {
+        box-shadow: none;
+    }
+
+    @media (max-width: 768px) {
+
+        .journal-action-buttons>.btn,
+        .journal-action-buttons form .btn {
+            padding: 0.3rem 0.4rem;
+            font-size: 0.72rem;
+        }
+    }
+</style>
+
 @endsection

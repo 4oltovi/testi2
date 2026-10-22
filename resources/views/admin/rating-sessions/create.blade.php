@@ -100,8 +100,12 @@
                                 <td class="ps-3">
                                     <div class="form-check">
                                         <input class="form-check-input subject-check" type="checkbox"
-                                            name="subject_ids[]" value="{{ $subj->id }}" id="subj_{{ $subj->id }}">
+                                            name="subject_ids[]" value="{{ $subj->id }}" id="subj_{{ $subj->id }}"
+                                            @disabled((int) $subj->groups_count === 0)>
                                         <label class="form-check-label" for="subj_{{ $subj->id }}">{{ $subj->name }}</label>
+                                        <small class="text-muted ms-1 subject-groups-hint">
+                                            {{ (int) $subj->groups_count === 0 ? 'Гурӯҳ нест' : (int) $subj->groups_count . ' гурӯҳ' }}
+                                        </small>
                                     </div>
                                 </td>
                             </tr>
@@ -114,15 +118,15 @@
 
             {{-- Ҷадвали гурӯҳҳо (режими by_group) --}}
             <div class="card border-0 shadow-sm d-none" id="groupsCard">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <h6 class="mb-0">Равзанаи вақт барои гурӯҳҳо</h6>
-                <div>
-                    <small class="text-muted me-2">Агар холӣ бошад — равзанаи умумӣ истифода мешавад</small>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copySessionTimeToAll()">
-                        <i class="bi bi-copy me-1"></i>Ҳамагӯҳ ба ҳамон вақт
-                    </button>
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Равзанаи вақт барои гурӯҳҳо</h6>
+                    <div>
+                        <small class="text-muted me-2">Агар холӣ бошад — равзанаи умумӣ истифода мешавад</small>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copySessionTimeToAll()">
+                            <i class="bi bi-copy me-1"></i>Ҳамагӯҳ ба ҳамон вақт
+                        </button>
+                    </div>
                 </div>
-            </div>
                 <div class="card-body p-0" style="max-height: 300px; overflow-y: auto;">
                     <table class="table table-sm mb-0">
                         <thead class="table-light sticky-top">
@@ -135,7 +139,7 @@
                         <tbody>
                             @foreach($groups as $g)
                             <tr>
-                                <td class="ps-3">{{ $g->name }} <small class="text-muted">({{ $g->specialty?->name }})</small></td>
+                                <td class="ps-3">{{ $g->display_name }} <small class="text-muted">({{ $g->specialty?->name }})</small></td>
                                 <td><input type="datetime-local" name="group_windows[{{ $g->id }}][start_at]" class="form-control form-control-sm gw-start"></td>
                                 <td><input type="datetime-local" name="group_windows[{{ $g->id }}][end_at]" class="form-control form-control-sm gw-end"></td>
                             </tr>
@@ -160,7 +164,12 @@
     const csrfToken = "{{ csrf_token() }}";
 
     function checkAllVisible(state) {
-        document.querySelectorAll('#subjectsTableBody .subject-check').forEach(c => c.checked = state);
+        document.querySelectorAll('#subjectsTableBody .subject-check').forEach(c => {
+            // Фанҳои бе гурӯҳ интихоб нашаванд
+            if (!c.disabled) {
+                c.checked = state;
+            }
+        });
     }
 
     function toggleGroups(show) {
@@ -201,6 +210,89 @@
         return groupIds;
     }
 
+    function escapeHtml(text) {
+        return String(text ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function groupsHint(count) {
+        count = parseInt(count || 0, 10);
+        return count === 0 ? 'Гурӯҳ нест' : count + ' гурӯҳ';
+    }
+
+    function subjectRowHtml(subject) {
+        return '<td class="ps-3"><div class="form-check">' +
+            '<input class="form-check-input subject-check" type="checkbox" name="subject_ids[]" value="' + subject.id + '" id="subj_' + subject.id + '">' +
+            '<label class="form-check-label" for="subj_' + subject.id + '">' + escapeHtml(subject.name) + '</label>' +
+            '<small class="text-muted ms-1 subject-groups-hint">' + groupsHint(subject.groups_count) + '</small>' +
+            '</div></td>';
+    }
+
+    /**
+     * Рӯйхати фанҳоро аз рӯи семестр нав мекунад:
+     *  - шумораи гурӯҳҳо дар ҳар фан нав мешавад;
+     *  - фанҳои бе гурӯҳ хомӯш (disabled) мешаванд.
+     */
+    function applySubjects(subjects) {
+        const list = subjects || [];
+        const byId = {};
+        list.forEach(s => {
+            byId[String(s.id)] = s;
+        });
+
+        const tbody = document.getElementById('subjectsTableBody');
+
+        // Фанҳои нави корӣ — сатрҳои нав
+        list.forEach(s => {
+            if (!document.getElementById('subj_' + s.id)) {
+                const tr = document.createElement('tr');
+                tr.setAttribute('data-subject-id', s.id);
+                tr.innerHTML = subjectRowHtml(s);
+                tbody.appendChild(tr);
+            }
+        });
+
+        let withoutGroups = 0;
+
+        document.querySelectorAll('#subjectsTableBody tr[data-subject-id]').forEach(tr => {
+            const id = tr.getAttribute('data-subject-id');
+            const subject = byId[String(id)];
+            const count = subject ? parseInt(subject.groups_count || 0, 10) : 0;
+            const checkbox = tr.querySelector('.subject-check');
+            const hint = tr.querySelector('.subject-groups-hint');
+
+            if (checkbox) {
+                checkbox.disabled = count === 0;
+                if (count === 0) {
+                    checkbox.checked = false;
+                    withoutGroups++;
+                }
+            }
+            if (hint) {
+                hint.textContent = groupsHint(count);
+            }
+        });
+
+        const alertBox = document.getElementById('subjectsAlert');
+        if (withoutGroups > 0) {
+            alertBox.textContent = withoutGroups + ' фан дар ин семестр гурӯҳ надоранд — интихоб карда нашаванд.';
+            alertBox.classList.remove('d-none');
+        } else {
+            alertBox.textContent = '';
+            alertBox.classList.add('d-none');
+        }
+
+        const emptyBox = document.getElementById('subjectsEmpty');
+        if (list.length === 0) {
+            emptyBox.classList.remove('d-none');
+        } else {
+            emptyBox.classList.add('d-none');
+        }
+    }
+
     function loadSubjects() {
         const semesterSelect = document.getElementById('semester_id');
         const semesterId = semesterSelect?.value;
@@ -231,67 +323,29 @@
         }
 
         fetch(subjectsBySemesterUrl, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': csrfToken,
-                'Accept': 'application/json',
-            },
-            body: formData,
-        })
-        .then(response => response.json())
-        .then(data => {
-            const allowed = new Set((data.subjects || []).map(s => String(s.id)));
-            const tbody = document.getElementById('subjectsTableBody');
-            const alertBox = document.getElementById('subjectsAlert');
-            const emptyBox = document.getElementById('subjectsEmpty');
-            let dropped = [];
-
-            // remove unchecked subjects not in allowed? keep existing checked ones that remain
-            document.querySelectorAll('#subjectsTableBody .subject-check').forEach(cb => {
-                if (!allowed.has(String(cb.value))) {
-                    if (cb.checked) {
-                        dropped.push(cb.nextElementSibling?.textContent?.trim() || cb.value);
-                        cb.checked = false;
-                    }
-                    const tr = cb.closest('tr');
-                    if (tr) tr.remove();
-                }
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                },
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => applySubjects(data.subjects || []))
+            .catch(() => {
+                // ignore
             });
-
-            // add missing allowed subjects
-            (data.subjects || []).forEach(subject => {
-                if (!document.getElementById('subj_' + subject.id)) {
-                    const tr = document.createElement('tr');
-                    tr.setAttribute('data-subject-id', subject.id);
-                    tr.innerHTML = '<td class="ps-3"><div class="form-check"><input class="form-check-input subject-check" type="checkbox" name="subject_ids[]" value="' + subject.id + '" id="subj_' + subject.id + '"><label class="form-check-label" for="subj_' + subject.id + '">' + subject.name.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</label></div></td>';
-                    tbody.appendChild(tr);
-                }
-            });
-
-            if (dropped.length > 0) {
-                alertBox.textContent = 'Баъзе фанҳо аз рӯйхат хориҷ карда шуданд, зеро дар ин семестр/гурӯҳҳо вуҷуд надоранд: ' + dropped.slice(0, 5).join(', ') + (dropped.length > 5 ? ' ...' : '');
-                alertBox.classList.remove('d-none');
-            } else {
-                alertBox.classList.add('d-none');
-                alertBox.textContent = '';
-            }
-
-            if ((data.subjects || []).length === 0) {
-                emptyBox.classList.remove('d-none');
-            } else {
-                emptyBox.classList.add('d-none');
-            }
-        })
-        .catch(() => {
-            // ignore
-        });
     }
 
     function copySessionTimeToAll() {
         const s = document.getElementById('start_at').value;
         const e = document.getElementById('end_at').value;
-        document.querySelectorAll('.gw-start').forEach(i => { i.value = s; });
-        document.querySelectorAll('.gw-end').forEach(i => { i.value = e; });
+        document.querySelectorAll('.gw-start').forEach(i => {
+            i.value = s;
+        });
+        document.querySelectorAll('.gw-end').forEach(i => {
+            i.value = e;
+        });
     }
 
     document.addEventListener('DOMContentLoaded', function() {

@@ -33,7 +33,11 @@ class SubjectController extends Controller
             $query->where('exam_type', $examType);
         }
 
-        $subjects = $query->orderBy('name')->paginate(25)->withQueryString();
+        if ($request->filled('semester_number')) {
+            $query->where('semester_number', $request->semester_number);
+        }
+
+        $subjects = $query->orderByRaw('CASE WHEN semester_number IS NULL THEN 1 ELSE 0 END, semester_number, name')->paginate(25)->withQueryString();
         $departments = Department::active()->with('faculty')->orderBy('name')->get();
 
         return view('admin.structure.subjects.index', compact('subjects', 'departments'));
@@ -59,6 +63,7 @@ class SubjectController extends Controller
             'exam_type' => 'nullable|in:exam,credit,diff_credit',
             'is_active' => 'boolean',
             'description' => 'nullable|string|max:1000',
+            'semester_number' => 'nullable|integer|between:1,12',
         ], [
             'department_id.required' => 'Кафедра ҳатмӣ аст.',
             'name.required' => 'Номи фан ҳатмӣ аст.',
@@ -69,6 +74,7 @@ class SubjectController extends Controller
         $validated['is_active'] = $request->boolean('is_active', true);
         $validated['exam_type'] = $validated['exam_type'] ?? 'exam';
         $validated['credits'] = $validated['credits'] ?? 3;
+        $validated['semester_number'] = $request->filled('semester_number') ? $request->integer('semester_number') : null;
 
         $subject = Subject::create($validated);
 
@@ -104,10 +110,13 @@ class SubjectController extends Controller
             'exam_type' => 'nullable|in:exam,credit,diff_credit',
             'is_active' => 'boolean',
             'description' => 'nullable|string|max:1000',
+            'semester_number' => 'nullable|integer|between:1,12',
         ]);
+
 
         $validated['is_active'] = $request->boolean('is_active', true);
         $validated['exam_type'] = $validated['exam_type'] ?? 'exam';
+        $validated['semester_number'] = $request->filled('semester_number') ? $request->integer('semester_number') : null;
 
         $subject->update($validated);
 

@@ -22,6 +22,14 @@
                     <option value="none">Бе савол</option>
                 </select>
             </div>
+            <div class="col-lg-2 col-md-4">
+                <select class="form-select" onchange="const u=new URL(window.location.href); if(this.value) u.searchParams.set('semester_number',this.value); else u.searchParams.delete('semester_number'); window.location.href=u.toString();">
+                    <option value="">Ҳама семестрҳо</option>
+                    @for($i=1;$i<=12;$i++)
+                        <option value="{{ $i }}" {{ request('semester_number') == $i ? 'selected' : '' }}>Семестри {{ $i }}</option>
+                    @endfor
+                </select>
+            </div>
             <div class="col-lg-5 col-md-2 text-md-end">
                 <a href="{{ route('admin.rating-questions.import-form') }}" class="btn btn-outline-primary">
                     <i class="bi bi-upload"></i> Импорт
@@ -36,13 +44,16 @@
     @php
         $cnt = $counts[$s->id] ?? 0;
     @endphp
-    <div class="col-12 col-sm-6 col-md-4 col-lg-3 subject-card-wrap" data-name="{{ mb_strtolower($s->name) }}" data-count="{{ $cnt }}">
+    <div class="col-12 col-sm-6 col-md-4 col-lg-3 subject-card-wrap" data-name="{{ mb_strtolower($s->name) }}" data-count="{{ $cnt }}" data-semester="{{ $s->semester_number ?? '' }}">
         <a href="{{ route('admin.rating-questions.index', ['subject_id' => $s->id]) }}" class="text-decoration-none text-dark d-block h-100">
             <div class="card border h-100 subject-card">
                 <div class="card-body d-flex align-items-center">
                     <div class="me-2 text-primary"><i class="bi bi-journal-text fs-5"></i></div>
                     <div class="flex-grow-1">
                         <div class="fw-semibold">{{ $s->name }}</div>
+                    @if($s->semester_number)
+                        <span class="badge bg-info text-dark mt-1">Семестри {{ $s->semester_number }}</span>
+                    @endif
                     </div>
                     <span class="badge {{ $cnt > 0 ? 'bg-secondary' : 'bg-light text-dark border' }} rounded-pill">{{ $cnt }}</span>
                 </div>
@@ -52,6 +63,9 @@
     @endforeach
 </div>
 <div id="subjectsNoMatch" class="text-center text-muted py-5 d-none">Фан ёфт нашуд</div>
+@if($subjects->isEmpty())
+<div class="text-center text-muted py-5">Дар ин семестр фан нест</div>
+@endif
 
 <style>
     .subject-card { transition: all .15s ease-in-out; }

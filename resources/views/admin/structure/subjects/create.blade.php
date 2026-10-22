@@ -42,9 +42,18 @@
                                 @endforeach
                             </select>
                             @error('department_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Тавсиф</label>
+                         </div>
+                         <div class="col-md-4">
+                             <label class="form-label">Семестр</label>
+                             <select name="semester_number" class="form-select">
+                                 <option value="">— муайян нашудааст —</option>
+                                 @for($i = 1; $i <= 12; $i++)
+                                     <option value="{{ $i }}" {{ old('semester_number') == $i ? 'selected' : '' }}>Семестри {{ $i }}</option>
+                                 @endfor
+                             </select>
+                         </div>
+                         <div class="col-12">
+                             <label class="form-label">Тавсиф</label>
                             <textarea name="description" rows="3" class="form-control">{{ old('description') }}</textarea>
                         </div>
                         <div class="col-12">

@@ -36,9 +36,17 @@
                         <option value="credit" {{ request('exam_type') == 'credit' ? 'selected' : '' }}>Синҷиш</option>
                         <option value="diff_credit" {{ request('exam_type') == 'diff_credit' ? 'selected' : '' }}>Синҷиши бо баҳо</option>
                     </select>
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-outline-primary"><i class="bi bi-search"></i></button>
+                 </div>
+                 <div class="col-md-2">
+                     <select name="semester_number" class="form-select">
+                         <option value="">Ҳама семестрҳо</option>
+                         @for($i = 1; $i <= 12; $i++)
+                             <option value="{{ $i }}" {{ request('semester_number') == $i ? 'selected' : '' }}>Семестри {{ $i }}</option>
+                         @endfor
+                     </select>
+                 </div>
+                 <div class="col-md-2">
+                     <button type="submit" class="btn btn-outline-primary"><i class="bi bi-search"></i></button>
                     <a href="{{ route('admin.structure.subjects.index') }}" class="btn btn-outline-secondary"><i class="bi bi-x-lg"></i></a>
                 </div>
             </form>
@@ -56,6 +64,7 @@
                             <th>Рамз</th>
                             <th>Кафедра</th>
                             <th>Навъи санҷиш</th>
+                            <th>Семестр</th>
                             <th>Ҳолат</th>
                             <th class="text-end">Амалҳо</th>
                         </tr>
@@ -83,9 +92,16 @@
                                         };
                                     @endphp
                                     <span class="badge {{ $examLabel[1] }}">{{ $examLabel[0] }}</span>
-                                </td>
-                                <td>
-                                    @if($subject->is_active)
+                                 </td>
+                                 <td>
+                                     @if($subject->semester_number)
+                                         Семестри {{ $subject->semester_number }}
+                                     @else
+                                         —
+                                     @endif
+                                 </td>
+                                 <td>
+                                     @if($subject->is_active)
                                         <span class="badge bg-success">Фаъол</span>
                                     @else
                                         <span class="badge bg-secondary">Ғайрифаъол</span>
@@ -107,7 +123,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center text-muted py-4">
+                                <td colspan="7" class="text-center text-muted py-4">
                                     <i class="bi bi-book fs-1 d-block mb-2"></i>
                                     Фане ёфт нашуд.
                                 </td>

@@ -78,8 +78,8 @@
                     <tbody>
                         @foreach($subject->subjectAssignments as $assignment)
                         <tr>
-                            <td>{{ $assignment->specialty->name }}</td>
-                            <td>{{ $assignment->semester->name }}</td>
+                            <td>{{ $assignment->group?->specialty?->name ?? '—' }}</td>
+                            <td>{{ $assignment->semester?->name ?? '—' }}</td>
                         </tr>
                         @endforeach
                     </tbody>

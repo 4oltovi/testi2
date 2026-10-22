@@ -12,6 +12,7 @@ use App\Models\SemesterGrade;
 use App\Models\Student;
 use App\Models\SubjectAssignment;
 use App\Services\DebtDetector;
+use App\Services\RatingSubjectPairService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -20,6 +21,10 @@ use Illuminate\View\View;
 
 class RatingController extends Controller
 {
+    public function __construct(private RatingSubjectPairService $pairService)
+    {
+    }
+
     private function student(): ?Student
     {
         return auth()->user()->student ?? null;
@@ -49,6 +54,17 @@ class RatingController extends Controller
             if ($sessionId) {
                 $session = RatingSession::with('subjects')->find($sessionId);
 
+                // Танҳо фанҳои гурӯҳи худ — фанҳои гурӯҳи дигар дида нашавад
+                $ownSubjectIds = $this->pairService->subjectIdsForGroup(
+                    $session->semester_id,
+                    $student->group_id
+                );
+
+                $session->setRelation(
+                    'subjects',
+                    $session->subjects->whereIn('id', $ownSubjectIds)->values()
+                );
+
                 $attemptsMap = RatingAttempt::where('rating_session_id', $sessionId)
                     ->where('student_id', $student->id)
                     ->get()
@@ -69,6 +85,16 @@ class RatingController extends Controller
         abort_unless($ratingSession->status === 'active', 403);
         abort_unless($ratingSession->isOpenForGroup($student->group_id), 403);
         abort_unless($ratingSession->subjects->contains('id', $subject->id), 404);
+
+        // Санҷиш танҳо бо фанҳои гурӯҳи худи донишҷӯ — ҳимояи серверӣ
+        abort_unless(
+            $this->pairService->groupStudiesSubject(
+                $ratingSession->semester_id,
+                $student->group_id,
+                $subject->id
+            ),
+            403
+        );
 
         $attempts = RatingAttempt::where('rating_session_id', $ratingSession->id)
             ->where('student_id', $student->id)
