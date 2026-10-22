@@ -31,6 +31,7 @@
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
+                        <th style="width:50px">№</th>
                         <th>Фан</th>
                         <th class="text-center">Кӯшишҳо</th>
                         <th class="text-center">Беҳтарин натиҷа</th>
@@ -47,6 +48,7 @@
                     $used = $atts->whereIn('status', ['finished', 'in_progress'])->count();
                     @endphp
                     <tr>
+                        <td>{{ $loop->iteration }}</td>
                         <td class="fw-semibold">{{ $subject->name }}</td>
                         <td class="text-center">{{ $used }} / {{ $session->max_attempts }}</td>
                         <td class="text-center">
@@ -58,12 +60,12 @@
                         </td>
                         <td class="text-center">
                             @php
-                                $lastFinished = $atts->where('status', 'finished')->sortByDesc('finished_at')->first();
+                            $lastFinished = $atts->where('status', 'finished')->sortByDesc('finished_at')->first();
                             @endphp
                             @if($lastFinished)
-                                <a href="{{ route('student.rating.result', $lastFinished) }}" class="btn btn-sm btn-outline-info" title="Натиҷа">
-                                    <i class="bi bi-eye"></i>
-                                </a>
+                            <a href="{{ route('student.rating.result', $lastFinished) }}" class="btn btn-sm btn-outline-info" title="Натиҷа">
+                                <i class="bi bi-eye"></i>
+                            </a>
                             @endif
                             @if($open)
                             <a href="{{ route('student.rating.take', $open) }}" class="btn btn-sm btn-warning" title="Идома додан">

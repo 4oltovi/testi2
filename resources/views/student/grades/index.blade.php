@@ -6,26 +6,26 @@
 @section('content')
 @forelse($grades as $yearId => $semestersGrades)
 @php
-    $firstSem = $semestersGrades->first()['semester'] ?? null;
-    $year = $firstSem?->academicYear ?? null;
-    $isCurrent = ($year?->id ?? $yearId) === $currentYearId;
-    $collapseId = 'gradesYear' . $yearId;
+$firstSem = $semestersGrades->first()['semester'] ?? null;
+$year = $firstSem?->academicYear ?? null;
+$isCurrent = ($year?->id ?? $yearId) === $currentYearId;
+$collapseId = 'gradesYear' . $yearId;
 @endphp
 <div class="accordion-item border-0 shadow-sm mb-3" style="border-radius: 16px; border: 1px solid #e8edf5;">
     <h2 class="accordion-header" id="heading{{ $yearId }}">
         <button class="accordion-button {{ $isCurrent ? '' : 'collapsed' }}"
-                type="button"
-                data-bs-toggle="collapse"
-                data-bs-target="#{{ $collapseId }}"
-                aria-expanded="{{ $isCurrent ? 'true' : 'false' }}"
-                aria-controls="{{ $collapseId }}"
-                style="border-radius: 16px 16px 0 0;">
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#{{ $collapseId }}"
+            aria-expanded="{{ $isCurrent ? 'true' : 'false' }}"
+            aria-controls="{{ $collapseId }}"
+            style="border-radius: 16px 16px 0 0;">
             <div class="d-flex align-items-center justify-content-between w-100">
                 <span class="fw-bold d-flex align-items-center gap-2">
                     <i class="bi bi-journal-bookmark text-primary"></i>
                     {{ $year?->name ?? ('Соли ' . $yearId) }}
                     @if($isCurrent)
-                        <span class="badge bg-primary text-white" style="font-size: 0.7rem;">Соли ҷорӣ</span>
+                    <span class="badge bg-primary text-white" style="font-size: 0.7rem;">Соли ҷорӣ</span>
                     @endif
                 </span>
                 <i class="bi bi-chevron-down accordion-chevron"></i>
@@ -33,9 +33,9 @@
         </button>
     </h2>
     <div id="{{ $collapseId }}"
-         class="accordion-collapse collapse {{ $isCurrent ? 'show' : '' }}"
-         data-bs-parent="#gradesAccordion"
-         aria-labelledby="heading{{ $yearId }}">
+        class="accordion-collapse collapse {{ $isCurrent ? 'show' : '' }}"
+        data-bs-parent="#gradesAccordion"
+        aria-labelledby="heading{{ $yearId }}">
         <div class="accordion-body p-0">
             @foreach($semestersGrades as $semesterId => $semGrades)
             @php $sem = $semGrades->first()['semester'] ?? null; @endphp
@@ -48,6 +48,7 @@
                 <table class="table table-sm table-hover mb-0">
                     <thead class="table-light">
                         <tr>
+                            <th style="width:50px">№</th>
                             <th>Фан</th>
                             <th class="text-center">Кредит</th>
                             <th class="text-center">R1</th>
@@ -62,10 +63,11 @@
                     <tbody>
                         @foreach($semGrades as $item)
                         @php
-                            $grade = $item['semester_grade'];
-                            $calc = $item;
+                        $grade = $item['semester_grade'];
+                        $calc = $item;
                         @endphp
                         <tr>
+                            <td>{{ $loop->iteration }}</td>
                             <td>{{ $item['subject']?->name ?? '—' }}</td>
                             <td class="text-center">{{ $calc['credits'] ?? '—' }}</td>
                             <td class="text-center">{{ $calc['rating1'] !== null ? number_format($calc['rating1'], 1) : '—' }}</td>
@@ -75,19 +77,19 @@
                             <td class="text-center"><strong>{{ $calc['total_score'] !== null ? number_format($calc['total_score'], 1) : '—' }}</strong></td>
                             <td class="text-center">
                                 @if($calc['letter_grade'])
-                                    @php $g = \App\Enums\GradeScale::tryFrom($calc['letter_grade']); @endphp
-                                    <span class="badge {{ $g?->badgeClass() ?? 'bg-secondary' }}">{{ $calc['letter_grade'] }}</span>
+                                @php $g = \App\Enums\GradeScale::tryFrom($calc['letter_grade']); @endphp
+                                <span class="badge {{ $g?->badgeClass() ?? 'bg-secondary' }}">{{ $calc['letter_grade'] }}</span>
                                 @else — @endif
                             </td>
                             <td class="text-center">
                                 @php
-                                    $statusLabel = match($calc['status']) {
-                                        'passed' => ['Гузашт', 'success'],
-                                        'failed' => ['Нагузашт', 'danger'],
-                                        'retake' => ['Такрорсупорӣ', 'warning'],
-                                        'in_progress' => ['Дар ҷараён', 'info'],
-                                        default => [$calc['status'] ?? '—', 'secondary'],
-                                    };
+                                $statusLabel = match($calc['status']) {
+                                'passed' => ['Гузашт', 'success'],
+                                'failed' => ['Нагузашт', 'danger'],
+                                'retake' => ['Такрорсупорӣ', 'warning'],
+                                'in_progress' => ['Дар ҷараён', 'info'],
+                                default => [$calc['status'] ?? '—', 'secondary'],
+                                };
                                 @endphp
                                 <span class="badge bg-{{ $statusLabel[1] }}">{{ $statusLabel[0] }}</span>
                             </td>
@@ -108,16 +110,17 @@
 @endforelse
 @push('scripts')
 <script>
-document.querySelectorAll('.accordion-button[data-bs-toggle="collapse"]').forEach(function(btn) {
-    var chevron = btn.querySelector('.accordion-chevron');
-    if (!chevron) return;
-    function update() {
-        var expanded = btn.getAttribute('aria-expanded') === 'true';
-        chevron.style.transform = expanded ? 'rotate(180deg)' : '';
-    }
-    btn.addEventListener('click', update);
-    update();
-});
+    document.querySelectorAll('.accordion-button[data-bs-toggle="collapse"]').forEach(function(btn) {
+        var chevron = btn.querySelector('.accordion-chevron');
+        if (!chevron) return;
+
+        function update() {
+            var expanded = btn.getAttribute('aria-expanded') === 'true';
+            chevron.style.transform = expanded ? 'rotate(180deg)' : '';
+        }
+        btn.addEventListener('click', update);
+        update();
+    });
 </script>
 @endpush
 @endsection

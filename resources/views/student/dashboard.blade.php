@@ -56,7 +56,7 @@
                     <i class="bi bi-mortarboard fs-4 text-success"></i>
                 </div>
                 <div>
-                    <h3 class="mb-0">{{ $student->earned_credits }}</h3>
+                    <h3 class="mb-0">{{ $credits ?? 0 }}</h3>
                     <small class="text-muted">Кредитҳо</small>
                 </div>
             </div>
